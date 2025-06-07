@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.promos;
+package mx.com.qtx.cotizador.dominio.promos;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.persistencia.config;
+package mx.com.qtx.cotizador.config;
 
 /**
  * Configuración de JPA para la aplicación.

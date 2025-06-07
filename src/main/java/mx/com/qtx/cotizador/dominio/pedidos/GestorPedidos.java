@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.pedidos;
+package mx.com.qtx.cotizador.dominio.pedidos;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -6,11 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import mx.com.qtx.cotizador.config.SpringContextProvider;
-import mx.com.qtx.cotizador.pedidos.excepciones.PresupuestoNoCargadoExcepcion;
-import mx.com.qtx.cotizador.pedidos.excepciones.ProveedorNoExisteExcepcion;
-import mx.com.qtx.cotizador.servicio.PedidoServicio;
-import mx.com.qtx.cotizador.servicio.ProveedorServicio;
+import mx.com.qtx.cotizador.dominio.pedidos.excepciones.PresupuestoNoCargadoExcepcion;
+import mx.com.qtx.cotizador.dominio.pedidos.excepciones.ProveedorNoExisteExcepcion;
+import mx.com.qtx.cotizador.servicio.pedido.PedidoServicio;
+import mx.com.qtx.cotizador.servicio.pedido.ProveedorServicio;
 
 /**
  * Gestiona la creación y manejo de pedidos a partir de presupuestos.
@@ -21,10 +20,12 @@ public class GestorPedidos {
     private IPresupuesto presupuestoActual; // El presupuesto cargado
     private Map<String, Proveedor> proveedores; // Simula un repositorio de proveedores
     private Pedido pedido;
-    private final PedidoServicio pedidoServicio = SpringContextProvider.getBean(PedidoServicio.class);
-    private final ProveedorServicio proveedorServicio = SpringContextProvider.getBean(ProveedorServicio.class);
+    private final PedidoServicio pedidoServicio;
+    private final ProveedorServicio proveedorServicio;
 
-    public GestorPedidos() {
+    public GestorPedidos( PedidoServicio pedidoServicio, ProveedorServicio proveedorServicio ) {
+        this.pedidoServicio = pedidoServicio;
+        this.proveedorServicio = proveedorServicio;
         this.proveedores = new HashMap<>();
         // Obtener proveedores desde el servicio
         List<Proveedor> listaProveedores = this.proveedorServicio.obtenerTodos();

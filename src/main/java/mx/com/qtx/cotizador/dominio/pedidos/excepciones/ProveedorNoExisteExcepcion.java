@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.pedidos.excepciones;
+package mx.com.qtx.cotizador.dominio.pedidos.excepciones;
 
 /**
  * Excepción lanzada cuando se intenta utilizar una clave de proveedor que no existe

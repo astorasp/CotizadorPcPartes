@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.pedidos;
+package mx.com.qtx.cotizador.dominio.pedidos;
 
 /**
  * Representa a un proveedor de artículos o servicios.

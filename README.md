@@ -14,18 +14,18 @@ Este proyecto implementa un sistema completo para cotizar componentes (como hard
     *   Permite definir y agregar diferentes tipos de componentes (Monitores, Discos Duros, Tarjetas de Video, PCs ensambladas) a una cotización.
     *   Calcula costos y precios de venta para cada componente y para la cotización total.
     *   Puede manejar componentes simples y componentes compuestos (como una PC que incluye otros componentes).
-    *   La clase principal para interactuar con esta funcionalidad es `mx.com.qtx.cotizadorv1ds.core.ICotizador` (obtenida a través de `mx.com.qtx.cotizadorv1ds.config.Config`).
+    *   La clase principal para interactuar con esta funcionalidad es `mx.com.qtx.cotizador.core.ICotizador` (obtenida a través de `mx.com.qtx.cotizador.config.Config`).
 
 2.  **Generación de Pedidos desde Cotizaciones:**
-    *   Convierte una `Cotizacion` generada en un formato de `IPresupuesto` utilizando un patrón Adapter (`mx.com.qtx.cotizadorv1ds.core.CotizacionPresupuestoAdapter`).
-    *   Utiliza un `GestorPedidos` (`mx.com.qtx.cotizadorv1ds.pedidos.GestorPedidos`) para procesar el presupuesto adaptado y generar un `Pedido` (`mx.com.qtx.cotizadorv1ds.pedidos.Pedido`).
-    *   Asocia el pedido a un `Proveedor` (`mx.com.qtx.cotizadorv1ds.pedidos.Proveedor`) específico.
+    *   Convierte una `Cotizacion` generada en un formato de `IPresupuesto` utilizando un patrón Adapter (`mx.com.qtx.cotizador.core.CotizacionPresupuestoAdapter`).
+    *   Utiliza un `GestorPedidos` (`mx.com.qtx.cotizador.pedidos.GestorPedidos`) para procesar el presupuesto adaptado y generar un `Pedido` (`mx.com.qtx.cotizador.pedidos.Pedido`).
+    *   Asocia el pedido a un `Proveedor` (`mx.com.qtx.cotizador.pedidos.Proveedor`) específico.
     *   Maneja excepciones básicas como `ProveedorNoExisteExcepcion` y `PresupuestoNoCargadoExcepcion`.
 
 3.  **Cálculo Flexible de Impuestos (Patrón Bridge):**
     *   Implementa un patrón Bridge para desacoplar la *abstracción* del tipo de impuesto (p.ej., local, federal - `CalculoImpuestoLocal`, `CalculoImpuestoFederal`) de la *implementación* específica por país o región (p.ej., `CalculoImpuestoMexico`, `CalculoImpuestosUsa`).
     *   Esto permite configurar y aplicar diferentes combinaciones de impuestos (ej. IVA + ISLR en México, Sales Tax en USA) de forma dinámica al generar la cotización.
-    *   La interfaz base es `mx.com.qtx.cotizadorv1ds.impuestos.CalculoImpuesto`.
+    *   La interfaz base es `mx.com.qtx.cotizador.impuestos.CalculoImpuesto`.
 
 4.  **Persistencia de Datos (JPA/Hibernate):**
     *   Permite guardar cotizaciones, componentes y pedidos en una base de datos MySQL.
@@ -54,18 +54,18 @@ Para ejecutar las pruebas y ver el sistema en acción:
 
 ## Estructura del Proyecto (Paquetes Principales)
 
-*   **`mx.com.qtx.cotizadorv1ds.config`:** Configuración del sistema y proveedor de contexto Spring.
+*   **`mx.com.qtx.cotizador.config`:** Configuración del sistema y proveedor de contexto Spring.
     * `SpringContextProvider`: Inicializa y proporciona acceso al contexto de Spring.
-*   **`mx.com.qtx.cotizadorv1ds.core`:** Clases centrales del módulo de cotización.
+*   **`mx.com.qtx.cotizador.core`:** Clases centrales del módulo de cotización.
     * `Cotizacion`: Representa una cotización con sus detalles y métodos para calcular totales y guardar.
     * `DetalleCotizacion`: Representa un ítem individual dentro de una cotización.
     * `ICotizador`: Interface para los diferentes implementaciones del cotizador.
-*   **`mx.com.qtx.cotizadorv1ds.core.componentes`:** Componentes cotizables.
+*   **`mx.com.qtx.cotizador.core.componentes`:** Componentes cotizables.
     * `Componente`: Clase base abstracta para todos los componentes.
     * Clases específicas como `Monitor`, `DiscoDuro`, `TarjetaVideo` y `Pc`.
-*   **`mx.com.qtx.cotizadorv1ds.impuestos`:** Clases relacionadas con el cálculo de impuestos.
-*   **`mx.com.qtx.cotizadorv1ds.pedidos`:** Clases relacionadas con la gestión y creación de pedidos.
-*   **`mx.com.qtx.cotizadorv1ds.persistencia`:** Capa de persistencia para acceso a datos.
+*   **`mx.com.qtx.cotizador.impuestos`:** Clases relacionadas con el cálculo de impuestos.
+*   **`mx.com.qtx.cotizador.pedidos`:** Clases relacionadas con la gestión y creación de pedidos.
+*   **`mx.com.qtx.cotizador.persistencia`:** Capa de persistencia para acceso a datos.
     * **`.config`:** Configuración JPA y Hibernate.
       * `JpaConfig`: Configura DataSource, EntityManagerFactory y TransactionManager.
     * **`.entidades`:** Entidades JPA mapeadas a tablas de la base de datos.
@@ -74,11 +74,11 @@ Para ejecutar las pruebas y ver el sistema en acción:
       * `ComponenteRepositorio`: Operaciones para componentes.
       * `CotizacionRepositorio`: Operaciones para cotizaciones.
       * Otros repositorios específicos.
-*   **`mx.com.qtx.cotizadorv1ds.servicios`:** Servicios de negocio que actúan como intermediarios.
+*   **`mx.com.qtx.cotizador.servicios`:** Servicios de negocio que actúan como intermediarios.
     * `ComponenteServicio`: Servicios para gestionar componentes.
     * `CotizacionServicio`: Servicios para gestionar cotizaciones.
     * **`.wrapper`:** Convertidores entre objetos de dominio y entidades.
       * `ComponenteEntityConverter`: Convierte entre componentes del dominio y entidades.
-*   **`mx.com.qtx.cotizadorv1ds.casosDeUso`:** Clases que demuestran casos de uso específicos.
+*   **`mx.com.qtx.cotizador.casosDeUso`:** Clases que demuestran casos de uso específicos.
     * `CotizacionAdapterBridgeTest`: Prueba la integración de cotizaciones y pedidos.
     * `CotizadorTest`: Prueba funcionalidades del cotizador con persistencia.

@@ -1,10 +1,12 @@
-package mx.com.qtx.cotizador.pedidos;
+package mx.com.qtx.cotizador.dominio.pedidos;
 
 import java.time.LocalDate;
 
 import mx.com.qtx.cotizador.dominio.core.Cotizacion;
 import mx.com.qtx.cotizador.dominio.core.CotizacionPresupuestoAdapter;
-import mx.com.qtx.cotizador.pedidos.excepciones.PresupuestoNoCargadoExcepcion;
+import mx.com.qtx.cotizador.dominio.pedidos.excepciones.PresupuestoNoCargadoExcepcion;
+import mx.com.qtx.cotizador.servicio.pedido.PedidoServicio;
+import mx.com.qtx.cotizador.servicio.pedido.ProveedorServicio;
 
 /**
  * Orquesta el proceso de creación de pedidos a partir de objetos Cotizacion.
@@ -18,8 +20,8 @@ public class ManejadorCreacionPedidos {
      * Construye una nueva instancia de ManejadorCreacionPedidos.
      * Inicializa el GestorPedidos interno.
      */
-    public ManejadorCreacionPedidos() {        
-        this.gestorPedidos = new GestorPedidos();
+    public ManejadorCreacionPedidos(PedidoServicio pedidoServicio, ProveedorServicio proveedorServicio) {        
+        this.gestorPedidos = new GestorPedidos(pedidoServicio, proveedorServicio);
     }
 
     /**

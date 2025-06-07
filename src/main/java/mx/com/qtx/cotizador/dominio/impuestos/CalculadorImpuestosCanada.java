@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.impuestos;
+package mx.com.qtx.cotizador.dominio.impuestos;
 
 import java.math.BigDecimal;
 

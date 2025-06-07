@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.pedidos;
+package mx.com.qtx.cotizador.dominio.pedidos;
 
 import java.math.BigDecimal;
 
