@@ -50,6 +50,237 @@
 
 ---
 
+## [2024-01-XX] - Implementación Completa PcController y DTOs Especializados
+
+### 🚀 **Nueva Funcionalidad Completa**
+- **Controlador especializado para PCs** con manejo diferenciado de componentes simples vs PCs con sub-componentes
+- **DTOs específicos para PCs** con validaciones apropiadas para componentes compuestos
+- **Servicios extendidos** para operaciones complejas de PCs con sub-componentes
+
+### 🆕 **Archivos Creados**
+
+#### DTOs Especializados para PC
+- `src/main/java/mx/com/qtx/cotizador/dto/pc/request/PcCreateRequest.java`
+  - DTO especializado para creación de PCs con lista de sub-componentes
+  - Validaciones Bean Validation específicas para PCs (mín 1, máx 10 sub-componentes)
+  - Campos específicos: marca, modelo, descripción, lista de ComponenteCreateRequest
+
+- `src/main/java/mx/com/qtx/cotizador/dto/pc/request/PcUpdateRequest.java`
+  - DTO para actualización de PCs (ID tomado del path parameter)
+  - Mismas validaciones que create pero sin ID en el body
+  - Soporte completo para agregar/quitar sub-componentes en actualizaciones
+
+- `src/main/java/mx/com/qtx/cotizador/dto/pc/response/PcResponse.java`
+  - DTO de respuesta con PC completa y sus sub-componentes como ComponenteResponse[]
+  - Información adicional: precioTotal, totalSubComponentes
+  - Metadatos de creación y actualización
+
+#### Mappers Especializados
+- `src/main/java/mx/com/qtx/cotizador/dto/pc/mapper/PcMapper.java`
+  - Conversiones entre DTOs de PC y objetos del dominio Pc
+  - **Uso correcto de PcBuilder** con `Componente.getPcBuilder()`
+  - Manejo automático de tipos de sub-componentes (Monitor, DiscoDuro, TarjetaVideo)
+  - Conversión bidireccional: Request → Pc → Response
+
+#### Controlador Especializado
+- `src/main/java/mx/com/qtx/cotizador/controlador/PcController.java`
+  - **API REST completa para PCs**: `/pcs/*`
+  - Endpoints especializados:
+    - `POST /pcs` - Crear PC con sub-componentes
+    - `PUT /pcs/{id}` - Actualizar PC y manejar sub-componentes
+    - `GET /pcs/{id}` - Obtener PC con sub-componentes
+    - `GET /pcs` - Listar todas las PCs
+    - `DELETE /pcs/{id}` - Eliminar PC completa
+  - **Validación de tipo**: Verifica que los componentes sean PCs reales
+  - **Logging especializado** para operaciones de PCs
+
+### 🔧 **Servicios Refactorizados**
+
+#### ComponenteServicio - Métodos Especializados para PC
+- **`guardarPcCompleto(Componente) → ApiResponse<Componente>`**:
+  - Validaciones específicas: tipo PC, sub-componentes requeridos
+  - Manejo transaccional completo con rollback automático
+  - Guardado de PC principal + asociaciones con sub-componentes
+  - Validación de reglas de negocio específicas para PCs
+
+- **`actualizarPcCompleto(Componente) → ApiResponse<Componente>`**:
+  - **Actualización inteligente**: recreación de asociaciones
+  - Elimina asociaciones existentes y las recrea
+  - Actualiza/crea sub-componentes según existencia
+  - Mantiene integridad referencial
+
+### 🏗️ **Arquitectura Diferenciada**
+
+#### Separación Clara de Responsabilidades
+```
+ComponenteController (/componentes/*)
+├── Componentes Simples (Monitor, DiscoDuro, TarjetaVideo)
+├── Operaciones: CRUD básico
+└── DTOs: ComponenteCreateRequest, ComponenteResponse
+
+PcController (/pcs/*)
+├── PCs Compuestas (con sub-componentes)  
+├── Operaciones: CRUD complejo con sub-componentes
+└── DTOs: PcCreateRequest, PcResponse con sub-componentes
+```
+
+#### Validaciones Específicas por Tipo
+- **Componentes Simples**: Validaciones básicas de campos
+- **PCs**: Validaciones de reglas de negocio (mín/máx sub-componentes, tipos válidos)
+
+### ✨ **Características Avanzadas**
+
+#### Manejo Inteligente de Sub-componentes
+- **Creación**: Valida y guarda cada sub-componente individualmente
+- **Actualización**: Detecta cambios y actualiza/crea según necesidad  
+- **Eliminación**: Manejo en cascada de asociaciones
+- **Validación**: Cumplimiento de reglas de negocio del PcBuilder
+
+#### Respuestas Enriquecidas
+- **PcResponse** incluye cálculo automático de precio total con descuento de PC (20%)
+- **Conteo de sub-componentes** en respuesta
+- **Información detallada** de cada sub-componente
+
+#### Arquitectura de Errores Consistente
+- **Códigos específicos** para violaciones de reglas de negocio de PC
+- **Mensajes descriptivos** para errores de sub-componentes
+- **Mapeo HTTP apropiado** según tipo de error
+
+### 🎯 **Beneficios de la Implementación**
+
+✅ **APIs Diferenciadas**: `/componentes` vs `/pcs` con funcionalidades específicas  
+✅ **DTOs Optimizados**: Estructuras de datos apropiadas para cada caso de uso  
+✅ **Validaciones Específicas**: Reglas de negocio apropiadas para PCs vs componentes  
+✅ **Separación de Responsabilidades**: Cada controlador maneja su dominio específico  
+✅ **Escalabilidad**: Arquitectura preparada para nuevos tipos de componentes compuestos  
+✅ **Mantenibilidad**: Código organizado y especializado por tipo de entidad  
+
+### 🚀 **APIs Funcionales**
+
+#### Endpoints de PCs
+- `POST /pcs` - Crear PC completa con sub-componentes
+- `PUT /pcs/{id}` - Actualizar PC y sus sub-componentes
+- `GET /pcs/{id}` - Obtener PC con sub-componentes detallados
+- `GET /pcs` - Listar todas las PCs
+- `DELETE /pcs/{id}` - Eliminar PC completa
+
+#### Endpoints de Componentes (Simples)
+- `POST /componentes` - Crear componente simple
+- `PUT /componentes/{id}` - Actualizar componente simple
+- `GET /componentes/{id}` - Obtener componente simple
+- `GET /componentes` - Listar componentes simples
+- `DELETE /componentes/{id}` - Eliminar componente simple
+
+### 📋 **Estado Final del Sistema**
+✅ **PcController**: 100% implementado con arquitectura ApiResponse  
+✅ **PcMapper**: Conversiones completas con PcBuilder  
+✅ **PcDTOs**: Request/Response especializados para PCs  
+✅ **ComponenteServicio**: Métodos especializados para PCs agregados  
+✅ **Separación de APIs**: Componentes simples vs PCs compuestas  
+✅ **Arquitectura Consistente**: Manejo de errores unificado  
+
+---
+
+## [2024-01-XX] - Endpoints Granulares para Casos de Uso Específicos
+
+### 🎯 **Mapeo Exacto a Casos de Uso del Diagrama**
+- **Implementación de endpoints granulares** que mapean directamente a los casos de uso 2.2 y 2.3 del diagrama
+- **Operaciones atómicas** más eficientes para cambios específicos en PCs
+- **Validaciones específicas** para cada operación granular
+
+### 🆕 **Nuevos Endpoints Granulares**
+
+#### Caso de Uso 2.2: Agregar Componentes
+- **`POST /pcs/{pcId}/componentes`** - Agregar un componente individual a PC existente
+  - DTO específico: `AgregarComponenteRequest`
+  - Validaciones: Tipo válido, PC existe, no PCs anidadas
+  - Manejo inteligente: Crea componente si no existe, solo asocia si ya existe
+  - Respuesta: ComponenteResponse del componente agregado
+
+#### Caso de Uso 2.3: Quitar Componentes  
+- **`DELETE /pcs/{pcId}/componentes/{componenteId}`** - Quitar componente específico
+  - Validaciones: PC existe, componente existe, asociación existe
+  - Reglas de negocio: No permitir quitar último componente
+  - Operación atómica: Solo elimina la asociación, no el componente
+
+#### Endpoint de Conveniencia
+- **`GET /pcs/{pcId}/componentes`** - Listar componentes de una PC
+  - Respuesta: Lista de ComponenteResponse de sub-componentes
+  - Útil para verificar estado antes de agregar/quitar
+
+### 🔧 **Servicios Granulares Implementados**
+
+#### ComponenteServicio - Nuevos Métodos Atómicos
+- **`agregarComponenteAPc(String pcId, Componente componente) → ApiResponse<Componente>`**:
+  - Validaciones exhaustivas: PC existe, es realmente PC, no PCs anidadas
+  - **Manejo inteligente**: Reutiliza componentes existentes o crea nuevos
+  - Previene duplicados: Verifica que no esté ya asociado
+  - **Operación transaccional** con rollback automático
+
+- **`quitarComponenteDePc(String pcId, String componenteId) → ApiResponse<Void>`**:
+  - Validaciones completas: PC existe, componente existe, asociación existe
+  - **Reglas de negocio**: Protege mínimo de 1 sub-componente por PC
+  - **Operación segura**: Solo elimina asociación, preserva componente para reutilización
+
+### 🏗️ **DTOs Especializados**
+
+#### AgregarComponenteRequest
+- **Validaciones específicas** para componentes individuales
+- **Campos condicionales**: capacidadAlm para discos, memoria para tarjetas
+- **Pattern validation**: Solo tipos válidos (MONITOR, DISCO_DURO, TARJETA_VIDEO)
+- **Reutilizable**: Puede crear o asociar componentes existentes
+
+### ✨ **Características Avanzadas**
+
+#### Operaciones Atómicas
+- **Agregar**: Una sola operación para agregar un componente
+- **Quitar**: Una sola operación para quitar un componente específico
+- **Eficiencia**: No requiere obtener/modificar/enviar lista completa
+
+#### Validaciones Inteligentes
+- **Prevención de duplicados**: No permite agregar el mismo componente dos veces
+- **Reglas de negocio**: Respeta mínimos y máximos de componentes
+- **Integridad referencial**: Verifica existencia de PC y componentes
+
+#### Reutilización de Componentes
+- **Componentes existentes**: Si el componente ya existe, solo se crea la asociación
+- **Componentes nuevos**: Si no existe, se crea el componente y luego se asocia
+- **Eficiencia de storage**: Evita duplicación innecesaria de componentes
+
+### 🎯 **Mapeo Completo a Casos de Uso**
+
+| Caso de Uso | Endpoint Implementado | Operación | Estado |
+|-------------|----------------------|-----------|---------|
+| **2.1 Armar PC** | `POST /pcs` | Crear PC completa | ✅ **Completo** |
+| **2.2 Agregar Componentes** | `POST /pcs/{id}/componentes` | Agregar individual | ✅ **Nuevo** |
+| **2.3 Quitar Componentes** | `DELETE /pcs/{id}/componentes/{compId}` | Quitar individual | ✅ **Nuevo** |
+| **2.4 Guardar SubComponentes** | Automático en todas las operaciones | Persistencia | ✅ **Completo** |
+| **2.5 Consultar PC** | `GET /pcs/{id}` y `GET /pcs` | Consulta completa | ✅ **Completo** |
+
+### 🚀 **APIs Granulares Funcionales**
+
+#### Operaciones de PC Completa
+- `POST /pcs` - Armar PC completa (Caso 2.1)
+- `PUT /pcs/{id}` - Actualizar PC completa
+- `GET /pcs/{id}` - Consultar PC (Caso 2.5)
+- `GET /pcs` - Listar todas las PCs (Caso 2.5)
+- `DELETE /pcs/{id}` - Eliminar PC completa
+
+#### Operaciones Granulares de Componentes
+- `POST /pcs/{id}/componentes` - **Agregar componente individual (Caso 2.2)**
+- `DELETE /pcs/{id}/componentes/{compId}` - **Quitar componente individual (Caso 2.3)**
+- `GET /pcs/{id}/componentes` - Listar componentes de PC
+
+### 📋 **Estado Final del Sistema**
+✅ **Casos de Uso**: 100% mapeados a endpoints específicos  
+✅ **Operaciones Granulares**: Agregar/quitar componentes individuales  
+✅ **Operaciones Completas**: CRUD completo de PCs  
+✅ **Validaciones Específicas**: Reglas de negocio por operación  
+✅ **Eficiencia**: Operaciones atómicas sin overhead  
+✅ **Arquitectura Consistente**: ApiResponse en todos los endpoints  
+
+---
+
 ## [2024-01-XX] - Implementación API REST Gestión de Componentes
 
 ### ➕ **Nuevas Funcionalidades**
