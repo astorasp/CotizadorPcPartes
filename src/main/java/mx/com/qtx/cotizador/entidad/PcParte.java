@@ -7,8 +7,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -26,9 +24,6 @@ public class PcParte implements Serializable {
     @Column(name = "id_componente")
     private String idComponente;
     
-    @ManyToOne
-    @JoinColumn(name = "id_componente", insertable = false, updatable = false)
-    private Componente componente;
     
     // Constructores
     public PcParte() {
@@ -55,14 +50,6 @@ public class PcParte implements Serializable {
     
     public void setIdComponente(String idComponente) {
         this.idComponente = idComponente;
-    }
-
-    public Componente getComponente() {
-        return componente;
-    }
-    
-    public void setComponente(Componente componente) {
-        this.componente = componente;
     }
     
     @Override

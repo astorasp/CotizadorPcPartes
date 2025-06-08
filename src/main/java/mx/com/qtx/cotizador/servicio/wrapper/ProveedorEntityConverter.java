@@ -1,7 +1,4 @@
 package mx.com.qtx.cotizador.servicio.wrapper;
-
-import mx.com.qtx.cotizador.entidad.Proveedor;
-
 /**
  * Conversor para transformar objetos Proveedor del dominio de negocio a entidades Proveedor 
  * para persistencia y viceversa.
@@ -15,7 +12,7 @@ public class ProveedorEntityConverter {
      * @return Un objeto del dominio Proveedor con la información del proveedor
      */
     public static mx.com.qtx.cotizador.dominio.pedidos.Proveedor convertToDomain(
-            Proveedor proveedorEntity) {
+            mx.com.qtx.cotizador.entidad.Proveedor proveedorEntity) {
         
         if (proveedorEntity == null) {
             return null;
@@ -43,18 +40,18 @@ public class ProveedorEntityConverter {
      * @param existingEntity Entidad existente (opcional, puede ser null para nuevos proveedores)
      * @return Una entidad Proveedor lista para ser persistida
      */
-    public static Proveedor convertToEntity(
+    public static mx.com.qtx.cotizador.entidad.Proveedor convertToEntity(
             mx.com.qtx.cotizador.dominio.pedidos.Proveedor proveedorDomain,
-            Proveedor existingEntity) {
+            mx.com.qtx.cotizador.entidad.Proveedor existingEntity) {
         
         if (proveedorDomain == null) {
             return null;
         }
         
         // Usar la entidad existente o crear una nueva
-        Proveedor proveedorEntity =
+        mx.com.qtx.cotizador.entidad.Proveedor proveedorEntity = 
                 existingEntity != null ? existingEntity : 
-                new Proveedor();
+                new mx.com.qtx.cotizador.entidad.Proveedor();
         
         // Establecer las propiedades básicas
         proveedorEntity.setNombre(proveedorDomain.getNombre());
@@ -75,7 +72,7 @@ public class ProveedorEntityConverter {
      * @param proveedorDomain El objeto del dominio Proveedor
      * @return Una nueva entidad Proveedor lista para ser persistida
      */
-    public static Proveedor convertToNewEntity(
+    public static mx.com.qtx.cotizador.entidad.Proveedor convertToNewEntity(
             mx.com.qtx.cotizador.dominio.pedidos.Proveedor proveedorDomain) {
         return convertToEntity(proveedorDomain, null);
     }

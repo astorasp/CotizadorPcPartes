@@ -1,10 +1,5 @@
 package mx.com.qtx.cotizador.servicio.wrapper;
 
-import mx.com.qtx.cotizador.entidad.Componente;
-import mx.com.qtx.cotizador.entidad.Cotizacion;
-import mx.com.qtx.cotizador.entidad.DetalleCotizacion;
-import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
-
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -21,16 +16,16 @@ public class CotizacionEntityConverter {
      * @param componenteRepo Repositorio de componentes para obtener referencias
      * @return Entidad Cotización para persistencia
      */
-    public static Cotizacion convertToEntity(
-            mx.com.qtx.cotizador.dominio.core.Cotizacion cotizacionCore,
-            ComponenteRepositorio componenteRepo) {
+    public static mx.com.qtx.cotizador.entidad.Cotizacion convertToEntity(
+            mx.com.qtx.cotizador.dominio.core.Cotizacion cotizacionCore, 
+            mx.com.qtx.cotizador.repositorio.ComponenteRepositorio componenteRepo) {
         
         if (cotizacionCore == null) {
             return null;
         }
         
         // Crear y configurar la entidad
-        Cotizacion cotizacionEntity = new Cotizacion();
+        mx.com.qtx.cotizador.entidad.Cotizacion cotizacionEntity = new mx.com.qtx.cotizador.entidad.Cotizacion();
         
         // La clave primaria (folio) la generará automáticamente
         
@@ -61,9 +56,9 @@ public class CotizacionEntityConverter {
      * @param componenteRepo Repositorio de componentes para obtener referencias
      */
     public static void addDetallesTo(
-            mx.com.qtx.cotizador.dominio.core.Cotizacion cotizacionCore,
-            Cotizacion cotizacionEntity,
-            ComponenteRepositorio componenteRepo) {
+            mx.com.qtx.cotizador.dominio.core.Cotizacion cotizacionCore, 
+            mx.com.qtx.cotizador.entidad.Cotizacion cotizacionEntity,
+            mx.com.qtx.cotizador.repositorio.ComponenteRepositorio componenteRepo) {
         
         if (cotizacionCore == null || cotizacionEntity == null) {
             return;
@@ -72,12 +67,12 @@ public class CotizacionEntityConverter {
         // Convertir y agregar los detalles
         for (mx.com.qtx.cotizador.dominio.core.DetalleCotizacion detalleCore : cotizacionCore.getDetalles()) {
             // Crear nueva entidad DetalleCotizacion
-            DetalleCotizacion detalleEntity =
-                new DetalleCotizacion();
+            mx.com.qtx.cotizador.entidad.DetalleCotizacion detalleEntity = 
+                new mx.com.qtx.cotizador.entidad.DetalleCotizacion();
             
             // Configurar ID compuesto
-            DetalleCotizacion.DetalleCotizacionId id =
-                new DetalleCotizacion.DetalleCotizacionId();
+            mx.com.qtx.cotizador.entidad.DetalleCotizacion.DetalleCotizacionId id = 
+                new mx.com.qtx.cotizador.entidad.DetalleCotizacion.DetalleCotizacionId();
             id.setFolio(cotizacionEntity.getFolio());
             id.setNumDetalle(detalleCore.getNumDetalle());
             detalleEntity.setId(id);
@@ -89,7 +84,7 @@ public class CotizacionEntityConverter {
             
             // Buscar y establecer la referencia al componente
             if (detalleCore.getIdComponente() != null) {
-                Componente componente =
+                mx.com.qtx.cotizador.entidad.Componente componente = 
                     componenteRepo.findById(detalleCore.getIdComponente()).orElse(null);
                 detalleEntity.setComponente(componente);
             }
@@ -106,13 +101,13 @@ public class CotizacionEntityConverter {
      * @param cotizacionCore Cotización del dominio
      * @return Entidad Cotización para persistencia con sus detalles
      */
-    public static Cotizacion convertToNewEntity(mx.com.qtx.cotizador.dominio.core.Cotizacion cotizacionCore) {
+    public static mx.com.qtx.cotizador.entidad.Cotizacion convertToNewEntity(mx.com.qtx.cotizador.dominio.core.Cotizacion cotizacionCore) {
         if (cotizacionCore == null) {
             return null;
         }
         
         // Crear y configurar la entidad
-        Cotizacion cotizacionEntity = new Cotizacion();
+        mx.com.qtx.cotizador.entidad.Cotizacion cotizacionEntity = new mx.com.qtx.cotizador.entidad.Cotizacion();
         
         // Convertir fecha de LocalDate a String
         cotizacionEntity.setFecha(

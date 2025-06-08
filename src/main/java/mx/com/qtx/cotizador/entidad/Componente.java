@@ -5,10 +5,15 @@ import java.util.List;
 import java.util.ArrayList;
 
 import jakarta.persistence.Entity;
+
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedEntityGraphs;
+import jakarta.persistence.NamedSubgraph;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Inheritance;
@@ -17,6 +22,29 @@ import jakarta.persistence.InheritanceType;
 @Entity
 @Table(name = "cocomponente")
 @Inheritance(strategy = InheritanceType.JOINED)
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+        name = "Componente.completo",
+        attributeNodes = {
+            @NamedAttributeNode("tipoComponente"),
+            @NamedAttributeNode(value = "promocion", subgraph = "promocion-completa")
+        },
+        subgraphs = {
+            @NamedSubgraph(
+                name = "promocion-completa",
+                attributeNodes = {
+                    @NamedAttributeNode(value = "detalles", subgraph = "detalles-completos")
+                }
+            ),
+            @NamedSubgraph(
+                name = "detalles-completos",
+                attributeNodes = {
+                    @NamedAttributeNode("descuentosPorCantidad")
+                }
+            )
+        }
+    )
+})
 public class Componente {
     
     @Id

@@ -20,7 +20,7 @@ spring:
 server:
   port: 8080
   servlet:
-    context-path: /cotizador/api/v1
+    context-path: /cotizador/v1/api
 
 logging:
   level:

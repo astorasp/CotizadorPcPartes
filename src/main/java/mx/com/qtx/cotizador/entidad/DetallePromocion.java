@@ -23,37 +23,47 @@ public class DetallePromocion {
     @Column(name = "id_detalle_promocion")
     private Integer idDetallePromocion;
     
-    @Column(name = "es_base")
+    @Column(name = "es_base", nullable = false)
     private Boolean esBase;
     
-    @Column(name = "llevent")
+    @Column(name = "llevent", nullable = false)
     private Integer llevent;
     
-    @Column(name = "nombre")
+    @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
     
-    @Column(name = "paguen")
+    @Column(name = "paguen", nullable = false)
     private Integer paguen;
     
-    @Column(name = "porc_dcto_plano")
+    @Column(name = "porc_dcto_plano", nullable = false)
     private Double porcDctoPlano;
     
-    @Column(name = "tipo_prom_acumulable")
+    @Column(name = "tipo_prom_acumulable", length = 50)
     private String tipoPromAcumulable;
     
-    @Column(name = "tipo_prom_base")
+    @Column(name = "tipo_prom_base", length = 50)
     private String tipoPromBase;
     
     @ManyToOne
-    @JoinColumn(name = "id_promocion")
+    @JoinColumn(name = "id_promocion", nullable = false)
     private Promocion promocion;
     
-    @OneToMany(mappedBy = "detallePromocion", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "detallePromocion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePromDsctoXCant> descuentosPorCantidad = new ArrayList<>();
     
     // Constructores
     public DetallePromocion() {
         // Constructor vacío requerido por JPA
+    }
+    
+    public DetallePromocion(Boolean esBase, Integer llevent, String nombre, Integer paguen, 
+                           Double porcDctoPlano, Promocion promocion) {
+        this.esBase = esBase;
+        this.llevent = llevent;
+        this.nombre = nombre;
+        this.paguen = paguen;
+        this.porcDctoPlano = porcDctoPlano;
+        this.promocion = promocion;
     }
     
     // Getters y setters
@@ -137,9 +147,26 @@ public class DetallePromocion {
         this.descuentosPorCantidad = descuentosPorCantidad;
     }
     
-    // Método helper para agregar un descuento por cantidad
+    // Métodos helper para manejar la relación bidireccional
     public void addDescuentoPorCantidad(DetallePromDsctoXCant descuento) {
         descuentosPorCantidad.add(descuento);
         descuento.setDetallePromocion(this);
+    }
+    
+    public void removeDescuentoPorCantidad(DetallePromDsctoXCant descuento) {
+        descuentosPorCantidad.remove(descuento);
+        descuento.setDetallePromocion(null);
+    }
+    
+    @Override
+    public String toString() {
+        return "DetallePromocion{" +
+                "idDetallePromocion=" + idDetallePromocion +
+                ", nombre='" + nombre + '\'' +
+                ", esBase=" + esBase +
+                ", llevent=" + llevent +
+                ", paguen=" + paguen +
+                ", porcDctoPlano=" + porcDctoPlano +
+                '}';
     }
 } 

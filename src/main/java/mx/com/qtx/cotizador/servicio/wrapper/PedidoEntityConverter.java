@@ -4,10 +4,9 @@ import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.util.List;
 
-import mx.com.qtx.cotizador.dominio.pedidos.Proveedor;
+
 import mx.com.qtx.cotizador.entidad.Componente;
 import mx.com.qtx.cotizador.entidad.DetallePedido;
-import mx.com.qtx.cotizador.entidad.Pedido;
 import mx.com.qtx.cotizador.entidad.DetallePedido.DetallePedidoId;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.repositorio.ProveedorRepositorio;
@@ -27,7 +26,7 @@ public class PedidoEntityConverter {
      * @param proveedorRepo Repositorio para buscar el proveedor en la base de datos
      * @return Una entidad Pedido lista para persistir, sin detalles
      */
-    public static Pedido convertToEntity(
+    public static mx.com.qtx.cotizador.entidad.Pedido convertToEntity(
             mx.com.qtx.cotizador.dominio.pedidos.Pedido pedidoCore,
             ProveedorRepositorio proveedorRepo) {
         
@@ -35,8 +34,8 @@ public class PedidoEntityConverter {
             return null;
         }
         
-        Pedido pedidoEntity =
-                new Pedido();
+        mx.com.qtx.cotizador.entidad.Pedido pedidoEntity = 
+                new mx.com.qtx.cotizador.entidad.Pedido();
         
         // Convertir campos simples
         // Nota: El ID se generará automáticamente por la base de datos para nuevos pedidos
@@ -72,6 +71,7 @@ public class PedidoEntityConverter {
                 proveedorRepo.findByCve(claveProveedor)
             );
         }
+        pedidoEntity.setTotal(pedidoCore.getTotalPedido());
         
         return pedidoEntity;
     }
@@ -86,7 +86,7 @@ public class PedidoEntityConverter {
      */
     public static void addDetallesTo(
             mx.com.qtx.cotizador.dominio.pedidos.Pedido pedidoCore,
-            Pedido pedidoEntity,
+            mx.com.qtx.cotizador.entidad.Pedido pedidoEntity,
             ComponenteRepositorio componenteRepo) {
         
         if (pedidoCore == null || pedidoEntity == null) {
@@ -100,7 +100,7 @@ public class PedidoEntityConverter {
         BigDecimal totalAcumulado = BigDecimal.ZERO;
         
         // Obtener los detalles del pedido del dominio
-        List<mx.com.qtx.cotizador.dominio.pedidos.DetallePedido> detallesCore =
+        List<mx.com.qtx.cotizador.dominio.pedidos.DetallePedido> detallesCore = 
                 pedidoCore.getDetallesPedido();
         
         // Convertir cada detalle
@@ -153,7 +153,7 @@ public class PedidoEntityConverter {
      * @param componenteRepo Repositorio para buscar los componentes
      * @return Una nueva entidad Pedido con todos sus detalles lista para persistir
      */
-    public static Pedido convertToNewEntity(
+    public static mx.com.qtx.cotizador.entidad.Pedido convertToNewEntity(
             mx.com.qtx.cotizador.dominio.pedidos.Pedido pedidoCore,
             ProveedorRepositorio proveedorRepo,
             ComponenteRepositorio componenteRepo) {
@@ -163,7 +163,7 @@ public class PedidoEntityConverter {
         }
         
         // Primero convertimos el pedido principal sin detalles
-        Pedido pedidoEntity =
+        mx.com.qtx.cotizador.entidad.Pedido pedidoEntity = 
                 convertToEntity(pedidoCore, proveedorRepo);
         
         // Calcular el total del pedido sumando los totales de los detalles (informativo)
@@ -188,7 +188,7 @@ public class PedidoEntityConverter {
      * @return Un objeto Pedido del dominio de negocio
      */
     public static mx.com.qtx.cotizador.dominio.pedidos.Pedido convertToDomain(
-            Pedido pedidoEntity) {
+            mx.com.qtx.cotizador.entidad.Pedido pedidoEntity) {
         
         if (pedidoEntity == null) {
             return null;
@@ -221,7 +221,7 @@ public class PedidoEntityConverter {
             pedidoEntity.getNivelSurtido() : 0; // Valor por defecto
         
         // Crear el proveedor del dominio
-        Proveedor proveedorDomain = null;
+        mx.com.qtx.cotizador.dominio.pedidos.Proveedor proveedorDomain = null;
         if (pedidoEntity.getProveedor() != null) {
             // Extraer los datos del proveedor de la entidad
             String cveProveedor = pedidoEntity.getProveedor().getCve();
@@ -233,7 +233,7 @@ public class PedidoEntityConverter {
                 pedidoEntity.getProveedor().getRazonSocial() : nombreProveedor;
             
             // Crear el proveedor del dominio con los tres parámetros requeridos
-            proveedorDomain = new Proveedor(
+            proveedorDomain = new mx.com.qtx.cotizador.dominio.pedidos.Proveedor(
                     cveProveedor, nombreProveedor, razonSocial);
         }
         
@@ -246,7 +246,7 @@ public class PedidoEntityConverter {
         
         // Convertir y agregar detalles
         if (pedidoEntity.getDetalles() != null) {
-            for (DetallePedido detalleEntity : pedidoEntity.getDetalles()) {
+            for (mx.com.qtx.cotizador.entidad.DetallePedido detalleEntity : pedidoEntity.getDetalles()) {
                 // Extraer datos del detalle de la entidad
                 String idArticulo = detalleEntity.getComponente() != null ? 
                         detalleEntity.getComponente().getId() : "N/A";

@@ -21,20 +21,28 @@ public class DetallePromDsctoXCant implements Serializable {
     @EmbeddedId
     private DetallePromDsctoXCantId id = new DetallePromDsctoXCantId();
     
-    @Column(name = "cantidad")
+    @Column(name = "cantidad", nullable = false)
     private Integer cantidad;
     
-    @Column(name = "dscto")
+    @Column(name = "dscto", nullable = false)
     private Double dscto;
     
     @ManyToOne
     @MapsId("numDetPromocion")
-    @JoinColumn(name = "num_det_promocion")
+    @JoinColumn(name = "num_det_promocion", nullable = false)
     private DetallePromocion detallePromocion;
     
     // Constructores
     public DetallePromDsctoXCant() {
         // Constructor vacío requerido por JPA
+    }
+    
+    public DetallePromDsctoXCant(Integer numDscto, Integer cantidad, Double dscto, 
+                                Integer numPromocion, DetallePromocion detallePromocion) {
+        this.id = new DetallePromDsctoXCantId(numDscto, detallePromocion.getIdDetallePromocion(), numPromocion);
+        this.cantidad = cantidad;
+        this.dscto = dscto;
+        this.detallePromocion = detallePromocion;
     }
     
     // Getters y setters
@@ -68,6 +76,32 @@ public class DetallePromDsctoXCant implements Serializable {
     
     public void setDetallePromocion(DetallePromocion detallePromocion) {
         this.detallePromocion = detallePromocion;
+        if (detallePromocion != null && this.id != null) {
+            this.id.setNumDetPromocion(detallePromocion.getIdDetallePromocion());
+        }
+    }
+    
+    // Métodos de conveniencia para acceder a los IDs
+    public Integer getNumDscto() {
+        return id != null ? id.getNumDscto() : null;
+    }
+    
+    public void setNumDscto(Integer numDscto) {
+        if (this.id == null) {
+            this.id = new DetallePromDsctoXCantId();
+        }
+        this.id.setNumDscto(numDscto);
+    }
+    
+    public Integer getNumPromocion() {
+        return id != null ? id.getNumPromocion() : null;
+    }
+    
+    public void setNumPromocion(Integer numPromocion) {
+        if (this.id == null) {
+            this.id = new DetallePromDsctoXCantId();
+        }
+        this.id.setNumPromocion(numPromocion);
     }
     
     @Override
@@ -83,18 +117,28 @@ public class DetallePromDsctoXCant implements Serializable {
         return Objects.hash(id);
     }
     
+    @Override
+    public String toString() {
+        return "DetallePromDsctoXCant{" +
+                "numDscto=" + getNumDscto() +
+                ", cantidad=" + cantidad +
+                ", dscto=" + dscto +
+                ", numPromocion=" + getNumPromocion() +
+                '}';
+    }
+    
     // Clase interna para la llave compuesta
     @Embeddable
     public static class DetallePromDsctoXCantId implements Serializable {
         private static final long serialVersionUID = 1L;
         
-        @Column(name = "num_dscto")
+        @Column(name = "num_dscto", nullable = false)
         private Integer numDscto;
         
-        @Column(name = "num_det_promocion")
+        @Column(name = "num_det_promocion", nullable = false)
         private Integer numDetPromocion;
         
-        @Column(name = "num_promocion")
+        @Column(name = "num_promocion", nullable = false)
         private Integer numPromocion;
         
         // Constructores
@@ -144,6 +188,15 @@ public class DetallePromDsctoXCant implements Serializable {
         @Override
         public int hashCode() {
             return Objects.hash(numDscto, numDetPromocion, numPromocion);
+        }
+        
+        @Override
+        public String toString() {
+            return "DetallePromDsctoXCantId{" +
+                    "numDscto=" + numDscto +
+                    ", numDetPromocion=" + numDetPromocion +
+                    ", numPromocion=" + numPromocion +
+                    '}';
         }
     }
 } 

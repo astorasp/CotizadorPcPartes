@@ -120,6 +120,12 @@ public class Pedido {
         this.detallesPedido.add(detalle);
     }
 
+    public BigDecimal getTotalPedido() {
+        return this.detallesPedido.stream()
+            .map(DetallePedido::getTotalCotizado)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     /**
      * Devuelve una representación en cadena del Pedido, incluyendo sus datos generales
      * y la lista de detalles formateada como tabla.
