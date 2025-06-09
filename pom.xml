@@ -105,14 +105,6 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- JavaFaker para generación de datos de prueba -->
-        <dependency>
-            <groupId>com.github.javafaker</groupId>
-            <artifactId>javafaker</artifactId>
-            <version>${javafaker.version}</version>
-            <scope>test</scope>
-        </dependency>
-        
         <!-- Spring Boot TestContainers -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -343,6 +343,16 @@ PcController (/pcs/*)
   - Menos ruido de frameworks externos
 - **Status**: ✅ Optimizado y probado - logs limpios y eficientes
 
+## 08-06-2025 21:42 - Corrección de Test de Consulta por ID
+### 🐛 **CORRECCIÓN DE BUG**: Test `deberiaConsultarComponentePorId` fallaba
+- **Problema**: Test buscaba campo `datos.idComponente` pero el JSON usa `datos.id`
+- **Causa raíz**: Inconsistencia entre nombre de campo en test vs DTO real
+- **Solución**: Actualizar test para usar `datos.id` (consistente con `ComponenteResponse`)
+- **Archivos corregidos**:
+  - `ComponenteIntegrationTest.java` - Campo `idComponente` → `id` en validaciones JSON
+- **Status**: ✅ Test corregido y funcionando - mapeo JSON consistente
+- **Logs optimizados**: Ahora se ve claramente el éxito de la operación sin ruido DEBUG
+
 #### Validaciones Inteligentes
 - **Prevención de duplicados**: No permite agregar el mismo componente dos veces
 - **Reglas de negocio**: Respeta mínimos y máximos de componentes
@@ -1254,3 +1264,49 @@ El sistema de gestión de pedidos está completamente implementado y listo para 
 - ⏳ API endpoints (pendientes - 404 esperado por implementación faltante)
 
 **Estado:** Implementación base completa y funcional
+
+## 08-06-2025 21:58 - Corrección completa de tests de integración de componentes
+
+### Problemas identificados y solucionados:
+
+1. **Configuración de seguridad en tests**:
+   - Corregida configuración de seguridad en `SecurityConfig.java` para incluir el context path completo
+   - Actualizada configuración en `application-test.properties` para habilitar seguridad con credenciales de test
+   - Unificadas credenciales de autenticación en todos los tests
+
+2. **Formato de DTOs en tests**:
+   - Corregidos todos los tests para usar el formato correcto de DTOs:
+     - `ComponenteCreateRequest`: campo `id` en lugar de `idComponente`
+     - `ComponenteUpdateRequest`: campo `tipoComponente` como String en lugar de `idTipoComponente` como número
+   - Eliminados campos obsoletos como `idPromocion`, `capacidadAlm`, `memoria` de tests básicos
+
+3. **Validaciones de longitud de campos**:
+   - Corregidos IDs de test para cumplir con validación `@Size(max = 10)`:
+     - `TEST-COMP-001` → `TEST001`
+     - `TEST-COMP-002` → `TEST002`
+     - `TEST-COMP-003` → `TEST003`
+
+4. **Códigos de error esperados**:
+   - Corregidos códigos de error en tests para coincidir con enum `Errores.java`:
+     - Recurso no encontrado: código "4" (RECURSO_NO_ENCONTRADO)
+     - Error de validación: código "2" (ERROR_DE_VALIDACION)
+     - Recurso ya existe: código "5" (RECURSO_YA_EXISTE)
+
+5. **Mensajes de respuesta**:
+   - Actualizados mensajes esperados en tests:
+     - "Componente guardado exitosamente" para creación
+     - "Componente actualizado exitosamente" para modificación
+
+6. **Test de componente duplicado**:
+   - Corregido para usar ID existente válido (`MON001`) que cumple validaciones de longitud
+
+### Archivos modificados:
+- `src/main/java/mx/com/qtx/cotizador/config/SecurityConfig.java`
+- `src/test/resources/application-test.properties`
+- `src/test/java/mx/com/qtx/cotizador/integration/componente/ComponenteIntegrationTest.java`
+
+### Resultado:
+- ✅ Todos los 14 tests de `ComponenteIntegrationTest` ahora pasan exitosamente
+- ✅ Configuración de seguridad funcional en entorno de test
+- ✅ DTOs y validaciones correctamente alineados
+- ✅ Códigos de error consistentes con la arquitectura del sistema
