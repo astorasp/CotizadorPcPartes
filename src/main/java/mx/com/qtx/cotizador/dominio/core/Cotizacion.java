@@ -18,7 +18,6 @@ import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
  * </p>
  */
 public class Cotizacion {
-	private final CotizacionServicio cotizacionServicio;
 	private static long nCotizaciones = 0;
 	
 	protected long num;
@@ -35,14 +34,13 @@ public class Cotizacion {
 	 * establece la fecha actual, inicializa el total en cero y crea un mapa vacío para los detalles.
 	 * </p>
 	 */
-	public Cotizacion(CotizacionServicio cotizacionServicio) {
+	public Cotizacion() {
 		super();
 		nCotizaciones++;
 		this.num = nCotizaciones;
 		this.fecha = LocalDate.now();
 		this.total = new BigDecimal(0);
 		this.detalles = new TreeMap<>();
-		this.cotizacionServicio = cotizacionServicio;
 	}
 	
 	/**
@@ -163,17 +161,6 @@ public class Cotizacion {
 		System.out.println(" ");
 		
 	}
-
-	/**
-	 * Guarda la cotización en la base de datos.
-	 * <p>
-	 * Utiliza el servicio de cotizaciones para persistir
-	 * la cotización actual y sus detalles.
-	 * </p>
-	 */
-	public void guardarCotizacion() {
-		cotizacionServicio.guardarCotizacion(this);
-	}	
 	
 	/**
 	 * Muestra una línea de detalle de la cotización en la consola.

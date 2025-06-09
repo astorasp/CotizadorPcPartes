@@ -22,9 +22,30 @@ server:
   servlet:
     context-path: /cotizador/v1/api
 
+# Configuración de Seguridad
+security:
+  basic:
+    enabled: true
+    username: ${SECURITY_USERNAME:admin}
+    password: ${SECURITY_PASSWORD:admin123}
+    realm: "Cotizador API"
+
 logging:
   level:
-    mx.com.qtx: DEBUG
-    org.springframework.web: INFO
+    mx.com.qtx: INFO
+    org.springframework.web: WARN
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type: WARN
+    com.zaxxer.hikari: WARN
+    org.springframework.boot: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/cotizador-application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 500MB

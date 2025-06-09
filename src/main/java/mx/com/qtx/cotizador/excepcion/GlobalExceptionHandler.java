@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import lombok.extern.slf4j.Slf4j;
 import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
 import mx.com.qtx.cotizador.util.Errores;
 
@@ -14,10 +15,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAllExceptions(Exception ex) {
+        log.error("Error interno del servicio", ex);
         return new 
             ResponseEntity<>(new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                 Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje()), 

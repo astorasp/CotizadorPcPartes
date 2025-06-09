@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.dominio.core.componentes;
+package mx.com.qtx.cotizador.util;
 
 public enum TipoComponenteEnum {
     DISCO_DURO("DISCO_DURO"),

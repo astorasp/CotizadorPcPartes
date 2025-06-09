@@ -6,8 +6,8 @@ import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
 
 public class CotizacionFmtoB extends Cotizacion {
 
-	public CotizacionFmtoB(CotizacionServicio cotizacionServicio) {
-		super(cotizacionServicio);
+	public CotizacionFmtoB() {
+		super();
 	}
 
 	@Override

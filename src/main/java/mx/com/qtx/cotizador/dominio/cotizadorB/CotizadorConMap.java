@@ -14,10 +14,8 @@ import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
 
 public class CotizadorConMap implements ICotizador {
 	private Map<Componente,Integer> mapCompsYcants;
-	private final CotizacionServicio cotizacionServicio;
 
-	public CotizadorConMap(CotizacionServicio cotizacionServicio) {
-		this.cotizacionServicio = cotizacionServicio;
+	public CotizadorConMap() {
 		this.mapCompsYcants = new HashMap<>();
 	}
 
@@ -42,7 +40,7 @@ public class CotizadorConMap implements ICotizador {
 	public Cotizacion generarCotizacion(List<CalculadorImpuesto> calculadorImpuestos) {
         BigDecimal total = new BigDecimal(0);
         
-        Cotizacion cotizacion = new CotizacionFmtoB(this.cotizacionServicio);
+        Cotizacion cotizacion = new CotizacionFmtoB();
         int i=0;
         for(Componente compI:this.mapCompsYcants.keySet()) {
         	int cantidadI = this.mapCompsYcants.get(compI);

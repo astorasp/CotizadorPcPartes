@@ -1,14 +1,23 @@
 package mx.com.qtx.cotizador.servicio.componente;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
 import mx.com.qtx.cotizador.dominio.core.componentes.Pc;
-import mx.com.qtx.cotizador.dominio.core.componentes.TipoComponenteEnum;
 import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
+import mx.com.qtx.cotizador.dto.componente.mapper.ComponenteMapper;
+import mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest;
+import mx.com.qtx.cotizador.dto.componente.request.ComponenteUpdateRequest;
+import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
+import mx.com.qtx.cotizador.dto.pc.response.PcResponse;
+import mx.com.qtx.cotizador.dto.pc.mapper.PcMapper;
+import mx.com.qtx.cotizador.dto.pc.request.PcCreateRequest;
+import mx.com.qtx.cotizador.dto.pc.request.PcUpdateRequest;
+import mx.com.qtx.cotizador.dto.pc.request.AgregarComponenteRequest;
 import mx.com.qtx.cotizador.entidad.PcParte;
 import mx.com.qtx.cotizador.entidad.TipoComponente;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
@@ -17,6 +26,7 @@ import mx.com.qtx.cotizador.repositorio.PromocionRepositorio;
 import mx.com.qtx.cotizador.repositorio.TipoComponenteRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.ComponenteEntityConverter;
 import mx.com.qtx.cotizador.util.Errores;
+import mx.com.qtx.cotizador.util.TipoComponenteEnum;
 
 @Service
 public class ComponenteServicio {
@@ -25,6 +35,7 @@ public class ComponenteServicio {
     private PcPartesRepositorio pcPartesRepo;  
     private PromocionRepositorio promoRepo;
     private List<TipoComponente> tipos;
+    
     public ComponenteServicio(ComponenteRepositorio compRepo, 
         PcPartesRepositorio pcPartesRepo,
         PromocionRepositorio promoRepo,
@@ -35,6 +46,11 @@ public class ComponenteServicio {
         this.tipos = tipoRepo.findAll();
     }
 
+    /**
+     * Elimina un componente por ID
+     * @param id ID del componente a eliminar
+     * @return ApiResponse<Void> con el resultado de la operación
+     */
     @Transactional
     public ApiResponse<Void> borrarComponente(String id) {
         try {
@@ -56,25 +72,32 @@ public class ComponenteServicio {
         }
     }
 
+    /**
+     * Guarda un nuevo componente
+     * @param request DTO con los datos del componente a crear
+     * @return ApiResponse<ComponenteResponse> con el componente creado
+     */
     @Transactional
-    public ApiResponse<Componente> guardarComponente(Componente comp) {
+    public ApiResponse<ComponenteResponse> guardarComponente(ComponenteCreateRequest request) {
         try {
-            if (comp == null) {
+            if (request == null) {
                 return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
-                                       "El componente no puede ser nulo");
+                                       "Los datos del componente son requeridos");
             }
             
-            if (compRepo.existsById(comp.getId())) {
+            if (compRepo.existsById(request.getId())) {
                 return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
                                        Errores.RECURSO_YA_EXISTE.getMensaje());
             }
             
-            // Convertir y guardar/actualizar componente si es necesario
-            // Usamos el método con nombre descriptivo para evitar ambigüedades
-            var compEntity = ComponenteEntityConverter.convertToEntity(comp);
+            // Mapear DTO a objeto de dominio
+            Componente componente = ComponenteMapper.toComponente(request);
+            
+            // Convertir y guardar componente
+            var compEntity = ComponenteEntityConverter.convertToEntity(componente);
             mx.com.qtx.cotizador.entidad.Promocion promo = null;
             
-            switch(comp.getCategoria()) {
+            switch(componente.getCategoria()) {
                 case "Disco Duro":
                     TipoComponente tipo = tipos.stream()
                         .filter(t -> t.getNombre().equals("DISCO_DURO"))
@@ -101,86 +124,104 @@ public class ComponenteServicio {
                     break;
                 default:
                     return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
-                                           "Tipo de componente no válido: " + comp.getCategoria());
+                                           "Tipo de componente no válido: " + componente.getCategoria());
             }
             
             compEntity.setPromocion(promo);
             var componenteGuardado = compRepo.save(compEntity);
             
-            // Convertir de vuelta a objeto de dominio para retornar
+            // Convertir de vuelta a objeto de dominio y luego a DTO de respuesta
             Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteGuardado, null);
+            ComponenteResponse response = ComponenteMapper.toResponse(componenteResultado);
             
-            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente guardado exitosamente", componenteResultado);
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente guardado exitosamente", response);
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
 
+    /**
+     * Actualiza un componente existente
+     * @param id ID del componente a actualizar
+     * @param request DTO con los nuevos datos del componente
+     * @return ApiResponse<ComponenteResponse> con el componente actualizado
+     */
     @Transactional
-    public ApiResponse<Componente> guardarPcCompleto(Componente pcComponente) {
+    public ApiResponse<ComponenteResponse> actualizarComponente(String id, ComponenteUpdateRequest request) {
         try {
-            if (pcComponente == null) {
+            if (request == null) {
                 return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
-                                       "El componente PC no puede ser nulo");
+                                       "Los datos del componente son requeridos");
             }
             
-            if (!(pcComponente instanceof Pc)) {
-                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
-                                       "El componente debe ser de tipo PC");
+            if (id == null || id.trim().isEmpty()) {
+                return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
+                                       "El ID del componente es requerido");
             }
             
-            if (compRepo.existsById(pcComponente.getId())) {
-                return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
-                                       Errores.RECURSO_YA_EXISTE.getMensaje());
+            if (!compRepo.existsById(id)) {
+                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
+                                       Errores.RECURSO_NO_ENCONTRADO.getMensaje());
             }
             
-            Pc pc = (Pc) pcComponente;
+            // Mapear DTO a objeto de dominio
+            Componente componente = ComponenteMapper.toComponente(id, request);
             
-            // Validar que tenga sub-componentes
-            if (pc.getSubComponentes() == null || pc.getSubComponentes().isEmpty()) {
-                return new ApiResponse<>(Errores.REGLA_NEGOCIO_VIOLADA.getCodigo(), 
-                                       "Una PC debe tener al menos un sub-componente");
+            // Convertir y actualizar componente
+            var compEntity = ComponenteEntityConverter.convertToEntity(componente);
+            mx.com.qtx.cotizador.entidad.Promocion promo = null;
+            
+            switch(componente.getCategoria()) {
+                case "Disco Duro":
+                    TipoComponente tipo = tipos.stream()
+                        .filter(t -> t.getNombre().equals("DISCO_DURO"))
+                        .findFirst()
+                        .orElse(null);
+                    compEntity.setTipoComponente(tipo);
+                    promo = promoRepo.findByNombre("Regular");
+                    break;
+                case "Tarjeta de Video":
+                    tipo = tipos.stream()
+                        .filter(t -> t.getNombre().equals("TARJETA_VIDEO"))
+                        .findFirst()
+                        .orElse(null);
+                    compEntity.setTipoComponente(tipo);
+                    promo = promoRepo.findByNombre("Tarjetas 3x2");
+                    break;
+                case "Monitor":
+                    tipo = tipos.stream()
+                        .filter(t -> t.getNombre().equals("MONITOR"))
+                        .findFirst()
+                        .orElse(null);
+                    compEntity.setTipoComponente(tipo);
+                    promo = promoRepo.findByNombre("Monitores por Volumen");
+                    break;
+                default:
+                    return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
+                                           "Tipo de componente no válido: " + componente.getCategoria());
             }
             
-            // 1. Convertir y guardar PC
-            var pcEntity = ComponenteEntityConverter.convertToEntity(pc);
-            var promo = promoRepo.findByNombre("PC Componentes");
-            TipoComponente tipo = tipos.stream()
-                .filter(t -> t.getNombre().equals("PC"))
-                .findFirst()
-                .orElse(null);
-                
-            pcEntity.setPromocion(promo);
-            pcEntity.setTipoComponente(tipo);
-            pcEntity = compRepo.save(pcEntity);
+            compEntity.setPromocion(promo);
+            var componenteActualizado = compRepo.save(compEntity);
             
-            // 2. Procesar componentes y crear asociaciones
-            for (Componente comp : pc.getSubComponentes()) {
-                ApiResponse<Componente> response = guardarComponente(comp);
-                if ("0".equals(response.getCodigo())) {
-                    var compEntity = ComponenteEntityConverter.convertToEntity(response.getData());
-                    PcParte pcParte = new PcParte(pcEntity.getId(), compEntity.getId());
-                    pcPartesRepo.save(pcParte);
-                } else {
-                    // Si falla algún sub-componente, retornar el error
-                    return new ApiResponse<>(response.getCodigo(), 
-                                           "Error guardando sub-componente: " + response.getMensaje());
-                }
-            }
+            // Convertir de vuelta a objeto de dominio y luego a DTO de respuesta
+            Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteActualizado, null);
+            ComponenteResponse response = ComponenteMapper.toResponse(componenteResultado);
             
-            // Convertir de vuelta a objeto de dominio
-            Componente pcResultado = ComponenteEntityConverter.convertToComponente(pcEntity, null);
-            
-            return new ApiResponse<>(Errores.OK.getCodigo(), "PC guardada exitosamente", pcResultado);
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente actualizado exitosamente", response);
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
 
-
-    public ApiResponse<Componente> buscarComponente(String id) {
+    /**
+     * Busca un componente por ID
+     * @param id ID del componente a buscar
+     * @return ApiResponse<ComponenteResponse> con el componente encontrado
+     */
+    public ApiResponse<ComponenteResponse> buscarComponente(String id) {
         try {
             if (id == null || id.trim().isEmpty()) {
                 return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
@@ -198,46 +239,118 @@ public class ComponenteServicio {
                 var subCompEntities = compRepo.findComponentesByPcWithTipoComponente(compEntity.getId());
                 componente = ComponenteEntityConverter.convertToComponente(compEntity, subCompEntities);
             } else {
-                componente = ComponenteEntityConverter.convertToComponente(compEntity,null);
+                componente = ComponenteEntityConverter.convertToComponente(compEntity, null);
             }
             
-            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente encontrado exitosamente", componente);
-        } catch (Exception e) {
-            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
-                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
-        }
-    }          
-    
-    public ApiResponse<List<Componente>> obtenerTodosLosComponentes() {
-        try {
-            List<Componente> componentes = List.of();
-            return new ApiResponse<>(Errores.OK.getCodigo(), "Componentes obtenidos exitosamente", componentes);
+            // Convertir a DTO de respuesta
+            ComponenteResponse response = ComponenteMapper.toResponse(componente);
+            
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente encontrado", response);
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
-    
-    @Transactional
-    public ApiResponse<Componente> actualizarComponente(Componente componente) {
+
+    /**
+     * Busca una PC completa por ID con sus sub-componentes cargados
+     * Método especializado para el controlador de PCs
+     * @param pcId ID de la PC a buscar
+     * @return ApiResponse<PcResponse> con la PC encontrada y sus sub-componentes
+     */
+    public ApiResponse<PcResponse> buscarPcCompleto(String pcId) {
         try {
-            if (componente == null) {
-                return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
-                                       "El componente no puede ser nulo");
+            if (pcId == null || pcId.trim().isEmpty()) {
+                return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
+                                       "El ID de la PC es requerido");
             }
             
-            if (!compRepo.existsById(componente.getId())) {
+            var compEntity = compRepo.findByIdWithTipoComponente(pcId);
+            if(compEntity == null) {
                 return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
                                        Errores.RECURSO_NO_ENCONTRADO.getMensaje());
             }
             
-            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente actualizado exitosamente", componente);
+            // Verificar que el componente sea de tipo PC
+            if(!compEntity.getTipoComponente().getNombre().equals(TipoComponenteEnum.PC.name())) {
+                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
+                                       "El componente especificado no es una PC");
+            }
+            
+            // Cargar los sub-componentes de la PC
+            var subCompEntities = compRepo.findComponentesByPcWithTipoComponente(compEntity.getId());
+            Componente componente = ComponenteEntityConverter.convertToComponente(compEntity, subCompEntities);
+            
+            // Verificar que se convirtió correctamente a PC
+            if(!(componente instanceof Pc)) {
+                return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                       "Error interno: No se pudo convertir el componente a PC");
+            }
+            
+            Pc pc = (Pc) componente;
+            PcResponse pcResponse = PcMapper.toResponse(pc);
+            return new ApiResponse<>(Errores.OK.getCodigo(), "PC encontrada con " + pc.getSubComponentes().size() + " sub-componentes", pcResponse);
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
-    
+
+    /**
+     * Obtiene todos los componentes
+     * @return ApiResponse<List<ComponenteResponse>> con la lista de componentes
+     */
+    public ApiResponse<List<ComponenteResponse>> obtenerTodosLosComponentes() {
+        try {
+            var compEntities = compRepo.findAllWithTipoComponente();
+            List<ComponenteResponse> componentes = compEntities.stream()
+                .map(entity -> {
+                    Componente componente = ComponenteEntityConverter.convertToComponente(entity, null);
+                    return ComponenteMapper.toResponse(componente);
+                })
+                .collect(Collectors.toList());
+            
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Consulta exitosa", componentes);
+        } catch (Exception e) {
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+
+    /**
+     * Busca componentes por tipo
+     * @param tipoComponente Tipo de componente a buscar
+     * @return ApiResponse<List<ComponenteResponse>> con la lista de componentes del tipo especificado
+     */
+    public ApiResponse<List<ComponenteResponse>> buscarPorTipo(String tipoComponente) {
+        try {
+            if (tipoComponente == null || tipoComponente.trim().isEmpty()) {
+                return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
+                                       "El tipo de componente es requerido");
+            }
+
+            var compEntities = compRepo.findByTipoComponenteNombre(tipoComponente.toUpperCase());
+            List<ComponenteResponse> componentes = compEntities.stream()
+                .map(entity -> {
+                    Componente componente = ComponenteEntityConverter.convertToComponente(entity, null);
+                    return ComponenteMapper.toResponse(componente);
+                })
+                .collect(Collectors.toList());
+            
+            return new ApiResponse<>(Errores.OK.getCodigo(), 
+                                   "Componentes del tipo " + tipoComponente + " obtenidos exitosamente", 
+                                   componentes);
+        } catch (Exception e) {
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+
+    /**
+     * Verifica si existe un componente por ID
+     * @param id ID del componente a verificar
+     * @return ApiResponse<Boolean> indicando si el componente existe
+     */
     public ApiResponse<Boolean> existeComponente(String id) {
         try {
             if (id == null || id.trim().isEmpty()) {
@@ -246,53 +359,34 @@ public class ComponenteServicio {
             }
             
             boolean existe = compRepo.existsById(id);
-            return new ApiResponse<>(Errores.OK.getCodigo(), "Verificación completada", existe);
+            return new ApiResponse<>(Errores.OK.getCodigo(), 
+                                   existe ? "El componente existe" : "El componente no existe",
+                                   existe);
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
-    
-    public ApiResponse<List<Componente>> buscarPorTipo(String tipoComponente) {
-        try {
-            if (tipoComponente == null || tipoComponente.trim().isEmpty()) {
-                return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
-                                       "El tipo de componente es requerido");
-            }
-            
-            String tipoValidado = tipoComponente.toUpperCase();
-            if (!List.of("MONITOR", "DISCO_DURO", "TARJETA_VIDEO", "PC").contains(tipoValidado)) {
-                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
-                                       "Tipo de componente inválido. Valores permitidos: MONITOR, DISCO_DURO, TARJETA_VIDEO, PC");
-            }
-            
-            List<Componente> componentes = List.of();
-            return new ApiResponse<>(Errores.OK.getCodigo(), "Componentes filtrados exitosamente", componentes);
-        } catch (Exception e) {
-            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
-                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
-        }
-    }
-    
+
+    // ==================== MÉTODOS PARA MANEJO DE PCs ====================
+    // Los métodos relacionados con PC se mantienen temporalmente usando objetos de dominio
+    // hasta que se definan los DTOs específicos para PC
+
     @Transactional
-    public ApiResponse<Componente> actualizarPcCompleto(Componente pcComponente) {
+    public ApiResponse<PcResponse> guardarPcCompleto(PcCreateRequest request) {
         try {
-            if (pcComponente == null) {
+            if (request == null) {
                 return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
-                                       "El componente PC no puede ser nulo");
+                                       "Los datos de la PC son requeridos");
             }
             
-            if (!(pcComponente instanceof Pc)) {
-                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
-                                       "El componente debe ser de tipo PC");
+            if (compRepo.existsById(request.getId())) {
+                return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
+                                       Errores.RECURSO_YA_EXISTE.getMensaje());
             }
             
-            if (!compRepo.existsById(pcComponente.getId())) {
-                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
-                                       Errores.RECURSO_NO_ENCONTRADO.getMensaje());
-            }
-            
-            Pc pc = (Pc) pcComponente;
+            // Convertir DTO a objeto de dominio
+            Pc pc = PcMapper.toPc(request);
             
             // Validar que tenga sub-componentes
             if (pc.getSubComponentes() == null || pc.getSubComponentes().isEmpty()) {
@@ -300,10 +394,75 @@ public class ComponenteServicio {
                                        "Una PC debe tener al menos un sub-componente");
             }
             
-            // 1. Eliminar asociaciones existentes de sub-componentes
-            pcPartesRepo.deleteByIdPc(pcComponente.getId());
+            // 1. Convertir y guardar PC
+            var pcEntity = ComponenteEntityConverter.convertToEntity(pc);
+            var promo = promoRepo.findByNombre("PC Componentes");
+            TipoComponente tipo = tipos.stream()
+                .filter(t -> t.getNombre().equals("PC"))
+                .findFirst()
+                .orElse(null);            
+                
+            pcEntity.setPromocion(promo);
+            pcEntity.setTipoComponente(tipo);
+            pcEntity = compRepo.save(pcEntity);        
             
-            // 2. Actualizar PC principal
+            // 2. Procesar componentes y crear asociaciones
+            for (Componente comp : pc.getSubComponentes()) {
+                // Convertir componente a DTO y usar el método refactorizado
+                ComponenteCreateRequest compRequest = ComponenteCreateRequest.builder()
+                    .id(comp.getId())
+                    .descripcion(comp.getDescripcion())
+                    .marca(comp.getMarca())
+                    .modelo(comp.getModelo())
+                    .costo(comp.getCosto())
+                    .precioBase(comp.getPrecioBase())
+                    .tipoComponente(comp.getCategoria().replace(" ", "_").toUpperCase())
+                    .build();
+                    
+                ApiResponse<ComponenteResponse> response = guardarComponente(compRequest);
+                if ("0".equals(response.getCodigo())) {
+                    PcParte pcParte = new PcParte(pcEntity.getId(), response.getData().getId());
+                    pcPartesRepo.save(pcParte);
+                } else {
+                    // Si falla algún sub-componente, retornar el error
+                    return new ApiResponse<>(response.getCodigo(), 
+                                           "Error guardando sub-componente: " + response.getMensaje());
+                }
+            }
+
+            // Convertir de vuelta a objeto de dominio y luego a DTO
+            Componente pcResultado = ComponenteEntityConverter.convertToComponente(pcEntity, null);
+            PcResponse pcResponse = PcMapper.toResponse((Pc) pcResultado);
+            
+            return new ApiResponse<>(Errores.OK.getCodigo(), "PC guardada exitosamente", pcResponse);
+        } catch (Exception e) {
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+
+    @Transactional
+    public ApiResponse<PcResponse> actualizarPcCompleto(String id, PcUpdateRequest request) {
+        try {
+            if (id == null || id.trim().isEmpty()) {
+                return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
+                                       "El ID de la PC es requerido");
+            }
+            
+            if (request == null) {
+                return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
+                                       "Los datos de la PC son requeridos");
+            }
+            
+            if (!compRepo.existsById(id)) {
+                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
+                                       Errores.RECURSO_NO_ENCONTRADO.getMensaje());
+            }
+            
+            // Convertir DTO a objeto de dominio
+            Pc pc = PcMapper.toPc(id, request);
+            
+            // 1. Actualizar datos básicos de la PC
             var pcEntity = ComponenteEntityConverter.convertToEntity(pc);
             var promo = promoRepo.findByNombre("PC Componentes");
             TipoComponente tipo = tipos.stream()
@@ -315,100 +474,81 @@ public class ComponenteServicio {
             pcEntity.setTipoComponente(tipo);
             pcEntity = compRepo.save(pcEntity);
             
-            // 3. Procesar y recrear asociaciones con sub-componentes
-            for (Componente comp : pc.getSubComponentes()) {
-                // Si el sub-componente existe, actualizarlo; si no, crearlo
-                ApiResponse<Componente> response;
-                if (compRepo.existsById(comp.getId())) {
-                    response = actualizarComponente(comp);
-                } else {
-                    response = guardarComponente(comp);
-                }
-                
-                if ("0".equals(response.getCodigo())) {
-                    var compEntity = ComponenteEntityConverter.convertToEntity(response.getData());
-                    PcParte pcParte = new PcParte(pcEntity.getId(), compEntity.getId());
-                    pcPartesRepo.save(pcParte);
-                } else {
-                    return new ApiResponse<>(response.getCodigo(), 
-                                           "Error procesando sub-componente: " + response.getMensaje());
+            // 2. Eliminar asociaciones existentes
+            pcPartesRepo.deleteByPcId(pc.getId());
+            
+            // 3. Agregar nuevas asociaciones si hay sub-componentes
+            if (pc.getSubComponentes() != null && !pc.getSubComponentes().isEmpty()) {
+                for (Componente comp : pc.getSubComponentes()) {
+                    if (compRepo.existsById(comp.getId())) {
+                        PcParte pcParte = new PcParte(pcEntity.getId(), comp.getId());
+                        pcPartesRepo.save(pcParte);
+                    }
                 }
             }
             
-            // Convertir de vuelta a objeto de dominio
+            // Convertir de vuelta a objeto de dominio y luego a DTO
             Componente pcResultado = ComponenteEntityConverter.convertToComponente(pcEntity, null);
+            PcResponse pcResponse = PcMapper.toResponse((Pc) pcResultado);
             
-            return new ApiResponse<>(Errores.OK.getCodigo(), "PC actualizada exitosamente", pcResultado);
+            return new ApiResponse<>(Errores.OK.getCodigo(), "PC actualizada exitosamente", pcResponse);
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
-    
+
     @Transactional
-    public ApiResponse<Componente> agregarComponenteAPc(String pcId, Componente componente) {
+    public ApiResponse<ComponenteResponse> agregarComponenteAPc(String pcId, AgregarComponenteRequest request) {
         try {
             if (pcId == null || pcId.trim().isEmpty()) {
                 return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
                                        "El ID de la PC es requerido");
             }
             
-            if (componente == null) {
+            if (request == null) {
                 return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
-                                       "El componente a agregar no puede ser nulo");
+                                       "Los datos del componente son requeridos");
             }
+            
+            // Convertir DTO a objeto de dominio
+            Componente componente = PcMapper.toComponente(request);
             
             // Verificar que la PC existe
-            if (!compRepo.existsById(pcId)) {
-                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
-                                       "La PC especificada no existe");
-            }
-            
-            // Verificar que es realmente una PC
             var pcEntity = compRepo.findByIdWithTipoComponente(pcId);
-            if (!pcEntity.getTipoComponente().getNombre().equals("PC")) {
-                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
-                                       "El ID especificado no corresponde a una PC");
+            if (pcEntity == null || !pcEntity.getTipoComponente().getNombre().equals("PC")) {
+                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
+                                       "PC no encontrada");
             }
             
-            // Validar que el componente no sea una PC (no se pueden anidar PCs)
-            if ("PC".equals(componente.getCategoria())) {
-                return new ApiResponse<>(Errores.REGLA_NEGOCIO_VIOLADA.getCodigo(), 
-                                       "No se pueden agregar PCs como sub-componentes de otra PC");
+            // Verificar que el componente existe
+            if (!compRepo.existsById(componente.getId())) {
+                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
+                                       "Componente no encontrado");
             }
             
-            // Verificar si el componente ya existe, si no, crearlo
-            ApiResponse<Componente> responseComponente;
-            if (compRepo.existsById(componente.getId())) {
-                // Si ya existe, verificar que no esté ya asociado a esta PC
-                var existeAsociacion = pcPartesRepo.existsById(new mx.com.qtx.cotizador.entidad.PcParte.PcPartesId(pcId, componente.getId()));
-                if (existeAsociacion) {
-                    return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
-                                           "El componente ya está asociado a esta PC");
-                }
-                responseComponente = new ApiResponse<>(Errores.OK.getCodigo(), "Componente existente encontrado", componente);
-            } else {
-                // Crear el componente nuevo
-                responseComponente = guardarComponente(componente);
-                if (!"0".equals(responseComponente.getCodigo())) {
-                    return new ApiResponse<>(responseComponente.getCodigo(), 
-                                           "Error creando el componente: " + responseComponente.getMensaje());
-                }
+            // Verificar que no esté ya asociado
+            if (pcPartesRepo.existsByPcIdAndComponenteId(pcId, componente.getId())) {
+                return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
+                                       "El componente ya está asociado a esta PC");
             }
             
-            // Crear la asociación PC-Componente
-            var pcParte = new mx.com.qtx.cotizador.entidad.PcParte(pcId, componente.getId());
+            // Crear la asociación
+            PcParte pcParte = new PcParte(pcId, componente.getId());
             pcPartesRepo.save(pcParte);
             
-            return new ApiResponse<>(Errores.OK.getCodigo(), 
-                                   "Componente agregado exitosamente a la PC", 
-                                   responseComponente.getData());
+            // Obtener el componente agregado y convertir a DTO
+            var componenteEntity = compRepo.findByIdWithTipoComponente(componente.getId());
+            Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteEntity, null);
+            ComponenteResponse componenteResponse = ComponenteMapper.toResponse(componenteResultado);
+            
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente agregado a la PC exitosamente", componenteResponse);
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
-    
+
     @Transactional
     public ApiResponse<Void> quitarComponenteDePc(String pcId, String componenteId) {
         try {
@@ -422,50 +562,23 @@ public class ComponenteServicio {
                                        "El ID del componente es requerido");
             }
             
-            // Verificar que la PC existe
-            if (!compRepo.existsById(pcId)) {
-                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
-                                       "La PC especificada no existe");
-            }
-            
-            // Verificar que es realmente una PC
-            var pcEntity = compRepo.findByIdWithTipoComponente(pcId);
-            if (!pcEntity.getTipoComponente().getNombre().equals("PC")) {
-                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
-                                       "El ID especificado no corresponde a una PC");
-            }
-            
-            // Verificar que el componente existe
-            if (!compRepo.existsById(componenteId)) {
-                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
-                                       "El componente especificado no existe");
-            }
-            
             // Verificar que la asociación existe
-            var pcPartesId = new mx.com.qtx.cotizador.entidad.PcParte.PcPartesId(pcId, componenteId);
-            if (!pcPartesRepo.existsById(pcPartesId)) {
+            if (!pcPartesRepo.existsByPcIdAndComponenteId(pcId, componenteId)) {
                 return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
-                                       "El componente no está asociado a esta PC");
-            }
-            
-            // Verificar que no se violen las reglas de negocio (mínimos requeridos)
-            long totalComponentes = pcPartesRepo.countComponentesByPc(pcId);
-            if (totalComponentes <= 1) {
-                return new ApiResponse<>(Errores.REGLA_NEGOCIO_VIOLADA.getCodigo(), 
-                                       "No se puede quitar el último componente. Una PC debe tener al menos un sub-componente");
+                                       "La asociación entre la PC y el componente no existe");
             }
             
             // Eliminar la asociación
-            pcPartesRepo.deleteById(pcPartesId);
+            pcPartesRepo.deleteByPcIdAndComponenteId(pcId, componenteId);
             
-            return new ApiResponse<>(Errores.OK.getCodigo(), 
-                                   "Componente removido exitosamente de la PC");
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Componente removido de la PC exitosamente");
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
     }
-    
+
+    // Método utilitario que se mantiene para compatibilidad
     public List<TipoComponente> obtenerTipos() {
         return tipos;
     }

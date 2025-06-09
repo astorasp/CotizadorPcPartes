@@ -3,16 +3,12 @@ package mx.com.qtx.cotizador.controlador;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
-import mx.com.qtx.cotizador.dominio.core.componentes.Pc;
 import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
-import mx.com.qtx.cotizador.dto.pc.mapper.PcMapper;
 import mx.com.qtx.cotizador.dto.pc.request.PcCreateRequest;
 import mx.com.qtx.cotizador.dto.pc.request.PcUpdateRequest;
 import mx.com.qtx.cotizador.dto.pc.request.AgregarComponenteRequest;
 import mx.com.qtx.cotizador.dto.pc.response.PcResponse;
 import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
-import mx.com.qtx.cotizador.dto.componente.mapper.ComponenteMapper;
 import mx.com.qtx.cotizador.servicio.componente.ComponenteServicio;
 import mx.com.qtx.cotizador.util.HttpStatusMapper;
 import org.springframework.http.HttpStatus;
@@ -20,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controlador REST para la gestión de PCs completas con sub-componentes
@@ -49,26 +44,14 @@ public class PcController {
         
         log.info("Iniciando creación de PC con ID: {}", request.getId());
         
-        // Convertir DTO a objeto de dominio
-        Pc pc = PcMapper.toPc(request);
-        
-        // Llamar al servicio especializado para PCs
-        ApiResponse<Componente> respuestaServicio = componenteServicio.guardarPcCompleto(pc);
+        // Convertir DTO a objeto de dominio y llamar al servicio
+        ApiResponse<PcResponse> respuestaServicio = componenteServicio.guardarPcCompleto(request);
         
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        // Convertir a DTO de respuesta si hay datos
-        ApiResponse<PcResponse> respuesta;
-        if (respuestaServicio.getData() != null && respuestaServicio.getData() instanceof Pc pcResultado) {
-            PcResponse pcResponse = PcMapper.toResponse(pcResultado);
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), pcResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
         log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
-        return ResponseEntity.status(httpStatus).body(respuesta);
+        return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
     /**
@@ -81,26 +64,14 @@ public class PcController {
         
         log.info("Iniciando actualización de PC con ID: {}", id);
         
-        // Convertir DTO a objeto de dominio
-        Pc pc = PcMapper.toPc(id, request);
-        
         // Llamar al servicio especializado para actualizar PCs
-        ApiResponse<Componente> respuestaServicio = componenteServicio.actualizarPcCompleto(pc);
+        ApiResponse<PcResponse> respuestaServicio = componenteServicio.actualizarPcCompleto(id, request);
         
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        // Convertir a DTO de respuesta si hay datos
-        ApiResponse<PcResponse> respuesta;
-        if (respuestaServicio.getData() != null && respuestaServicio.getData() instanceof Pc pcResultado) {
-            PcResponse pcResponse = PcMapper.toResponse(pcResultado);
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), pcResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
         log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
-        return ResponseEntity.status(httpStatus).body(respuesta);
+        return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
     /**
@@ -111,29 +82,14 @@ public class PcController {
         
         log.info("Consultando PC con ID: {}", id);
         
-        // Llamar al servicio para buscar la PC
-        ApiResponse<Componente> respuestaServicio = componenteServicio.buscarComponente(id);
+        // Usar el método especializado para buscar la PC
+        ApiResponse<PcResponse> respuestaServicio = componenteServicio.buscarPcCompleto(id);
         
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        // Convertir a DTO de respuesta si hay datos y es una PC
-        ApiResponse<PcResponse> respuesta;
-        if (respuestaServicio.getData() != null) {
-            if (respuestaServicio.getData() instanceof Pc pc) {
-                PcResponse pcResponse = PcMapper.toResponse(pc);
-                respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), pcResponse);
-            } else {
-                // El componente existe pero no es una PC
-                respuesta = new ApiResponse<>("6", "El componente especificado no es una PC");
-                httpStatus = HttpStatus.BAD_REQUEST;
-            }
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
         log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
-        return ResponseEntity.status(httpStatus).body(respuesta);
+        return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
     /**
@@ -144,17 +100,12 @@ public class PcController {
         
         log.info("Iniciando eliminación de PC con ID: {}", id);
         
-        // Primero verificar que sea una PC
-        ApiResponse<Componente> verificacion = componenteServicio.buscarComponente(id);
+        // Primero verificar que sea una PC usando el método especializado
+        ApiResponse<PcResponse> verificacion = componenteServicio.buscarPcCompleto(id);
         if (!"0".equals(verificacion.getCodigo())) {
             HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(verificacion.getCodigo());
             ApiResponse<Void> respuesta = new ApiResponse<>(verificacion.getCodigo(), verificacion.getMensaje());
             return ResponseEntity.status(httpStatus).body(respuesta);
-        }
-        
-        if (!(verificacion.getData() instanceof Pc)) {
-            ApiResponse<Void> respuesta = new ApiResponse<>("6", "El componente especificado no es una PC");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
         }
         
         // Eliminar la PC (esto también eliminará las asociaciones en cascada)
@@ -171,33 +122,18 @@ public class PcController {
      * Listar todas las PCs
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PcResponse>>> obtenerTodasLasPcs() {
+    public ResponseEntity<ApiResponse<List<ComponenteResponse>>> obtenerTodasLasPcs() {
         
         log.info("Consultando todas las PCs");
         
         // Obtener todos los componentes y filtrar solo las PCs
-        ApiResponse<List<Componente>> respuestaServicio = componenteServicio.buscarPorTipo("PC");
+        ApiResponse<List<ComponenteResponse>> respuestaServicio = componenteServicio.buscarPorTipo("PC");
         
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        // Convertir a DTOs de respuesta si hay datos
-        ApiResponse<List<PcResponse>> respuesta;
-        if (respuestaServicio.getData() != null) {
-            List<PcResponse> pcsResponse = respuestaServicio.getData().stream()
-                    .filter(comp -> comp instanceof Pc)
-                    .map(comp -> PcMapper.toResponse((Pc) comp))
-                    .collect(Collectors.toList());
-            
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), 
-                                        "PCs obtenidas exitosamente (" + pcsResponse.size() + " encontradas)", 
-                                        pcsResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
         log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
-        return ResponseEntity.status(httpStatus).body(respuesta);
+        return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
     /**
@@ -210,26 +146,14 @@ public class PcController {
         
         log.info("Agregando componente {} a PC {}", request.getId(), pcId);
         
-        // Convertir DTO a objeto de dominio
-        Componente componente = PcMapper.toComponente(request);
-        
         // Llamar al servicio para agregar el componente a la PC
-        ApiResponse<Componente> respuestaServicio = componenteServicio.agregarComponenteAPc(pcId, componente);
+        ApiResponse<ComponenteResponse> respuestaServicio = componenteServicio.agregarComponenteAPc(pcId, request);
         
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        // Convertir a DTO de respuesta si hay datos
-        ApiResponse<ComponenteResponse> respuesta;
-        if (respuestaServicio.getData() != null) {
-            ComponenteResponse componenteResponse = ComponenteMapper.toResponse(respuestaServicio.getData());
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), componenteResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
         log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
-        return ResponseEntity.status(httpStatus).body(respuesta);
+        return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
     /**
@@ -262,26 +186,21 @@ public class PcController {
         
         log.info("Consultando componentes de PC {}", pcId);
         
-        // Obtener la PC completa con sus componentes
-        ApiResponse<Componente> respuestaServicio = componenteServicio.buscarComponente(pcId);
+        // Obtener la PC completa con sus componentes usando el método especializado
+        ApiResponse<PcResponse> respuestaServicio = componenteServicio.buscarPcCompleto(pcId);
         
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        // Extraer solo los sub-componentes si es una PC
+        // Extraer los sub-componentes de la PC
         ApiResponse<List<ComponenteResponse>> respuesta;
-        if (respuestaServicio.getData() != null && respuestaServicio.getData() instanceof Pc pc) {
-            List<ComponenteResponse> componentesResponse = pc.getSubComponentes().stream()
-                    .map(ComponenteMapper::toResponse)
-                    .collect(Collectors.toList());
+        if (respuestaServicio.getData() != null) {
+            PcResponse pcResponse = respuestaServicio.getData();
+            List<ComponenteResponse> componentesResponse = pcResponse.getSubComponentes();
             
             respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), 
-                                        "Componentes de la PC obtenidos exitosamente (" + componentesResponse.size() + " encontrados)",
+                                        respuestaServicio.getMensaje(),
                                         componentesResponse);
-        } else if (respuestaServicio.getData() != null) {
-            // El componente existe pero no es una PC
-            respuesta = new ApiResponse<>("6", "El componente especificado no es una PC");
-            httpStatus = HttpStatus.BAD_REQUEST;
         } else {
             respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
         }

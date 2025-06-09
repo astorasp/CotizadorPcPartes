@@ -8,7 +8,7 @@ import mx.com.qtx.cotizador.dominio.core.componentes.DiscoDuro;
 import mx.com.qtx.cotizador.dominio.core.componentes.Monitor;
 import mx.com.qtx.cotizador.dominio.core.componentes.PcBuilder;
 import mx.com.qtx.cotizador.dominio.core.componentes.TarjetaVideo;
-import mx.com.qtx.cotizador.dominio.core.componentes.TipoComponenteEnum;
+import mx.com.qtx.cotizador.util.TipoComponenteEnum;
 
 /**
  * Clase utilitaria para convertir objetos Componente del dominio a entidades Componente de persistencia
@@ -122,12 +122,16 @@ public class ComponenteEntityConverter {
             // Usar el método factory para crear un Monitor por defecto como tipo más simple
             componente = Componente.crearMonitor(id, descripcion, marca, modelo, costo, precioBase);
         }
-        else {
-            PcBuilder pcBuilder = Componente.getPcBuilder();
-            pcBuilder.definirId(id)
-                .definirDescripcion(descripcion)
-                .definirMarcaYmodelo(marca, modelo);
-            if(subCompEntity != null) {
+        else if (compEntity.getTipoComponente().getNombre()
+                .equals(TipoComponenteEnum.PC.name())) {
+            // Es una PC - verificar si tiene sub-componentes
+            if (subCompEntity != null && !subCompEntity.isEmpty()) {
+                // PC con componentes - usar el builder completo
+                PcBuilder pcBuilder = Componente.getPcBuilder();
+                pcBuilder.definirId(id)
+                    .definirDescripcion(descripcion)
+                    .definirMarcaYmodelo(marca, modelo);
+                    
                 for(mx.com.qtx.cotizador.entidad.Componente subComp : subCompEntity) {
                     Componente subCompCore = convertToComponente(subComp, null);
                     switch(subCompCore.getCategoria()) {
@@ -148,8 +152,15 @@ public class ComponenteEntityConverter {
                         }
                     }
                 }
+                componente = pcBuilder.build();
+            } else {
+                // PC sin componentes - tratarla como un componente Monitor genérico para evitar el error de validación
+                // En el futuro se puede crear una clase PcEnConstruccion si se requiere un manejo más específico
+                componente = Componente.crearMonitor(id, descripcion, marca, modelo, costo, precioBase);
             }
-            componente = pcBuilder.build();
+        } else {
+            // Tipo desconocido - crear como Monitor por defecto
+            componente = Componente.crearMonitor(id, descripcion, marca, modelo, costo, precioBase);
         }
 
         if(componente != null) {

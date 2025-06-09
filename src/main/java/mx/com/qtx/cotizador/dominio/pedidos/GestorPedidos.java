@@ -8,8 +8,6 @@ import java.util.Map;
 
 import mx.com.qtx.cotizador.dominio.pedidos.excepciones.PresupuestoNoCargadoExcepcion;
 import mx.com.qtx.cotizador.dominio.pedidos.excepciones.ProveedorNoExisteExcepcion;
-import mx.com.qtx.cotizador.servicio.pedido.PedidoServicio;
-import mx.com.qtx.cotizador.servicio.pedido.ProveedorServicio;
 
 /**
  * Gestiona la creación y manejo de pedidos a partir de presupuestos.
@@ -20,17 +18,10 @@ public class GestorPedidos {
     private IPresupuesto presupuestoActual; // El presupuesto cargado
     private Map<String, Proveedor> proveedores; // Simula un repositorio de proveedores
     private Pedido pedido;
-    private final PedidoServicio pedidoServicio;
-    private final ProveedorServicio proveedorServicio;
 
-    public GestorPedidos( PedidoServicio pedidoServicio, ProveedorServicio proveedorServicio ) {
-        this.pedidoServicio = pedidoServicio;
-        this.proveedorServicio = proveedorServicio;
+    public GestorPedidos(List<Proveedor> proveedores) {
         this.proveedores = new HashMap<>();
-        // Obtener proveedores desde el servicio
-        List<Proveedor> listaProveedores = this.proveedorServicio.obtenerTodos();
-        // Cargar los proveedores en el mapa
-        listaProveedores.forEach(proveedor -> {
+        proveedores.forEach(proveedor -> {
             this.proveedores.put(proveedor.getCve(), proveedor);
         });
     }
@@ -47,8 +38,6 @@ public class GestorPedidos {
             throw new PresupuestoNoCargadoExcepcion();
         }
         this.presupuestoActual = presupuesto;
-        Map<String, Integer> cantidades = presupuesto.getCantidadesXIdArticulo();
-        
     }
 
     /**
@@ -64,7 +53,7 @@ public class GestorPedidos {
      * @throws ProveedorNoExisteExcepcion Si la clave de proveedor no corresponde a un proveedor conocido.
      * @throws PresupuestoNoCargadoExcepcion Si no se ha cargado un presupuesto antes de llamar a este método.
      */
-    public void generarPedido(String cveProveedor,int numPedido, int nivelSurtido,
+    public Pedido generarPedido(String cveProveedor,int numPedido, int nivelSurtido,
         LocalDate fechaEmision, LocalDate fechaEntrega) throws ProveedorNoExisteExcepcion, 
             PresupuestoNoCargadoExcepcion {
         if (this.presupuestoActual == null) {
@@ -101,10 +90,9 @@ public class GestorPedidos {
                 precioUnitario, importeTotal);
             
         }
-        pedido = nuevoPedido;
-        this.pedidoServicio.guardarPedido(pedido);
         // Aquí iría la lógica para persistir el pedido, enviarlo, etc.
         System.out.println("GestorPedidos: Pedido generado exitosamente.");
+        return nuevoPedido;
     }
 
     /**

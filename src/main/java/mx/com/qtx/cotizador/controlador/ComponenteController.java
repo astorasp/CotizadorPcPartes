@@ -3,9 +3,7 @@ package mx.com.qtx.cotizador.controlador;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
 import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
-import mx.com.qtx.cotizador.dto.componente.mapper.ComponenteMapper;
 import mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest;
 import mx.com.qtx.cotizador.dto.componente.request.ComponenteUpdateRequest;
 import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
@@ -16,14 +14,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controlador REST para la gestión de componentes
  * 
- * Implementa la nueva arquitectura donde:
- * - Los servicios retornan ApiResponse<T>
- * - El controlador mapea códigos de error a HTTP status sin condicionales innecesarias
+ * Implementa la arquitectura refactorizada donde:
+ * - El controlador NO conoce nada del dominio
+ * - Solo maneja DTOs de request y response
+ * - El servicio se encarga del mapeo DTO ↔ Dominio
+ * - Los servicios retornan ApiResponse<DTO>
+ * - El controlador mapea códigos de error a HTTP status:
  *   • Código "0" → HTTP 200
  *   • Código "3" → HTTP 500  
  *   • Todo lo demás → HTTP 400
@@ -45,25 +45,13 @@ public class ComponenteController {
         
         log.info("Iniciando creación de componente con ID: {}", request.getId());
         
-        // Convertir DTO a objeto de dominio
-        Componente componente = ComponenteMapper.toComponente(request);
-        
-        // Llamar al servicio y obtener ApiResponse
-        ApiResponse<Componente> respuestaServicio = componenteServicio.guardarComponente(componente);
+        // Llamar al servicio que maneja el mapeo internamente
+        ApiResponse<ComponenteResponse> respuesta = componenteServicio.guardarComponente(request);
         
         // Mapear el código de error a HTTP status
-        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
         
-        // Convertir a DTO de respuesta si hay datos
-        ApiResponse<ComponenteResponse> respuesta;
-        if (respuestaServicio.getData() != null) {
-            ComponenteResponse componenteResponse = ComponenteMapper.toResponse(respuestaServicio.getData());
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), componenteResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuesta);
     }
     
@@ -77,25 +65,13 @@ public class ComponenteController {
         
         log.info("Iniciando actualización de componente con ID: {}", id);
         
-        // Convertir DTO a objeto de dominio
-        Componente componente = ComponenteMapper.toComponente(id, request);
-        
-        // Llamar al servicio y obtener ApiResponse
-        ApiResponse<Componente> respuestaServicio = componenteServicio.actualizarComponente(componente);
+        // Llamar al servicio que maneja el mapeo internamente
+        ApiResponse<ComponenteResponse> respuesta = componenteServicio.actualizarComponente(id, request);
         
         // Mapear el código de error a HTTP status
-        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
         
-        // Convertir a DTO de respuesta si hay datos
-        ApiResponse<ComponenteResponse> respuesta;
-        if (respuestaServicio.getData() != null) {
-            ComponenteResponse componenteResponse = ComponenteMapper.toResponse(respuestaServicio.getData());
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), componenteResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuesta);
     }
     
@@ -107,14 +83,14 @@ public class ComponenteController {
         
         log.info("Iniciando eliminación de componente con ID: {}", id);
         
-        // Llamar al servicio y obtener ApiResponse
-        ApiResponse<Void> respuestaServicio = componenteServicio.borrarComponente(id);
+        // Llamar al servicio
+        ApiResponse<Void> respuesta = componenteServicio.borrarComponente(id);
         
         // Mapear el código de error a HTTP status
-        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
-        return ResponseEntity.status(httpStatus).body(respuestaServicio);
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
+        return ResponseEntity.status(httpStatus).body(respuesta);
     }
     
     /**
@@ -125,24 +101,13 @@ public class ComponenteController {
         
         log.info("Consultando todos los componentes");
         
-        // Llamar al servicio y obtener ApiResponse
-        ApiResponse<List<Componente>> respuestaServicio = componenteServicio.obtenerTodosLosComponentes();
+        // Llamar al servicio que retorna directamente DTOs
+        ApiResponse<List<ComponenteResponse>> respuesta = componenteServicio.obtenerTodosLosComponentes();
         
         // Mapear el código de error a HTTP status
-        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
         
-        // Convertir a DTOs de respuesta si hay datos
-        ApiResponse<List<ComponenteResponse>> respuesta;
-        if (respuestaServicio.getData() != null) {
-            List<ComponenteResponse> componentesResponse = respuestaServicio.getData().stream()
-                    .map(ComponenteMapper::toResponse)
-                    .collect(Collectors.toList());
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), componentesResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuesta);
     }
     
@@ -154,22 +119,13 @@ public class ComponenteController {
         
         log.info("Consultando componente con ID: {}", id);
         
-        // Llamar al servicio y obtener ApiResponse
-        ApiResponse<Componente> respuestaServicio = componenteServicio.buscarComponente(id);
+        // Llamar al servicio que retorna directamente DTOs
+        ApiResponse<ComponenteResponse> respuesta = componenteServicio.buscarComponente(id);
         
         // Mapear el código de error a HTTP status
-        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
         
-        // Convertir a DTO de respuesta si hay datos
-        ApiResponse<ComponenteResponse> respuesta;
-        if (respuestaServicio.getData() != null) {
-            ComponenteResponse componenteResponse = ComponenteMapper.toResponse(respuestaServicio.getData());
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), componenteResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
-        
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuesta);
     }
     
@@ -181,24 +137,31 @@ public class ComponenteController {
         
         log.info("Consultando componentes por tipo: {}", tipo);
         
-        // Llamar al servicio y obtener ApiResponse
-        ApiResponse<List<Componente>> respuestaServicio = componenteServicio.buscarPorTipo(tipo);
+        // Llamar al servicio que retorna directamente DTOs
+        ApiResponse<List<ComponenteResponse>> respuesta = componenteServicio.buscarPorTipo(tipo);
         
         // Mapear el código de error a HTTP status
-        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
         
-        // Convertir a DTOs de respuesta si hay datos
-        ApiResponse<List<ComponenteResponse>> respuesta;
-        if (respuestaServicio.getData() != null) {
-            List<ComponenteResponse> componentesResponse = respuestaServicio.getData().stream()
-                    .map(ComponenteMapper::toResponse)
-                    .collect(Collectors.toList());
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje(), componentesResponse);
-        } else {
-            respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), respuestaServicio.getMensaje());
-        }
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
+        return ResponseEntity.status(httpStatus).body(respuesta);
+    }
+    
+    /**
+     * Caso de uso adicional: Verificar existencia de componente
+     */
+    @GetMapping("/{id}/existe")
+    public ResponseEntity<ApiResponse<Boolean>> verificarExistenciaComponente(@PathVariable String id) {
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        log.info("Verificando existencia de componente con ID: {}", id);
+        
+        // Llamar al servicio
+        ApiResponse<Boolean> respuesta = componenteServicio.existeComponente(id);
+        
+        // Mapear el código de error a HTTP status
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
+        
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuesta);
     }
 } 

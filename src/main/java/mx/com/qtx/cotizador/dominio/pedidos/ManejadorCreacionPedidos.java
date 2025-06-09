@@ -1,12 +1,12 @@
 package mx.com.qtx.cotizador.dominio.pedidos;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import mx.com.qtx.cotizador.dominio.core.Cotizacion;
 import mx.com.qtx.cotizador.dominio.core.CotizacionPresupuestoAdapter;
 import mx.com.qtx.cotizador.dominio.pedidos.excepciones.PresupuestoNoCargadoExcepcion;
-import mx.com.qtx.cotizador.servicio.pedido.PedidoServicio;
-import mx.com.qtx.cotizador.servicio.pedido.ProveedorServicio;
 
 /**
  * Orquesta el proceso de creación de pedidos a partir de objetos Cotizacion.
@@ -15,14 +15,16 @@ import mx.com.qtx.cotizador.servicio.pedido.ProveedorServicio;
  */
 public class ManejadorCreacionPedidos {
     private GestorPedidos gestorPedidos;
+    List<Pedido> pedidos;
 
     /**
      * Construye una nueva instancia de ManejadorCreacionPedidos.
      * Inicializa el GestorPedidos interno.
      */
-    public ManejadorCreacionPedidos(PedidoServicio pedidoServicio, ProveedorServicio proveedorServicio) {        
-        this.gestorPedidos = new GestorPedidos(pedidoServicio, proveedorServicio);
-    }
+    public ManejadorCreacionPedidos(List<Proveedor> proveedores) {        
+        this.gestorPedidos = new GestorPedidos(proveedores);
+        this.pedidos = new ArrayList<>();
+    }   
 
     /**
      * Crea y genera un pedido utilizando la información de una Cotizacion existente.
@@ -47,8 +49,8 @@ public class ManejadorCreacionPedidos {
             gestorPedidos.agregarPresupuesto(presupuestoAdaptado);
             System.out.println("Iniciando proceso para generar pedido desde cotización: " + cotizacion.getNum());
             // 3. Generar el pedido
-            gestorPedidos.generarPedido(cveProveedor, numPedido, nivelSurtido, 
-                fechaEmision, fechaEntrega);
+            pedidos.add(gestorPedidos.generarPedido(cveProveedor, numPedido, nivelSurtido, 
+                fechaEmision, fechaEntrega));
             System.out.println("Pedido generado exitosamente para cotización: " + cotizacion.getNum());            
         } 
         catch (PresupuestoNoCargadoExcepcion e) {
@@ -59,6 +61,15 @@ public class ManejadorCreacionPedidos {
              e.printStackTrace();
              // Lanzar excepción, loggear, etc.
         }
+    }
+
+    /**
+     * Obtiene la lista de pedidos generados
+     * 
+     * @return Lista de pedidos creados
+     */
+    public List<Pedido> getPedidos() {
+        return pedidos;
     }
 
     /**

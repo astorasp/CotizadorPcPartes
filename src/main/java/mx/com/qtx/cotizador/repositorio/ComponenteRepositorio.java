@@ -30,6 +30,18 @@ public interface ComponenteRepositorio extends JpaRepository<Componente, String>
     Componente findByIdWithTipoComponente(@Param("id") String id);
 
     /**
+     * Obtiene todos los componentes con su tipo de componente cargado.
+     * 
+     * @return Lista de todos los componentes con el tipo de componente incluido
+     */
+    @EntityGraph("Componente.completo")
+    @Query("""
+        SELECT c FROM Componente c
+            JOIN FETCH c.tipoComponente                
+    """)
+    List<Componente> findAllWithTipoComponente();
+
+    /**
      * Encuentra componentes por su tipo de componente.
      * <p>
      * Permite buscar todos los componentes que pertenecen a una categoría o tipo específico,
@@ -46,7 +58,22 @@ public interface ComponenteRepositorio extends JpaRepository<Componente, String>
             JOIN PcParte p ON c.id = p.idComponente 
         WHERE p.idPc = :idPc                
     """)
-    List<Componente> findComponentesByPcWithTipoComponente(@Param("idPc") String idPc);  
+    List<Componente> findComponentesByPcWithTipoComponente(@Param("idPc") String idPc);
+
+    /**
+     * Encuentra componentes por nombre del tipo de componente.
+     * 
+     * @param nombreTipo Nombre del tipo de componente a buscar
+     * @return Lista de componentes del tipo especificado
+     */
+    @EntityGraph("Componente.completo")
+    @Query("""
+        SELECT c FROM Componente c
+            JOIN FETCH c.tipoComponente tc
+        WHERE tc.nombre = :nombreTipo                
+    """)
+    List<Componente> findByTipoComponenteNombre(@Param("nombreTipo") String nombreTipo);
+
     /**
      * Encuentra componentes por su tipo de componente.
      * <p>

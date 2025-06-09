@@ -15,10 +15,8 @@ public class Cotizador implements ICotizador{
     private List<Componente> componentes = new ArrayList<>();
     private List<Integer> cantidades = new ArrayList<>();
 	private final CalculadorImpuesto calculadorImpuesto;
-	private final CotizacionServicio cotizacionServicio;
 
-	public Cotizador(CotizacionServicio cotizacionServicio, CalculadorImpuesto calculadorImpuesto) {
-		this.cotizacionServicio = cotizacionServicio;		
+	public Cotizador(CalculadorImpuesto calculadorImpuesto) {
 		this.calculadorImpuesto = calculadorImpuesto;
 	}
 
@@ -44,7 +42,7 @@ public class Cotizador implements ICotizador{
     public Cotizacion generarCotizacion(List<CalculadorImpuesto> calculadorImpuestos) {
         BigDecimal total = new BigDecimal(0);
         
-        Cotizacion cotizacion = new Cotizacion(this.cotizacionServicio);
+        Cotizacion cotizacion = new Cotizacion();
         
         for(int i=0; i<this.cantidades.size();i++) {
         	Componente compI = this.componentes.get(i);
