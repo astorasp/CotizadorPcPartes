@@ -135,12 +135,12 @@ public class ComponenteEntityConverter {
                 for(mx.com.qtx.cotizador.entidad.Componente subComp : subCompEntity) {
                     Componente subCompCore = convertToComponente(subComp, null);
                     switch(subCompCore.getCategoria()) {
-                        case "DiscoDuro" -> {
+                        case "Disco Duro" -> {
                             DiscoDuro disco = (DiscoDuro) subCompCore;
                             pcBuilder.agregarDisco(disco.getId(), disco.getDescripcion(), disco.getMarca(), 
                                 disco.getModelo(), disco.getCosto(), disco.getPrecioBase(), disco.getCapacidadAlm());
                         }
-                        case "TarjetaVideo" -> {
+                        case "Tarjeta de Video" -> {
                             TarjetaVideo tarjeta = (TarjetaVideo) subCompCore;
                             pcBuilder.agregarTarjetaVideo(tarjeta.getId(), tarjeta.getDescripcion(), tarjeta.getMarca(), 
                                 tarjeta.getModelo(), tarjeta.getCosto(), tarjeta.getPrecioBase(), tarjeta.getMemoria());
@@ -154,9 +154,13 @@ public class ComponenteEntityConverter {
                 }
                 componente = pcBuilder.build();
             } else {
-                // PC sin componentes - tratarla como un componente Monitor genérico para evitar el error de validación
-                // En el futuro se puede crear una clase PcEnConstruccion si se requiere un manejo más específico
-                componente = Componente.crearMonitor(id, descripcion, marca, modelo, costo, precioBase);
+                // PC sin componentes - crear una PC vacía usando el builder
+                PcBuilder pcBuilder = Componente.getPcBuilder();
+                pcBuilder.definirId(id)
+                    .definirDescripcion(descripcion)
+                    .definirMarcaYmodelo(marca, modelo);
+                    
+                componente = pcBuilder.build();
             }
         } else {
             // Tipo desconocido - crear como Monitor por defecto

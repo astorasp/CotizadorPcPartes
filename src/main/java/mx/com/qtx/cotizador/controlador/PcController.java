@@ -100,16 +100,8 @@ public class PcController {
         
         log.info("Iniciando eliminación de PC con ID: {}", id);
         
-        // Primero verificar que sea una PC usando el método especializado
-        ApiResponse<PcResponse> verificacion = componenteServicio.buscarPcCompleto(id);
-        if (!"0".equals(verificacion.getCodigo())) {
-            HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(verificacion.getCodigo());
-            ApiResponse<Void> respuesta = new ApiResponse<>(verificacion.getCodigo(), verificacion.getMensaje());
-            return ResponseEntity.status(httpStatus).body(respuesta);
-        }
-        
-        // Eliminar la PC (esto también eliminará las asociaciones en cascada)
-        ApiResponse<Void> respuestaServicio = componenteServicio.borrarComponente(id);
+        // Usar el método especializado para eliminar PCs completas
+        ApiResponse<Void> respuestaServicio = componenteServicio.eliminarPcCompleta(id);
         
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());

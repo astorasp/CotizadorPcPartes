@@ -27,7 +27,9 @@ import mx.com.qtx.cotizador.repositorio.TipoComponenteRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.ComponenteEntityConverter;
 import mx.com.qtx.cotizador.util.Errores;
 import mx.com.qtx.cotizador.util.TipoComponenteEnum;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class ComponenteServicio {
     
@@ -332,7 +334,14 @@ public class ComponenteServicio {
             var compEntities = compRepo.findByTipoComponenteNombre(tipoComponente.toUpperCase());
             List<ComponenteResponse> componentes = compEntities.stream()
                 .map(entity -> {
-                    Componente componente = ComponenteEntityConverter.convertToComponente(entity, null);
+                    Componente componente;
+                    // Si es una PC, cargar sus sub-componentes
+                    if (entity.getTipoComponente().getNombre().equals(TipoComponenteEnum.PC.name())) {
+                        var subCompEntities = compRepo.findComponentesByPcWithTipoComponente(entity.getId());
+                        componente = ComponenteEntityConverter.convertToComponente(entity, subCompEntities);
+                    } else {
+                        componente = ComponenteEntityConverter.convertToComponente(entity, null);
+                    }
                     return ComponenteMapper.toResponse(componente);
                 })
                 .collect(Collectors.toList());
@@ -341,6 +350,7 @@ public class ComponenteServicio {
                                    "Componentes del tipo " + tipoComponente + " obtenidos exitosamente", 
                                    componentes);
         } catch (Exception e) {
+            log.error("Error en buscarPorTipo para tipo {}: {}", tipoComponente, e.getMessage(), e);
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
@@ -375,12 +385,17 @@ public class ComponenteServicio {
     @Transactional
     public ApiResponse<PcResponse> guardarPcCompleto(PcCreateRequest request) {
         try {
+            log.debug("guardarPcCompleto: Iniciando con request: {}", request);
+            
             if (request == null) {
+                log.debug("guardarPcCompleto: Request nulo");
                 return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
                                        "Los datos de la PC son requeridos");
             }
             
+            log.debug("guardarPcCompleto: Verificando si ID {} ya existe", request.getId());
             if (compRepo.existsById(request.getId())) {
+                log.debug("guardarPcCompleto: ID {} ya existe", request.getId());
                 return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
                                        Errores.RECURSO_YA_EXISTE.getMensaje());
             }
@@ -396,11 +411,24 @@ public class ComponenteServicio {
             
             // 1. Convertir y guardar PC
             var pcEntity = ComponenteEntityConverter.convertToEntity(pc);
+            
+            // Buscar promoción PC Componentes
             var promo = promoRepo.findByNombre("PC Componentes");
+            if (promo == null) {
+                // Fallback a promoción Regular si PC Componentes no existe
+                promo = promoRepo.findByNombre("Regular");
+            }
+            
+            // Buscar tipo PC - validar que existe
             TipoComponente tipo = tipos.stream()
                 .filter(t -> t.getNombre().equals("PC"))
                 .findFirst()
-                .orElse(null);            
+                .orElse(null);
+                
+            if (tipo == null) {
+                return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                       "Tipo de componente PC no encontrado en el sistema");
+            }
                 
             pcEntity.setPromocion(promo);
             pcEntity.setTipoComponente(tipo);
@@ -408,6 +436,9 @@ public class ComponenteServicio {
             
             // 2. Procesar componentes y crear asociaciones
             for (Componente comp : pc.getSubComponentes()) {
+                // Mapear categoría desde el enum para consistencia
+                String tipoComponenteMapeado = mapearCategoriaATipo(comp.getCategoria());
+                
                 // Convertir componente a DTO y usar el método refactorizado
                 ComponenteCreateRequest compRequest = ComponenteCreateRequest.builder()
                     .id(comp.getId())
@@ -416,7 +447,7 @@ public class ComponenteServicio {
                     .modelo(comp.getModelo())
                     .costo(comp.getCosto())
                     .precioBase(comp.getPrecioBase())
-                    .tipoComponente(comp.getCategoria().replace(" ", "_").toUpperCase())
+                    .tipoComponente(tipoComponenteMapeado)
                     .build();
                     
                 ApiResponse<ComponenteResponse> response = guardarComponente(compRequest);
@@ -426,18 +457,52 @@ public class ComponenteServicio {
                 } else {
                     // Si falla algún sub-componente, retornar el error
                     return new ApiResponse<>(response.getCodigo(), 
-                                           "Error guardando sub-componente: " + response.getMensaje());
+                                           "Error guardando sub-componente " + comp.getId() + ": " + response.getMensaje());
                 }
             }
 
-            // Convertir de vuelta a objeto de dominio y luego a DTO
-            Componente pcResultado = ComponenteEntityConverter.convertToComponente(pcEntity, null);
-            PcResponse pcResponse = PcMapper.toResponse((Pc) pcResultado);
+            // Obtener la PC completa con sus componentes asociados y convertir a DTO
+            ApiResponse<PcResponse> pcCompleta = buscarPcCompleto(pcEntity.getId());
+            if (!"0".equals(pcCompleta.getCodigo())) {
+                return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                       "Error al recuperar la PC guardada");
+            }
+            PcResponse pcResponse = pcCompleta.getData();
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC guardada exitosamente", pcResponse);
         } catch (Exception e) {
+            log.error("Error al guardar PC completa: {}", e.getMessage(), e);
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+    
+    /**
+     * Mapea las categorías de componentes a los tipos válidos del sistema
+     * @param categoria Categoría del componente (ej: "Monitor", "Disco Duro", etc.)
+     * @return Tipo de componente mapeado para el enum
+     */
+    private String mapearCategoriaATipo(String categoria) {
+        if (categoria == null) {
+            return "MONITOR"; // Valor por defecto
+        }
+        
+        switch (categoria.toUpperCase().trim()) {
+            case "DISCO DURO":
+            case "DISCO_DURO":
+            case "HDD":
+            case "SSD":
+                return "DISCO_DURO";
+            case "TARJETA DE VIDEO":
+            case "TARJETA_VIDEO": 
+            case "GPU":
+                return "TARJETA_VIDEO";
+            case "MONITOR":
+                return "MONITOR";
+            case "PC":
+                return "PC";
+            default:
+                return "MONITOR"; // Valor por defecto para tipos no reconocidos
         }
     }
 
@@ -511,9 +576,6 @@ public class ComponenteServicio {
                                        "Los datos del componente son requeridos");
             }
             
-            // Convertir DTO a objeto de dominio
-            Componente componente = PcMapper.toComponente(request);
-            
             // Verificar que la PC existe
             var pcEntity = compRepo.findByIdWithTipoComponente(pcId);
             if (pcEntity == null || !pcEntity.getTipoComponente().getNombre().equals("PC")) {
@@ -521,29 +583,61 @@ public class ComponenteServicio {
                                        "PC no encontrada");
             }
             
-            // Verificar que el componente existe
-            if (!compRepo.existsById(componente.getId())) {
-                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
-                                       "Componente no encontrado");
+            // Verificar si el componente ya existe
+            boolean componenteExiste = compRepo.existsById(request.getId());
+            ComponenteResponse componenteResponse;
+            
+            if (componenteExiste) {
+                // Caso 1: El componente ya existe, solo crear la asociación
+                
+                // Verificar que no esté ya asociado
+                if (pcPartesRepo.existsByPcIdAndComponenteId(pcId, request.getId())) {
+                    return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
+                                           "El componente ya está asociado a esta PC");
+                }
+                
+                // Crear la asociación
+                PcParte pcParte = new PcParte(pcId, request.getId());
+                pcPartesRepo.save(pcParte);
+                
+                // Obtener el componente existente y convertir a DTO
+                var componenteEntity = compRepo.findByIdWithTipoComponente(request.getId());
+                Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteEntity, null);
+                componenteResponse = ComponenteMapper.toResponse(componenteResultado);
+                
+            } else {
+                // Caso 2: El componente no existe, crearlo y luego asociarlo
+                
+                // Convertir AgregarComponenteRequest a ComponenteCreateRequest
+                ComponenteCreateRequest crearRequest = ComponenteCreateRequest.builder()
+                    .id(request.getId())
+                    .descripcion(request.getDescripcion())
+                    .marca(request.getMarca())
+                    .modelo(request.getModelo())
+                    .costo(request.getCosto())
+                    .precioBase(request.getPrecioBase())
+                    .tipoComponente(request.getTipoComponente())
+                    .capacidadAlm(request.getCapacidadAlm())
+                    .memoria(request.getMemoria())
+                    .build();
+                
+                // Crear el componente usando el método existente
+                ApiResponse<ComponenteResponse> crearResponse = guardarComponente(crearRequest);
+                if (!"0".equals(crearResponse.getCodigo())) {
+                    return new ApiResponse<>(crearResponse.getCodigo(), 
+                                           "Error creando componente: " + crearResponse.getMensaje());
+                }
+                
+                // Crear la asociación
+                PcParte pcParte = new PcParte(pcId, request.getId());
+                pcPartesRepo.save(pcParte);
+                
+                componenteResponse = crearResponse.getData();
             }
-            
-            // Verificar que no esté ya asociado
-            if (pcPartesRepo.existsByPcIdAndComponenteId(pcId, componente.getId())) {
-                return new ApiResponse<>(Errores.RECURSO_YA_EXISTE.getCodigo(), 
-                                       "El componente ya está asociado a esta PC");
-            }
-            
-            // Crear la asociación
-            PcParte pcParte = new PcParte(pcId, componente.getId());
-            pcPartesRepo.save(pcParte);
-            
-            // Obtener el componente agregado y convertir a DTO
-            var componenteEntity = compRepo.findByIdWithTipoComponente(componente.getId());
-            Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteEntity, null);
-            ComponenteResponse componenteResponse = ComponenteMapper.toResponse(componenteResultado);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente agregado a la PC exitosamente", componenteResponse);
         } catch (Exception e) {
+            log.error("Error al agregar componente a PC: {}", e.getMessage(), e);
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }
@@ -581,5 +675,45 @@ public class ComponenteServicio {
     // Método utilitario que se mantiene para compatibilidad
     public List<TipoComponente> obtenerTipos() {
         return tipos;
+    }
+
+    /**
+     * Elimina una PC completa incluyendo todas sus asociaciones
+     * Maneja las foreign keys eliminando primero las asociaciones y luego la PC
+     * @param pcId ID de la PC a eliminar
+     * @return ApiResponse<Void> con el resultado de la operación
+     */
+    @Transactional
+    public ApiResponse<Void> eliminarPcCompleta(String pcId) {
+        try {
+            if (pcId == null || pcId.trim().isEmpty()) {
+                return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
+                                       "El ID de la PC es requerido");
+            }
+            
+            // Verificar que la PC existe y es de tipo PC
+            var pcEntity = compRepo.findByIdWithTipoComponente(pcId);
+            if (pcEntity == null) {
+                return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(), 
+                                       Errores.RECURSO_NO_ENCONTRADO.getMensaje());
+            }
+            
+            if (!pcEntity.getTipoComponente().getNombre().equals(TipoComponenteEnum.PC.name())) {
+                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
+                                       "El componente especificado no es una PC");
+            }
+            
+            // 1. Eliminar todas las asociaciones de la PC con sus componentes
+            pcPartesRepo.deleteByPcId(pcId);
+            
+            // 2. Eliminar la PC
+            compRepo.deleteById(pcId);
+            
+            return new ApiResponse<>(Errores.OK.getCodigo(), "PC eliminada exitosamente");
+        } catch (Exception e) {
+            log.error("Error al eliminar PC completa: {}", e.getMessage(), e);
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
     }
 } 

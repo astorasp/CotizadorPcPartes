@@ -61,11 +61,11 @@ public class SecurityConfig {
                 
                 // Endpoints de API que requieren autenticación (sin context path adicional)
                 .requestMatchers("/componentes/**").authenticated()
+                .requestMatchers("/pcs/**").authenticated()
                 .requestMatchers("/cotizaciones/**").authenticated()
                 .requestMatchers("/pedidos/**").authenticated()
                 .requestMatchers("/promociones/**").authenticated()
                 .requestMatchers("/proveedores/**").authenticated()
-                .requestMatchers("/promociones/**").authenticated()
                 
                 // Cualquier otro endpoint requiere autenticación
                 .anyRequest().authenticated()
