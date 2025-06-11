@@ -38,7 +38,7 @@ import mx.com.qtx.cotizador.util.HttpStatusMapper;
  * - Logging de todas las operaciones
  */
 @RestController
-@RequestMapping("/api/promociones")
+@RequestMapping("/promociones")
 public class PromocionControlador {
     
     private static final Logger logger = LoggerFactory.getLogger(PromocionControlador.class);

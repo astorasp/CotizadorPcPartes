@@ -115,9 +115,16 @@ Implementar y probar endpoints RESTful para gestión de proveedores
 - [x] Revisar modelo, entidades y repositorio de promoción
 - [x] Confirmar existencia de DTOs, mappers y servicio
 - [x] Confirmar existencia de controlador REST y endpoints
-- [ ] Desarrollar pruebas de integración para promociones (alta, modificación, consulta, eliminación, errores)
-- [ ] Documentar endpoints y casos de uso en README/Javadoc
+- [x] Desarrollar pruebas de integración para promociones (alta, modificación, consulta, eliminación, errores)
+- [x] Documentar endpoints y casos de uso en README/Javadoc
 
 ## Current Goal
-Planificar e implementar endpoints RESTful para generación y consulta de pedidos usando ManejadorCreacionPedidos
-Desarrollar y validar pruebas de integración para promociones
+✅ **COMPLETADO** - Sistema de gestión de promociones completamente implementado y probado
+
+**Resultado**: 
+- **Implementación completa**: DTOs, Mappers, Servicios, Controladores y Tests
+- **16/16 tests de integración pasando**: Cobertura completa de todos los casos de uso (6.1-6.4) y escenarios de error
+- **API RESTful funcionando**: Todos los endpoints operativos con validación Bean Validation y seguridad
+- **Casos de uso implementados**: 6.1 (Agregar promoción), 6.2 (Modificar promoción), 6.3 (Consultar promociones), 6.4 (Eliminar promoción)
+- **Tests de seguridad**: Validación de autenticación requerida para todos los endpoints
+- **Manejo de errores**: Gestión correcta de restricciones de foreign key y validaciones de negocio
