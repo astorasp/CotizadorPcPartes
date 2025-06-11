@@ -314,6 +314,7 @@ public class ComponenteServicio {
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Consulta exitosa", componentes);
         } catch (Exception e) {
+            log.error("Error al obtener todos los componentes: {}", e.getMessage(), e);
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }

@@ -1,8 +1,11 @@
 package mx.com.qtx.cotizador.config;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,6 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,6 +57,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             // Deshabilitar CSRF para APIs REST
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             
             // Configurar autorización de requests
@@ -66,9 +73,9 @@ public class SecurityConfig {
                 .requestMatchers("/pedidos/**").authenticated()
                 .requestMatchers("/promociones/**").authenticated()
                 .requestMatchers("/proveedores/**").authenticated()
-                
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ¡IMPORTANTE!
                 // Cualquier otro endpoint requiere autenticación
-                .anyRequest().authenticated()
+                .anyRequest().authenticated()                
             )
             
             // Configurar autenticación básica HTTP
@@ -82,6 +89,19 @@ public class SecurityConfig {
             )
             
             .build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(false);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
     
     /**

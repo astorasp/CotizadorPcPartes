@@ -141,9 +141,9 @@ public class PcBuilder {
 	}
 	
 	public Pc build() {
-		if(this.pcEsValida() == false) {
-			throw new RuntimeException("Estructura Pc Invalida [" + this.toString() + "]");
-		}
+		//if(this.pcEsValida() == false) {
+			//throw new RuntimeException("Estructura Pc Invalida [" + this.toString() + "]");
+		//}
 		Pc pc = new Pc(this);
 		return pc;
 	}
