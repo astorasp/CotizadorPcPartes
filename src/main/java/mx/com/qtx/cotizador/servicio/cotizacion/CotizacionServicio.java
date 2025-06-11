@@ -90,14 +90,14 @@ public class CotizacionServicio {
                     componenteServicio.buscarComponente(detalle.getIdComponente());
                 
                 if (!componenteResponse.getCodigo().equals(Errores.OK.getCodigo()) || 
-                    componenteResponse.getData() == null) {
+                    componenteResponse.getDatos() == null) {
                     logger.warn("Componente no encontrado: {}", detalle.getIdComponente());
                     return new ApiResponse<>(Errores.COMPONENTE_NO_ENCONTRADO_EN_COTIZACION.getCodigo(), 
                                            "Componente no encontrado: " + detalle.getIdComponente());
                 }
                 
                 // Convertir DTO de respuesta a objeto de dominio
-                Componente compDominio = ComponenteResponseConverter.toDomainObject(componenteResponse.getData());
+                Componente compDominio = ComponenteResponseConverter.toDomainObject(componenteResponse.getDatos());
                 
                 // Agregar al cotizador
                 cotizador.agregarComponente(detalle.getCantidad(), compDominio);

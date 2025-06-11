@@ -186,8 +186,8 @@ public class PcController {
         
         // Extraer los sub-componentes de la PC
         ApiResponse<List<ComponenteResponse>> respuesta;
-        if (respuestaServicio.getData() != null) {
-            PcResponse pcResponse = respuestaServicio.getData();
+        if (respuestaServicio.getDatos() != null) {
+            PcResponse pcResponse = respuestaServicio.getDatos();
             List<ComponenteResponse> componentesResponse = pcResponse.getSubComponentes();
             
             respuesta = new ApiResponse<>(respuestaServicio.getCodigo(), 

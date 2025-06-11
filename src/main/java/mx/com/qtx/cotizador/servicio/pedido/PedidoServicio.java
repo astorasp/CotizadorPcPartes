@@ -83,7 +83,7 @@ public class PedidoServicio {
             }
             
             // Convertir ProveedorResponse a Proveedor dominio
-            Proveedor proveedorDominio = convertirResponseADominio(proveedorResponse.getData());
+            Proveedor proveedorDominio = convertirResponseADominio(proveedorResponse.getDatos());
             
             // Convertir DTO a dominio usando mapper (usamos 0 como placeholder, JPA generará automáticamente el ID)
             Pedido pedido = PedidoMapper.toPedido(request, proveedorDominio, 0L);
@@ -92,7 +92,7 @@ public class PedidoServicio {
             guardarPedidoInterno(pedido);
             
             // Convertir resultado a DTO
-            PedidoResponse response = PedidoMapper.toResponse(pedido, proveedorResponse.getData());
+            PedidoResponse response = PedidoMapper.toResponse(pedido, proveedorResponse.getDatos());
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Pedido creado exitosamente", response);
         } catch (Exception e) {
@@ -142,7 +142,7 @@ public class PedidoServicio {
              // En una implementación completa, aquí iría la integración con ManejadorCreacionPedidos
              
              // Convertir ProveedorResponse a Proveedor dominio
-             Proveedor proveedorDominio = convertirResponseADominio(proveedorResponse.getData());
+             Proveedor proveedorDominio = convertirResponseADominio(proveedorResponse.getDatos());
              
              // Crear pedido básico (simulado desde cotización) - JPA generará automáticamente el ID
              Pedido pedidoGenerado = new Pedido(
@@ -159,15 +159,15 @@ public class PedidoServicio {
                  "ITEM-COT-" + cotizacionId,
                  "Item generado desde cotización " + cotizacionId,
                  1,
-                 cotizacionResponse.getData().getTotal(),
-                 cotizacionResponse.getData().getTotal()
+                 cotizacionResponse.getDatos().getTotal(),
+                 cotizacionResponse.getDatos().getTotal()
              );
              
              // Persistir el pedido
              guardarPedidoInterno(pedidoGenerado);
              
              // Convertir a DTO y retornar
-             PedidoResponse response = PedidoMapper.toResponse(pedidoGenerado, proveedorResponse.getData());
+             PedidoResponse response = PedidoMapper.toResponse(pedidoGenerado, proveedorResponse.getDatos());
             
             return new ApiResponse<>(Errores.OK.getCodigo(), 
                                    "Pedido generado exitosamente desde cotización", response);
@@ -242,11 +242,11 @@ public class PedidoServicio {
     private List<Proveedor> obtenerProveedoresDominio() {
         ApiResponse<List<ProveedorResponse>> respuesta = proveedorServicio.obtenerTodosLosProveedores();
         
-        if (!"0".equals(respuesta.getCodigo()) || respuesta.getData() == null) {
+        if (!"0".equals(respuesta.getCodigo()) || respuesta.getDatos() == null) {
             throw new RuntimeException("Error al obtener proveedores: " + respuesta.getMensaje());
         }
         
-        return respuesta.getData().stream()
+        return respuesta.getDatos().stream()
             .map(this::convertirResponseADominio)
             .collect(Collectors.toList());
     }

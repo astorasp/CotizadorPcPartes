@@ -39,3 +39,28 @@
 ✅ **COMPLETADO** - Plan de integración de cotización con dominio implementado exitosamente
 
 **Resultado**: El sistema ahora integra completamente la lógica de dominio de cotización con la capa de servicio y persistencia, respetando la arquitectura en capas y proporcionando una API RESTful completa.
+
+# Plan de implementación: Endpoints RESTful para gestión de proveedores
+
+## Notes
+- Se requiere implementar endpoints RESTful para gestión de proveedores (agregar, modificar, consultar, eliminar), respetando la arquitectura y la separación de responsabilidades.
+- El flujo debe ser: DTO → Servicio → Repositorio/Entidad → BD. Solo la capa de servicio puede acceder a entidades y repositorios; el controlador debe trabajar con DTOs.
+- La arquitectura y buenas prácticas son las mismas que para cotizaciones: separación estricta de capas, validaciones en el servicio, controlador solo orquesta y responde con DTOs/ApiResponse.
+- Casos de uso a cubrir: 4.1 Agregar proveedor, 4.2 Modificar proveedor, 4.3 Consultar proveedores, 4.4 Eliminar proveedor.
+- Se requiere documentación (Javadoc y/o README) y pruebas de integración para validar el flujo completo.
+
+## Task List
+- [x] Revisar modelo y entidades de proveedor
+- [x] Confirmar existencia de repositorio y servicio de proveedor
+- [ ] Definir/ajustar DTOs de proveedor (request/response)
+- [ ] Implementar/ajustar el controlador RESTful para proveedores (`ProveedorController`):
+    - [ ] POST /proveedores (agregar)
+    - [ ] PUT /proveedores/{id} (modificar)
+    - [ ] GET /proveedores (consultar)
+    - [ ] GET /proveedores/{id} (detalle)
+    - [ ] DELETE /proveedores/{id} (eliminar)
+- [ ] Validar flujo con pruebas de integración
+- [ ] Documentar endpoints y flujo en README/Javadoc
+
+## Current Goal
+Implementar y probar endpoints RESTful para gestión de proveedores

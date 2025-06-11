@@ -9,12 +9,12 @@ public class ApiResponse<T> {
     private String mensaje;
     
     @JsonProperty("datos")
-    private T data;
+    private T datos;
 
-    public ApiResponse(String codigo, String mensaje, T data) {
+    public ApiResponse(String codigo, String mensaje, T datos) {
         this.codigo = codigo;
         this.mensaje = mensaje;
-        this.data = data;
+        this.datos = datos;
     }
 
     public ApiResponse(String codigo, String mensaje) {

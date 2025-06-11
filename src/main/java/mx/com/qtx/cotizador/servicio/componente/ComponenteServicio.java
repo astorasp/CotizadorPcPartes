@@ -452,7 +452,7 @@ public class ComponenteServicio {
                     
                 ApiResponse<ComponenteResponse> response = guardarComponente(compRequest);
                 if ("0".equals(response.getCodigo())) {
-                    PcParte pcParte = new PcParte(pcEntity.getId(), response.getData().getId());
+                    PcParte pcParte = new PcParte(pcEntity.getId(), response.getDatos().getId());
                     pcPartesRepo.save(pcParte);
                 } else {
                     // Si falla algún sub-componente, retornar el error
@@ -467,7 +467,7 @@ public class ComponenteServicio {
                 return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                        "Error al recuperar la PC guardada");
             }
-            PcResponse pcResponse = pcCompleta.getData();
+            PcResponse pcResponse = pcCompleta.getDatos();
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC guardada exitosamente", pcResponse);
         } catch (Exception e) {
@@ -632,7 +632,7 @@ public class ComponenteServicio {
                 PcParte pcParte = new PcParte(pcId, request.getId());
                 pcPartesRepo.save(pcParte);
                 
-                componenteResponse = crearResponse.getData();
+                componenteResponse = crearResponse.getDatos();
             }
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente agregado a la PC exitosamente", componenteResponse);

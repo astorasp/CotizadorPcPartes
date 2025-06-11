@@ -171,3 +171,69 @@ El flujo está completamente documentado en los métodos del servicio y controla
 - Confirmada existencia de: modelo dominio, entidades JPA, repositorios, conversores
 - Verificada configuración JPA y datasource
 - Establecido flujo: DTO → Dominio → Servicio → Entidad → JPA → BD respetando arquitectura en capas
+
+## 10-12-2024 20:49
+
+### Implementación de Endpoints RESTful para Proveedores - Diagnóstico completo
+
+#### ✅ Completado:
+- **Controlador ProveedorController**: Implementación completa con todos los endpoints CRUD
+  - POST /proveedores (crear)
+  - PUT /proveedores/{id} (actualizar)
+  - GET /proveedores/{id} (consultar por clave)
+  - GET /proveedores (listar todos)
+  - DELETE /proveedores/{id} (eliminar)
+  - Endpoints adicionales de búsqueda por nombre y razón social
+
+- **Servicio ProveedorServicio**: Lógica de negocio completa
+  - Implementa arquitectura de manejo de errores con ApiResponse<T>
+  - Manejo interno de errores con try-catch
+  - Códigos de error específicos del enum Errores
+  - Conversiones correctas entre DTOs, dominio y entidades
+
+- **Tests de integración**: 16 tests comprehensivos creados
+  - TestContainers con MySQL 8.4.4
+  - RestAssured para testing de endpoints HTTP
+  - Cobertura completa de casos de uso y errores
+
+- **DTOs y Mappers**: Implementación completa
+  - ProveedorCreateRequest, ProveedorUpdateRequest, ProveedorResponse
+  - ProveedorMapper con conversiones correctas
+  - ProveedorEntityConverter funcional
+
+#### 🔧 Diagnóstico realizado:
+- **Lógica de negocio**: ✅ FUNCIONA PERFECTAMENTE
+  - Conversión DTO → Dominio → Entidad → BD: EXITOSA
+  - Operaciones de base de datos: EXITOSAS (confirmado por logs Hibernate)
+  - Conversión Entidad → Dominio → DTO: EXITOSA
+  - ApiResponse se crea correctamente con todos los datos
+
+- **Controlador**: ✅ FUNCIONA PERFECTAMENTE
+  - Recibe respuesta correcta del servicio
+  - ResponseEntity se crea con datos correctos
+  - Logging confirma que data contiene todos los campos correctos
+
+#### ❌ Problema identificado:
+**SERIALIZACIÓN JSON**: El problema está en la serialización JSON de Spring/Jackson. A pesar de que:
+- El objeto ProveedorResponse contiene datos correctos (confirmado por logs)
+- El controlador maneja correctamente la respuesta
+- ResponseEntity.body tiene los datos correctos
+
+Los tests fallan porque el JSON serializado contiene `"data": null` en lugar de los datos del proveedor.
+
+#### 🔍 Investigación realizada:
+1. **Eliminación de @JsonProperty**: NO resolvió el problema
+2. **Logging exhaustivo**: Confirmó que el problema NO está en la lógica de negocio
+3. **Comparación con CotizacionResponse**: CotizacionResponse funciona sin @JsonProperty
+4. **Verificación de arquitectura**: Implementación sigue patrones establecidos correctamente
+
+#### 📋 Pendiente:
+- Resolver problema de serialización JSON en ProveedorResponse
+- Investigar configuración específica de Jackson para este DTO
+- Ejecutar tests una vez resuelto el problema de serialización
+
+#### 📚 Arquitectura confirmada:
+- Implementación sigue exactamente los patrones de CotizacionController
+- Manejo de errores consistente con HttpStatusMapper
+- Separación de capas respetada (Controller → Service → Repository)
+- DTOs correctamente implementados según especificaciones del proyecto

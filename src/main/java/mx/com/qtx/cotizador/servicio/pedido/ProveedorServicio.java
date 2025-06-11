@@ -3,6 +3,8 @@ package mx.com.qtx.cotizador.servicio.pedido;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,9 @@ import mx.com.qtx.cotizador.util.Errores;
  */
 @Service
 public class ProveedorServicio {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ProveedorServicio.class);
+    
     private final ProveedorRepositorio proveedorRepositorio;
     
     public ProveedorServicio(ProveedorRepositorio proveedorRepositorio) {
@@ -72,10 +77,15 @@ public class ProveedorServicio {
     @Transactional
     public ApiResponse<ProveedorResponse> crearProveedor(ProveedorCreateRequest request) {
         try {
+            logger.debug("=== INICIO DEBUG crearProveedor ===");
+            
             if (request == null) {
                 return new ApiResponse<>(Errores.ERROR_DE_VALIDACION.getCodigo(), 
                                        "Los datos del proveedor son requeridos");
             }
+            
+            logger.debug("Request recibido: cve={}, nombre={}, razonSocial={}", 
+                        request.getCve(), request.getNombre(), request.getRazonSocial());
             
             // Verificar si el proveedor ya existe
             if (proveedorRepositorio.findByCve(request.getCve()) != null) {
@@ -85,17 +95,36 @@ public class ProveedorServicio {
             
             // Convertir DTO a dominio
             Proveedor proveedor = ProveedorMapper.toProveedor(request);
+            logger.debug("Proveedor dominio creado: cve={}, nombre={}, razonSocial={}", 
+                        proveedor.getCve(), proveedor.getNombre(), proveedor.getRazonSocial());
             
             // Convertir a entidad y guardar
             var proveedorEntity = ProveedorEntityConverter.convertToNewEntity(proveedor);
+            logger.debug("Proveedor entity creado: cve={}, nombre={}, razonSocial={}", 
+                        proveedorEntity.getCve(), proveedorEntity.getNombre(), proveedorEntity.getRazonSocial());
+            
             proveedorEntity = proveedorRepositorio.save(proveedorEntity);
+            logger.debug("Proveedor entity guardado: cve={}, nombre={}, razonSocial={}", 
+                        proveedorEntity.getCve(), proveedorEntity.getNombre(), proveedorEntity.getRazonSocial());
             
             // Convertir resultado a DTO
             Proveedor proveedorGuardado = ProveedorEntityConverter.convertToDomain(proveedorEntity);
-            ProveedorResponse response = ProveedorMapper.toResponse(proveedorGuardado);
+            logger.debug("Proveedor dominio convertido después de guardar: cve={}, nombre={}, razonSocial={}", 
+                        proveedorGuardado.getCve(), proveedorGuardado.getNombre(), proveedorGuardado.getRazonSocial());
             
-            return new ApiResponse<>(Errores.OK.getCodigo(), "Proveedor creado exitosamente", response);
+            ProveedorResponse response = ProveedorMapper.toResponse(proveedorGuardado);
+            logger.debug("CRITICAL: ProveedorResponse creado: cve={}, nombre={}, razonSocial={}, numeroPedidos={}", 
+                        response.getCve(), response.getNombre(), response.getRazonSocial(), response.getNumeroPedidos());
+            
+            ApiResponse<ProveedorResponse> apiResponse = new ApiResponse<>(Errores.OK.getCodigo(), "Proveedor creado exitosamente", response);
+            logger.debug("CRITICAL: ApiResponse creado con datos: {}", apiResponse.getDatos());
+            logger.debug("CRITICAL: ApiResponse datos.getCve(): {}", apiResponse.getDatos() != null ? apiResponse.getDatos().getCve() : "DATOS IS NULL!");
+            
+            logger.debug("=== FIN DEBUG crearProveedor ===");
+            
+            return apiResponse;
         } catch (Exception e) {
+            logger.error("Error al crear proveedor: {}", e.getMessage(), e);
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
         }

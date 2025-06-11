@@ -1,14 +1,14 @@
 package mx.com.qtx.cotizador.controlador;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
 import mx.com.qtx.cotizador.dto.proveedor.request.ProveedorCreateRequest;
 import mx.com.qtx.cotizador.dto.proveedor.request.ProveedorUpdateRequest;
 import mx.com.qtx.cotizador.dto.proveedor.response.ProveedorResponse;
 import mx.com.qtx.cotizador.servicio.pedido.ProveedorServicio;
 import mx.com.qtx.cotizador.util.HttpStatusMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,13 +29,18 @@ import java.util.List;
  * - Mapeo automático de códigos de error a HTTP status
  * - Solo manejo de DTOs, nunca objetos de dominio
  */
-@Slf4j
 @RestController
 @RequestMapping("/proveedores")
-@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class ProveedorController {
     
+    private static final Logger logger = LoggerFactory.getLogger(ProveedorController.class);
+    
     private final ProveedorServicio proveedorServicio;
+    
+    public ProveedorController(ProveedorServicio proveedorServicio) {
+        this.proveedorServicio = proveedorServicio;
+    }
     
     /**
      * Caso de uso 4.1: Agregar proveedor
@@ -47,16 +52,36 @@ public class ProveedorController {
     public ResponseEntity<ApiResponse<ProveedorResponse>> crearProveedor(
             @Valid @RequestBody ProveedorCreateRequest request) {
         
-        log.info("Iniciando creación de proveedor con clave: {}", request.getCve());
+        logger.info("Iniciando creación de proveedor con clave: {}", request.getCve());
         
         // Llamar al servicio para crear el proveedor
         ApiResponse<ProveedorResponse> respuestaServicio = proveedorServicio.crearProveedor(request);
         
+        // LOGGING CRÍTICO PARA DEBUG
+        logger.debug("=== CONTROLLER DEBUG ===");
+        logger.debug("Respuesta servicio código: {}", respuestaServicio.getCodigo());
+        logger.debug("Respuesta servicio mensaje: {}", respuestaServicio.getMensaje());
+        logger.debug("Respuesta servicio datos: {}", respuestaServicio.getDatos());
+        if (respuestaServicio.getDatos() != null) {
+            ProveedorResponse data = respuestaServicio.getDatos();
+            logger.debug("Data.getCve(): {}", data.getCve());
+            logger.debug("Data.getNombre(): {}", data.getNombre());
+            logger.debug("Data.getRazonSocial(): {}", data.getRazonSocial());
+            logger.debug("Data.getNumeroPedidos(): {}", data.getNumeroPedidos());
+        } else {
+            logger.error("DATA ES NULL EN EL CONTROLADOR!");
+        }
+        
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
-        return ResponseEntity.status(httpStatus).body(respuestaServicio);
+        logger.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        
+        ResponseEntity<ApiResponse<ProveedorResponse>> responseEntity = ResponseEntity.status(httpStatus).body(respuestaServicio);
+        logger.debug("ResponseEntity creado, body datos: {}", responseEntity.getBody().getDatos());
+        logger.debug("=== FIN CONTROLLER DEBUG ===");
+        
+        return responseEntity;
     }
     
     /**
@@ -71,7 +96,7 @@ public class ProveedorController {
             @PathVariable String cve,
             @Valid @RequestBody ProveedorUpdateRequest request) {
         
-        log.info("Iniciando actualización de proveedor con clave: {}", cve);
+        logger.info("Iniciando actualización de proveedor con clave: {}", cve);
         
         // Llamar al servicio para actualizar el proveedor
         ApiResponse<ProveedorResponse> respuestaServicio = proveedorServicio.actualizarProveedor(cve, request);
@@ -79,7 +104,7 @@ public class ProveedorController {
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        logger.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
@@ -92,7 +117,7 @@ public class ProveedorController {
     @GetMapping("/{cve}")
     public ResponseEntity<ApiResponse<ProveedorResponse>> obtenerProveedorPorClave(@PathVariable String cve) {
         
-        log.info("Consultando proveedor con clave: {}", cve);
+        logger.info("Consultando proveedor con clave: {}", cve);
         
         // Llamar al servicio para buscar el proveedor
         ApiResponse<ProveedorResponse> respuestaServicio = proveedorServicio.buscarPorClave(cve);
@@ -100,7 +125,7 @@ public class ProveedorController {
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        logger.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
@@ -112,7 +137,7 @@ public class ProveedorController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProveedorResponse>>> obtenerTodosLosProveedores() {
         
-        log.info("Consultando todos los proveedores");
+        logger.info("Consultando todos los proveedores");
         
         // Llamar al servicio para obtener todos los proveedores
         ApiResponse<List<ProveedorResponse>> respuestaServicio = proveedorServicio.obtenerTodosLosProveedores();
@@ -120,7 +145,7 @@ public class ProveedorController {
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        logger.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
@@ -133,7 +158,7 @@ public class ProveedorController {
     @DeleteMapping("/{cve}")
     public ResponseEntity<ApiResponse<Void>> eliminarProveedor(@PathVariable String cve) {
         
-        log.info("Iniciando eliminación de proveedor con clave: {}", cve);
+        logger.info("Iniciando eliminación de proveedor con clave: {}", cve);
         
         // Llamar al servicio para eliminar el proveedor
         ApiResponse<Void> respuestaServicio = proveedorServicio.eliminarProveedor(cve);
@@ -141,7 +166,7 @@ public class ProveedorController {
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        logger.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
@@ -157,7 +182,7 @@ public class ProveedorController {
     public ResponseEntity<ApiResponse<List<ProveedorResponse>>> buscarProveedoresPorNombre(
             @RequestParam String nombre) {
         
-        log.info("Buscando proveedores por nombre: {}", nombre);
+        logger.info("Buscando proveedores por nombre: {}", nombre);
         
         // Llamar al servicio para buscar por nombre
         ApiResponse<List<ProveedorResponse>> respuestaServicio = proveedorServicio.buscarPorNombre(nombre);
@@ -165,7 +190,7 @@ public class ProveedorController {
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        logger.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
     
@@ -179,7 +204,7 @@ public class ProveedorController {
     public ResponseEntity<ApiResponse<List<ProveedorResponse>>> buscarProveedoresPorRazonSocial(
             @RequestParam String razonSocial) {
         
-        log.info("Buscando proveedores por razón social: {}", razonSocial);
+        logger.info("Buscando proveedores por razón social: {}", razonSocial);
         
         // Llamar al servicio para buscar por razón social
         ApiResponse<List<ProveedorResponse>> respuestaServicio = proveedorServicio.buscarPorRazonSocial(razonSocial);
@@ -187,7 +212,7 @@ public class ProveedorController {
         // Mapear el código de error a HTTP status
         HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuestaServicio.getCodigo());
         
-        log.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
+        logger.info("Operación completada. Código: {}, HttpStatus: {}", respuestaServicio.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuestaServicio);
     }
 } 

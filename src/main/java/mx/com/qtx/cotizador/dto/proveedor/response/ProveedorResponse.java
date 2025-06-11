@@ -1,9 +1,9 @@
 package mx.com.qtx.cotizador.dto.proveedor.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 /**
  * DTO de respuesta para proveedores
@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
  * Contiene toda la información del proveedor para ser enviada al cliente
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ProveedorResponse {
     
     /**

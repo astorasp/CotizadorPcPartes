@@ -40,7 +40,7 @@ import mx.com.qtx.cotizador.config.TestContainerConfig;
  * - Consume endpoints REST del CotizacionController
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@ActiveProfiles("test") 
 @Import(TestContainerConfig.class)  
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public class CotizacionIntegrationTest {
@@ -463,7 +463,7 @@ public class CotizacionIntegrationTest {
     // TESTS DE SEGURIDAD Y VALIDACIÓN
     // ========================================================================
     
-    @Test
+    @Test  
     @DisplayName("Seguridad: Todos los endpoints requieren autenticación")
     void todosLosEndpointsRequierenAutenticacion() {
         String cotizacion = """
