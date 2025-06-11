@@ -1,10 +1,9 @@
 package mx.com.qtx.cotizador.dto.pedido.response;
 
-import mx.com.qtx.cotizador.dto.proveedor.response.ProveedorResponse;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,22 +12,18 @@ import java.util.List;
 /**
  * DTO de respuesta para pedidos
  * 
- * Contiene toda la información del pedido incluyendo:
- * - Datos básicos del pedido
- * - Información del proveedor
- * - Lista completa de detalles
- * - Totales calculados
+ * Contiene toda la información del pedido para ser enviada al cliente
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PedidoResponse {
     
     /**
      * Número único del pedido
      */
-    private Integer numPedido;
+    private Long numPedido;
     
     /**
      * Fecha de emisión del pedido
@@ -46,14 +41,19 @@ public class PedidoResponse {
     private Integer nivelSurtido;
     
     /**
+     * Clave del proveedor asociado
+     */
+    private String cveProveedor;
+    
+    /**
+     * Nombre del proveedor asociado
+     */
+    private String nombreProveedor;
+    
+    /**
      * Total del pedido (suma de todos los detalles)
      */
     private BigDecimal total;
-    
-    /**
-     * Información completa del proveedor
-     */
-    private ProveedorResponse proveedor;
     
     /**
      * Lista de detalles del pedido
@@ -64,9 +64,4 @@ public class PedidoResponse {
      * Número total de líneas de detalle
      */
     private Integer totalDetalles;
-    
-    /**
-     * Estado calculado basado en fechas
-     */
-    private String estado; // "PENDIENTE", "EN_PROCESO", "ENTREGADO", "VENCIDO"
 } 

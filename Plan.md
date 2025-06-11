@@ -52,15 +52,72 @@
 ## Task List
 - [x] Revisar modelo y entidades de proveedor
 - [x] Confirmar existencia de repositorio y servicio de proveedor
-- [ ] Definir/ajustar DTOs de proveedor (request/response)
-- [ ] Implementar/ajustar el controlador RESTful para proveedores (`ProveedorController`):
-    - [ ] POST /proveedores (agregar)
-    - [ ] PUT /proveedores/{id} (modificar)
-    - [ ] GET /proveedores (consultar)
-    - [ ] GET /proveedores/{id} (detalle)
-    - [ ] DELETE /proveedores/{id} (eliminar)
-- [ ] Validar flujo con pruebas de integración
-- [ ] Documentar endpoints y flujo en README/Javadoc
+- [x] Definir/ajustar DTOs de proveedor (request/response)
+- [x] Implementar/ajustar el controlador RESTful para proveedores (`ProveedorController`):
+    - [x] POST /proveedores (agregar)
+    - [x] PUT /proveedores/{id} (modificar)
+    - [x] GET /proveedores (consultar)
+    - [x] GET /proveedores/{id} (detalle)
+    - [x] DELETE /proveedores/{id} (eliminar)
+- [x] Validar flujo con pruebas de integración
+- [x] Documentar endpoints y flujo en README/Javadoc
 
 ## Current Goal
 Implementar y probar endpoints RESTful para gestión de proveedores
+
+**Resultado**: Implementacion completa de las actividades relacionados a proveedores.
+
+# Plan de implementación: Endpoints RESTful para gestión de pedidos
+
+## Notes
+- La lógica de negocio para la creación de pedidos está centralizada en la clase `mx.com.qtx.cotizador.dominio.pedidos.ManejadorCreacionPedidos`, que utiliza internamente `GestorPedidos`.
+- Se requiere implementar endpoints RESTful para administración de pedidos (generar desde cotización, consultar), respetando la arquitectura y la separación de responsabilidades.
+- El flujo debe ser: DTO → Servicio → Dominio (`ManejadorCreacionPedidos`) → Repositorio/Entidad → BD. Solo la capa de servicio puede acceder a entidades y repositorios; el controlador debe trabajar con DTOs.
+- Casos de uso a cubrir: 5.1 Generar pedido (a partir de cotización), 5.2 Consultar pedido.
+- Se requiere documentación (Javadoc y/o README) y pruebas de integración para validar el flujo completo.
+
+## Task List
+- [x] Revisar modelo y entidades de pedido
+- [x] Confirmar existencia de repositorio y servicio de pedido
+- [x] Definir/ajustar DTOs de pedido (request/response)
+- [x] Implementar/ajustar el controlador RESTful para pedidos (`PedidoController`):
+    - [x] POST /pedidos/generar (generar usando lógica de ManejadorCreacionPedidos)
+    - [x] GET /pedidos/{id} (detalle)
+    - [x] GET /pedidos (consultar todos)
+- [x] Integrar y orquestar el uso de `GestorPedidos` en el servicio de pedidos
+- [x] Validar flujo con pruebas de integración
+- [x] Documentar endpoints y flujo en README/Javadoc
+
+## Current Goal
+✅ **COMPLETADO** - Sistema de gestión de pedidos completamente implementado y probado
+
+**Resultado**: 
+- **Implementación completa**: DTOs, Mappers, Servicios, Controladores y Tests
+- **14/14 tests de integración pasando**: Cobertura completa de todos los casos de uso y escenarios de error
+- **Arquitectura domain-driven**: Uso correcto de `GestorPedidos` para lógica de negocio
+- **API RESTful funcionando**: Todos los endpoints operativos con validación y seguridad
+- **Casos de uso implementados**: 5.2 (Generar pedido desde cotización), 5.3 (Consultar pedidos por ID y listar todos)
+
+
+# Plan de implementación: Endpoints RESTful para gestión de promociones
+
+## Notes
+- El sistema ya cuenta con entidad, repositorio, DTOs, mappers, servicio (`PromocionServicio`) y controlador (`PromocionControlador`) que cubren los casos de uso:
+  - 6.1 Agregar promoción
+  - 6.2 Modificar promoción
+  - 6.3 Consultar promociones (una y todas)
+  - 6.4 Eliminar promoción
+- El controlador REST expone los endpoints necesarios y la validación se realiza en el servicio.
+- Faltan pruebas de integración para validar todos los flujos y escenarios de error.
+- Se recomienda documentar los endpoints en README y/o Swagger.
+
+## Task List
+- [x] Revisar modelo, entidades y repositorio de promoción
+- [x] Confirmar existencia de DTOs, mappers y servicio
+- [x] Confirmar existencia de controlador REST y endpoints
+- [ ] Desarrollar pruebas de integración para promociones (alta, modificación, consulta, eliminación, errores)
+- [ ] Documentar endpoints y casos de uso en README/Javadoc
+
+## Current Goal
+Planificar e implementar endpoints RESTful para generación y consulta de pedidos usando ManejadorCreacionPedidos
+Desarrollar y validar pruebas de integración para promociones

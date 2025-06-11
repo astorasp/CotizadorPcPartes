@@ -1,26 +1,25 @@
 package mx.com.qtx.cotizador.dto.pedido.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 
 /**
  * DTO de respuesta para detalles de pedido
  * 
- * Contiene toda la información de un detalle de pedido
- * para ser enviada al cliente
+ * Contiene la información de cada línea de detalle de un pedido
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class DetallePedidoResponse {
     
     /**
-     * ID único del artículo/componente
+     * Identificador del artículo
      */
     private String idArticulo;
     
@@ -40,12 +39,7 @@ public class DetallePedidoResponse {
     private BigDecimal precioUnitario;
     
     /**
-     * Total cotizado para esta línea de detalle
+     * Total de esta línea (cantidad * precio unitario)
      */
     private BigDecimal totalCotizado;
-    
-    /**
-     * Número de detalle dentro del pedido (para ordenamiento)
-     */
-    private Integer numeroDetalle;
 } 

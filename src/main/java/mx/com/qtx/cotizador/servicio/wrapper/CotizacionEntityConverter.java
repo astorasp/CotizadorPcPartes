@@ -1,6 +1,9 @@
 package mx.com.qtx.cotizador.servicio.wrapper;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Clase utilitaria para convertir objetos de Cotización entre el dominio y la persistencia
@@ -124,5 +127,99 @@ public class CotizacionEntityConverter {
         cotizacionEntity.setTotal(cotizacionCore.getTotal());
         
         return cotizacionEntity;
+    }
+    
+    /**
+     * Convierte una entidad Cotización de persistencia a un objeto de dominio
+     * 
+     * @param cotizacionEntity Entidad Cotización de persistencia
+     * @return Cotización del dominio
+     */
+    public static mx.com.qtx.cotizador.dominio.core.Cotizacion convertToDomain(
+            mx.com.qtx.cotizador.entidad.Cotizacion cotizacionEntity) {
+        
+        if (cotizacionEntity == null) {
+            return null;
+        }
+        
+        // Convertir fecha de String a LocalDate
+        LocalDate fecha = null;
+        if (cotizacionEntity.getFecha() != null && !cotizacionEntity.getFecha().isEmpty()) {
+            try {
+                fecha = LocalDate.parse(cotizacionEntity.getFecha(), DATE_FORMATTER);
+            } catch (Exception e) {
+                // Si la fecha no puede parsearse, usamos fecha actual
+                fecha = LocalDate.now();
+            }
+        }
+        
+        // Crear objeto de dominio Cotizacion
+        mx.com.qtx.cotizador.dominio.core.Cotizacion cotizacionDominio = 
+            new mx.com.qtx.cotizador.dominio.core.Cotizacion();
+        
+        // Establecer la fecha si es diferente de la actual
+        if (fecha != null) {
+            cotizacionDominio.setFecha(fecha);
+        }
+        
+        // Convertir los detalles
+        if (cotizacionEntity.getDetalles() != null && !cotizacionEntity.getDetalles().isEmpty()) {
+            List<mx.com.qtx.cotizador.dominio.core.DetalleCotizacion> detallesDominio = 
+                cotizacionEntity.getDetalles().stream()
+                    .map(CotizacionEntityConverter::convertDetalleToDomain)
+                    .collect(Collectors.toList());
+            
+            // Agregar detalles a la cotización de dominio
+            for (mx.com.qtx.cotizador.dominio.core.DetalleCotizacion detalle : detallesDominio) {
+                cotizacionDominio.agregarDetalle(detalle);
+            }
+        }
+        
+        return cotizacionDominio;
+    }
+    
+    /**
+     * Convierte un detalle de cotización de entidad a dominio
+     * 
+     * @param detalleEntity Entidad DetalleCotizacion
+     * @return DetalleCotizacion del dominio
+     */
+    private static mx.com.qtx.cotizador.dominio.core.DetalleCotizacion convertDetalleToDomain(
+            mx.com.qtx.cotizador.entidad.DetalleCotizacion detalleEntity) {
+        
+        if (detalleEntity == null) {
+            return null;
+        }
+        
+        // Obtener ID del componente
+        String idComponente = null;
+        if (detalleEntity.getComponente() != null) {
+            idComponente = detalleEntity.getComponente().getId();
+        }
+        
+        // Calcular importe cotizado como precioBase * cantidad
+        java.math.BigDecimal precioBase = detalleEntity.getPrecioBase() != null ? 
+            detalleEntity.getPrecioBase() : java.math.BigDecimal.ZERO;
+        int cantidad = detalleEntity.getCantidad() != null ? detalleEntity.getCantidad() : 0;
+        java.math.BigDecimal importeCotizado = precioBase.multiply(java.math.BigDecimal.valueOf(cantidad));
+        
+        // Obtener categoría del componente (a través de TipoComponente)
+        String categoria = "COMPONENTE";
+        if (detalleEntity.getComponente() != null && 
+            detalleEntity.getComponente().getTipoComponente() != null &&
+            detalleEntity.getComponente().getTipoComponente().getNombre() != null) {
+            categoria = detalleEntity.getComponente().getTipoComponente().getNombre();
+        }
+        
+        // Crear detalle de dominio
+        return new mx.com.qtx.cotizador.dominio.core.DetalleCotizacion(
+            detalleEntity.getId() != null ? detalleEntity.getId().getNumDetalle() : 0,
+            idComponente,
+            detalleEntity.getDescripcion() != null ? detalleEntity.getDescripcion() : "",
+            cantidad,
+            precioBase,
+            importeCotizado,
+            categoria
+        );
     }
 }
