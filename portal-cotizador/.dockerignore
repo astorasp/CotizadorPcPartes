@@ -1,0 +1,49 @@
+# Archivos de configuración del IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Node modules (si los hubiera)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Logs
+logs/
+*.log
+
+# Coverage reports
+coverage/
+
+# Source maps de desarrollo
+*.map
+
+# Archivos de configuración local (si los hubiera)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local 

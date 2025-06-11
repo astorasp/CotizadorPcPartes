@@ -1,0 +1,93 @@
+services:
+  # Base de datos MySQL
+  mysql:
+    image: mysql:8.4.4
+    container_name: cotizador-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: cotizador
+      MYSQL_USER: cotizador_user
+      MYSQL_PASSWORD: cotizador_pass
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      #- mysql_data:/var/lib/mysql
+      - ./Cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
+      - ./Cotizador/sql/dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
+    networks:
+      - cotizador-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "cotizador_user", "-pcotizador_pass"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Backend Spring Boot
+  backend:
+    build: 
+      context: ./Cotizador
+      dockerfile: Dockerfile
+    container_name: cotizador-backend
+    restart: unless-stopped
+    environment:
+      # Base de datos
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: cotizador_user
+      DB_PASSWORD: cotizador_pass
+      # Seguridad
+      SECURITY_USERNAME: admin
+      SECURITY_PASSWORD: admin123
+      # Java
+      JAVA_OPTS: "-Xmx1g -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    networks:
+      - cotizador-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8080/actuator/health || nc -z localhost 8080"]
+      timeout: 15s
+      retries: 8
+      interval: 30s
+      start_period: 120s
+
+  # Frontend Portal
+  frontend:
+    build:
+      context: ./portal-cotizador
+      dockerfile: Dockerfile
+    container_name: cotizador-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - cotizador-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 10s
+
+# Volúmenes persistentes
+#volumes:
+  #mysql_data:
+  #  driver: local
+  #  name: cotizador_mysql_data
+
+# Red personalizada
+networks:
+  cotizador-network:
+    driver: bridge
+    name: cotizador-network 

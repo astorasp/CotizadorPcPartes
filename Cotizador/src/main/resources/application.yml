@@ -30,6 +30,23 @@ security:
     password: ${SECURITY_PASSWORD:admin123}
     realm: "Cotizador API"
 
+# Configuración de Spring Boot Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
 logging:
   level:
     mx.com.qtx: INFO

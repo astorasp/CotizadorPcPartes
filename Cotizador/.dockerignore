@@ -1,0 +1,50 @@
+# Directorios de target de Maven
+target/
+
+# Archivos de configuración del IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# Archivos de test
+src/test/resources/application-test.properties
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+documentacion/
+
+# Coverage reports
+.jacoco/
+coverage/
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Build artifacts que no necesitamos
+dependency-reduced-pom.xml 
