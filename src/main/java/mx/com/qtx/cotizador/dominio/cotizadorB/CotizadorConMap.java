@@ -10,7 +10,6 @@ import mx.com.qtx.cotizador.dominio.core.DetalleCotizacion;
 import mx.com.qtx.cotizador.dominio.core.ICotizador;
 import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
 import mx.com.qtx.cotizador.dominio.impuestos.CalculadorImpuesto;
-import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
 
 public class CotizadorConMap implements ICotizador {
 	private Map<Componente,Integer> mapCompsYcants;

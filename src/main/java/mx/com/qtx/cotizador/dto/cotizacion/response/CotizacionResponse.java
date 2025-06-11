@@ -47,4 +47,9 @@ public class CotizacionResponse {
      * Lista de detalles de la cotización
      */
     private List<DetalleCotizacionResponse> detalles;
+    
+    /**
+     * Observaciones adicionales de la cotización (opcional)
+     */
+    private String observaciones;
 } 

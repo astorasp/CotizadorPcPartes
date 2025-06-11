@@ -1,12 +1,9 @@
 package mx.com.qtx.cotizador.dto.cotizacion.mapper;
 
-import mx.com.qtx.cotizador.dto.cotizacion.request.CotizacionCreateRequest;
-import mx.com.qtx.cotizador.dto.cotizacion.request.DetalleCotizacionRequest;
 import mx.com.qtx.cotizador.dto.cotizacion.response.CotizacionResponse;
 import mx.com.qtx.cotizador.dto.cotizacion.response.DetalleCotizacionResponse;
 import mx.com.qtx.cotizador.entidad.Cotizacion;
 import mx.com.qtx.cotizador.entidad.DetalleCotizacion;
-import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,6 +33,7 @@ public class CotizacionMapper {
                 .impuestos(cotizacion.getImpuestos())
                 .total(cotizacion.getTotal())
                 .detalles(detallesResponse)
+                .observaciones(null) // Las observaciones no se almacenan en la entidad actual
                 .build();
     }
     
@@ -58,53 +56,6 @@ public class CotizacionMapper {
                 .precioBase(detalle.getPrecioBase())
                 .importeTotal(calcularImporteTotal(detalle))
                 .build();
-    }
-    
-    /**
-     * Convierte un CotizacionCreateRequest a Cotizacion del dominio
-     */
-    public static mx.com.qtx.cotizador.dominio.core.Cotizacion toDomain(CotizacionCreateRequest request, CotizacionServicio cotizacionServicio) {
-        if (request == null) {
-            return null;
-        }
-        
-        var cotizacion = new mx.com.qtx.cotizador.dominio.core.Cotizacion();
-        
-        // Agregar detalles
-        if (request.getDetalles() != null) {
-            for (int i = 0; i < request.getDetalles().size(); i++) {
-                DetalleCotizacionRequest detalleRequest = request.getDetalles().get(i);
-                mx.com.qtx.cotizador.dominio.core.DetalleCotizacion detalle = toDetalleDomain(detalleRequest, i + 1);
-                cotizacion.agregarDetalle(detalle);
-            }
-        }
-        
-        return cotizacion;
-    }
-    
-    /**
-     * Convierte un DetalleCotizacionRequest a DetalleCotizacion del dominio
-     */
-    public static mx.com.qtx.cotizador.dominio.core.DetalleCotizacion toDetalleDomain(DetalleCotizacionRequest request, int numDetalle) {
-        if (request == null) {
-            return null;
-        }
-        
-        // Usar valores por defecto para campos requeridos que se calcularán después
-        String descripcion = request.getDescripcion() != null ? request.getDescripcion() : "";
-        java.math.BigDecimal precioBase = request.getPrecioBase() != null ? request.getPrecioBase() : java.math.BigDecimal.ZERO;
-        java.math.BigDecimal importeCotizado = precioBase.multiply(java.math.BigDecimal.valueOf(request.getCantidad()));
-        String categoria = ""; // Se establecerá después al obtener el componente
-        
-        return new mx.com.qtx.cotizador.dominio.core.DetalleCotizacion(
-            numDetalle,
-            request.getIdComponente(),
-            descripcion,
-            request.getCantidad(),
-            precioBase,
-            importeCotizado,
-            categoria
-        );
     }
     
     /**

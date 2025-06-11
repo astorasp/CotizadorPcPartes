@@ -6,16 +6,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import mx.com.qtx.cotizador.dominio.core.Cotizacion;
+import mx.com.qtx.cotizador.dominio.core.ICotizador;
+import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
+import mx.com.qtx.cotizador.dominio.cotizadorA.Cotizador;
+import mx.com.qtx.cotizador.dominio.cotizadorB.CotizadorConMap;
+import mx.com.qtx.cotizador.dominio.impuestos.CalculadorImpuesto;
+import mx.com.qtx.cotizador.dominio.impuestos.IVA;
+import mx.com.qtx.cotizador.dominio.impuestos.CalculadorImpuestoLocal;
+import mx.com.qtx.cotizador.dominio.impuestos.CalculadorImpuestoFederal;
+import mx.com.qtx.cotizador.dominio.impuestos.CalculadorImpuestoMexico;
 import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
+import mx.com.qtx.cotizador.dto.cotizacion.request.CotizacionCreateRequest;
+import mx.com.qtx.cotizador.dto.cotizacion.request.DetalleCotizacionRequest;
+import mx.com.qtx.cotizador.dto.cotizacion.response.CotizacionResponse;
+import mx.com.qtx.cotizador.dto.cotizacion.mapper.CotizacionMapper;
+import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
+import mx.com.qtx.cotizador.servicio.componente.ComponenteServicio;
 import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEntityConverter;
+import mx.com.qtx.cotizador.servicio.wrapper.ComponenteResponseConverter;
 import mx.com.qtx.cotizador.util.Errores;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @Service
 public class CotizacionServicio {
@@ -23,12 +40,149 @@ public class CotizacionServicio {
     private static final Logger logger = LoggerFactory.getLogger(CotizacionServicio.class);
     
     private final CotizacionRepositorio cotizacionRepo;
-    private final ComponenteRepositorio componenteRepo;
+    private final ComponenteServicio componenteServicio;
+    private final ComponenteRepositorio componenteRepo; // Necesario solo para addDetallesTo
     
-    public CotizacionServicio(CotizacionRepositorio cotizacionRepo, ComponenteRepositorio componenteRepo) {
+    public CotizacionServicio(CotizacionRepositorio cotizacionRepo, 
+                             ComponenteServicio componenteServicio,
+                             ComponenteRepositorio componenteRepo) {
         this.cotizacionRepo = cotizacionRepo;
+        this.componenteServicio = componenteServicio;
         this.componenteRepo = componenteRepo;
     }   
+
+    /**
+     * Guarda una cotización completa usando la lógica de dominio.
+     * <p>
+     * Este método implementa el flujo arquitectónico correcto:
+     * 1. Recibe DTOs de entrada
+     * 2. Usa ComponenteServicio para obtener objetos de dominio
+     * 3. Aplica lógica de dominio (cotizadores e impuestos)
+     * 4. Persiste resultado y retorna DTOs de salida
+     * </p>
+     * 
+     * @param request DTO con los datos para crear la cotización
+     * @return ApiResponse con la cotización guardada o error correspondiente
+     */
+    @Transactional
+    public ApiResponse<CotizacionResponse> guardarCotizacion(CotizacionCreateRequest request) {
+        try {
+            // 1. Validaciones de entrada
+            if (request == null) {
+                logger.warn("Request de cotización nulo");
+                return new ApiResponse<>(Errores.CAMPO_REQUERIDO.getCodigo(), 
+                                       "Los datos de cotización son requeridos");
+            }
+            
+            if (request.getDetalles() == null || request.getDetalles().isEmpty()) {
+                logger.warn("Request sin detalles");
+                return new ApiResponse<>(Errores.COTIZACION_SIN_DETALLES.getCodigo(), 
+                                       Errores.COTIZACION_SIN_DETALLES.getMensaje());
+            }
+            
+            // 2. Crear cotizador según tipo especificado
+            ICotizador cotizador = crearCotizador(request.getTipoCotizador());
+            
+            // 3. Agregar componentes al cotizador usando servicio de componentes
+            for (DetalleCotizacionRequest detalle : request.getDetalles()) {
+                // Buscar componente usando el servicio (no repositorio directamente)
+                ApiResponse<ComponenteResponse> componenteResponse = 
+                    componenteServicio.buscarComponente(detalle.getIdComponente());
+                
+                if (!componenteResponse.getCodigo().equals(Errores.OK.getCodigo()) || 
+                    componenteResponse.getData() == null) {
+                    logger.warn("Componente no encontrado: {}", detalle.getIdComponente());
+                    return new ApiResponse<>(Errores.COMPONENTE_NO_ENCONTRADO_EN_COTIZACION.getCodigo(), 
+                                           "Componente no encontrado: " + detalle.getIdComponente());
+                }
+                
+                // Convertir DTO de respuesta a objeto de dominio
+                Componente compDominio = ComponenteResponseConverter.toDomainObject(componenteResponse.getData());
+                
+                // Agregar al cotizador
+                cotizador.agregarComponente(detalle.getCantidad(), compDominio);
+            }
+            
+            // 4. Generar cotización usando lógica de dominio
+            List<CalculadorImpuesto> impuestos = mapearImpuestos(request.getImpuestos());
+            Cotizacion cotizacionDominio = cotizador.generarCotizacion(impuestos);
+            
+            logger.info("Cotización generada con lógica de dominio. Total: {}", cotizacionDominio.getTotal());
+            
+            // 5. Convertir dominio a entidad JPA para persistir
+            mx.com.qtx.cotizador.entidad.Cotizacion cotizacionEntity = 
+                CotizacionEntityConverter.convertToNewEntity(cotizacionDominio);
+                
+            // 6. Persistir la entidad cotización
+            mx.com.qtx.cotizador.entidad.Cotizacion cotizacionGuardada = cotizacionRepo.save(cotizacionEntity);
+            
+            // 7. Convertir a DTO de respuesta
+            CotizacionResponse response = CotizacionMapper.toResponse(cotizacionGuardada);
+            
+            logger.info("Cotización guardada exitosamente con folio: {}", cotizacionGuardada.getFolio());
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Cotización guardada exitosamente", response);
+            
+        } catch (Exception e) {
+            logger.error("Error al guardar cotización: {}", e.getMessage(), e);
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+    
+    /**
+     * Factory para crear cotizador según tipo especificado
+     */
+    private ICotizador crearCotizador(String tipo) {
+        if (tipo == null) {
+            tipo = "A"; // Valor por defecto
+        }
+        
+        switch (tipo.toUpperCase()) {
+            case "A":
+                return new Cotizador(new IVA());
+            case "B": 
+                return new CotizadorConMap();
+            default:
+                logger.warn("Tipo de cotizador desconocido '{}', usando tipo A por defecto", tipo);
+                return new Cotizador(new IVA());
+        }
+    }
+    
+    /**
+     * Mapea los tipos de impuestos del DTO a objetos CalculadorImpuesto
+     */
+    private List<CalculadorImpuesto> mapearImpuestos(List<String> tiposImpuestos) {
+        List<CalculadorImpuesto> impuestos = new ArrayList<>();
+        
+        if (tiposImpuestos == null || tiposImpuestos.isEmpty()) {
+            // Aplicar IVA por defecto
+            impuestos.add(new IVA());
+            return impuestos;
+        }
+        
+        for (String tipo : tiposImpuestos) {
+            switch (tipo.toUpperCase()) {
+                case "IVA":
+                    impuestos.add(new IVA());
+                    break;
+                case "LOCAL":
+                    impuestos.add(new CalculadorImpuestoLocal(new CalculadorImpuestoMexico()));
+                    break;
+                case "FEDERAL":
+                    impuestos.add(new CalculadorImpuestoFederal(new CalculadorImpuestoMexico()));
+                    break;
+                default:
+                    logger.warn("Tipo de impuesto desconocido '{}', se ignora", tipo);
+            }
+        }
+        
+        // Si no se mapeó ningún impuesto válido, agregar IVA por defecto
+        if (impuestos.isEmpty()) {
+            impuestos.add(new IVA());
+        }
+        
+        return impuestos;
+    }
 
     /**
      * Guarda una cotización en la base de datos
@@ -93,6 +247,39 @@ public class CotizacionServicio {
     }
 
     /**
+     * Busca una cotización por su ID y la retorna como DTO
+     */
+    @Transactional(readOnly = true)
+    public ApiResponse<CotizacionResponse> buscarCotizacionPorIdComoDTO(Integer id) {
+        try {
+            if (id == null || id <= 0) {
+                logger.warn("ID de cotización inválido: {}", id);
+                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
+                                       Errores.VALOR_INVALIDO.getMensaje());
+            }
+
+            Optional<mx.com.qtx.cotizador.entidad.Cotizacion> cotizacionEntity = cotizacionRepo.findById(id);
+            
+            if (cotizacionEntity.isEmpty()) {
+                logger.warn("Cotización no encontrada con ID: {}", id);
+                return new ApiResponse<>(Errores.COTIZACION_NO_ENCONTRADA.getCodigo(), 
+                                       Errores.COTIZACION_NO_ENCONTRADA.getMensaje());
+            }
+
+            // Convertir entidad a DTO
+            CotizacionResponse response = CotizacionMapper.toResponse(cotizacionEntity.get());
+            
+            logger.info("Cotización encontrada exitosamente: {}", id);
+            return new ApiResponse<>(Errores.OK.getCodigo(), Errores.OK.getMensaje(), response);
+            
+        } catch (Exception e) {
+            logger.error("Error al buscar cotización por ID {}: {}", id, e.getMessage(), e);
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+
+    /**
      * Lista todas las cotizaciones
      */
     @Transactional(readOnly = true)
@@ -102,6 +289,27 @@ public class CotizacionServicio {
             
             logger.info("Listado de cotizaciones obtenido exitosamente. Total: {}", cotizaciones.size());
             return new ApiResponse<>(Errores.OK.getCodigo(), Errores.OK.getMensaje(), cotizaciones);
+            
+        } catch (Exception e) {
+            logger.error("Error al listar cotizaciones: {}", e.getMessage(), e);
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+
+    /**
+     * Lista todas las cotizaciones como DTOs
+     */
+    @Transactional(readOnly = true)
+    public ApiResponse<List<CotizacionResponse>> listarCotizacionesComoDTO() {
+        try {
+            List<mx.com.qtx.cotizador.entidad.Cotizacion> cotizaciones = cotizacionRepo.findAll();
+            
+            // Convertir entidades a DTOs
+            List<CotizacionResponse> responses = CotizacionMapper.toResponseList(cotizaciones);
+            
+            logger.info("Listado de cotizaciones obtenido exitosamente. Total: {}", cotizaciones.size());
+            return new ApiResponse<>(Errores.OK.getCodigo(), Errores.OK.getMensaje(), responses);
             
         } catch (Exception e) {
             logger.error("Error al listar cotizaciones: {}", e.getMessage(), e);
@@ -126,6 +334,33 @@ public class CotizacionServicio {
             
             logger.info("Búsqueda por fecha '{}' completada. Encontradas: {}", fecha, cotizaciones.size());
             return new ApiResponse<>(Errores.OK.getCodigo(), Errores.OK.getMensaje(), cotizaciones);
+            
+        } catch (Exception e) {
+            logger.error("Error al buscar cotizaciones por fecha '{}': {}", fecha, e.getMessage(), e);
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+
+    /**
+     * Busca cotizaciones por fecha y las retorna como DTOs
+     */
+    @Transactional(readOnly = true)
+    public ApiResponse<List<CotizacionResponse>> buscarCotizacionesPorFechaComoDTO(String fecha) {
+        try {
+            if (fecha == null || fecha.trim().isEmpty()) {
+                logger.warn("Fecha de búsqueda vacía o nula");
+                return new ApiResponse<>(Errores.VALOR_INVALIDO.getCodigo(), 
+                                       "La fecha de búsqueda no puede estar vacía");
+            }
+
+            List<mx.com.qtx.cotizador.entidad.Cotizacion> cotizaciones = cotizacionRepo.findByFechaContaining(fecha);
+            
+            // Convertir entidades a DTOs
+            List<CotizacionResponse> responses = CotizacionMapper.toResponseList(cotizaciones);
+            
+            logger.info("Búsqueda por fecha '{}' completada. Encontradas: {}", fecha, cotizaciones.size());
+            return new ApiResponse<>(Errores.OK.getCodigo(), Errores.OK.getMensaje(), responses);
             
         } catch (Exception e) {
             logger.error("Error al buscar cotizaciones por fecha '{}': {}", fecha, e.getMessage(), e);
