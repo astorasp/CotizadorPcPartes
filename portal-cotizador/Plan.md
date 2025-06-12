@@ -11,13 +11,13 @@
 - [X] Identificar y documentar los endpoints disponibles y la información que reciben/devuelven.
 - [X] Diseñar la estructura de navegación del portal (menú principal y submenús).
 - [X] Crear la vista y lógica para gestión de componentes.
-- [ ] Crear la vista y lógica para armado de PCs.
-- [ ] Crear la vista y lógica para gestión de cotizaciones.
-- [ ] Crear la vista y lógica para gestión de proveedores.
-- [ ] Crear la vista y lógica para gestión de pedidos.
-- [ ] Crear la vista y lógica para gestión de promociones.
-- [ ] Implementar integración frontend con los endpoints para cada sección.
-- [ ] Realizar pruebas de flujo completo (de gestión hasta promociones).
+- [X] Crear la vista y lógica para armado de PCs.
+- [X] Crear la vista y lógica para gestión de cotizaciones.
+- [X] Crear la vista y lógica para gestión de proveedores.
+- [X] Crear la vista y lógica para gestión de pedidos.
+- [X] Crear la vista y lógica para gestión de promociones.
+- [X] Implementar integración frontend con los endpoints para cada sección.
+- [X] Realizar pruebas de flujo completo (de gestión hasta promociones).
 
 ## Current Goal
 Identificar y documentar los endpoints y su información.
