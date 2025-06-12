@@ -1,13 +1,8 @@
 package mx.com.qtx.cotizador.integration.pc;
 
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import mx.com.qtx.cotizador.config.TestContainerConfig;
+import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 import org.junit.jupiter.api.*;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -24,11 +19,8 @@ import io.restassured.response.ValidatableResponse;
  * - CU 2.4: Guardar sub-componentes
  * - CU 2.5: Consultar PC con todos sus componentes
  * 
- * Configuración:
- * - Usa TestContainers con MySQL 8.4.4
- * - Perfil 'test' con configuración específica
- * - Puerto aleatorio para evitar conflictos
- * - Datos de prueba precargados via DDL/DML de /sql
+ * Usa base de datos MySQL compartida via BaseIntegrationTest.
+ * Configuración y datos de prueba heredados automáticamente.
  * 
  * Datos precargados disponibles:
  * - PCs: PC001-PC005 (con componentes asociados)
@@ -36,30 +28,23 @@ import io.restassured.response.ValidatableResponse;
  * - Tipos: PC, DISCO_DURO, MONITOR, TARJETA_VIDEO
  * - Promociones: Regular, Monitores por Volumen, Tarjetas 3x2, etc.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-@SpringJUnitConfig(TestContainerConfig.class)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-public class PcIntegrationTest {
+class PcIntegrationTest extends BaseIntegrationTest {
 
     private static final String USER_ADMIN = "test";
     private static final String PASSWORD_ADMIN = "test123";
-
-    @LocalServerPort
-    private int port;
 
     // IDs de PCs para tests (usaremos timestamp para evitar conflictos con datos precargados)
     private static final String PC_TEST_ID = "PC" + System.currentTimeMillis() % 1000;
     private static final String PC_MODIFICAR_ID = "PM" + (System.currentTimeMillis() % 1000 + 1); 
     private static final String PC_ELIMINAR_ID = "PD" + (System.currentTimeMillis() % 1000 + 2);
 
-    @BeforeEach
-    void setUp() {
-        RestAssured.port = port;
-        RestAssured.basePath = "/cotizador/v1/api";
-        // Las credenciales están configuradas en application-test.properties
-        // Username: test, Password: test123
-    }
+    // ✅ Configuración heredada de BaseIntegrationTest:
+    // - Base de datos MySQL compartida
+    // - RestAssured configurado automáticamente  
+    // - Autenticación (test/test123)
+    // - Puerto aleatorio
+    // - Scripts DDL + DML precargados
 
     // ========================================================================
     // CASO DE USO 2.5: CONSULTAR PC

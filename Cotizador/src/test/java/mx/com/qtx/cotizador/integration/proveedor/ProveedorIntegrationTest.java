@@ -7,34 +7,19 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.greaterThan;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.AfterAll;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
 import mx.com.qtx.cotizador.dto.proveedor.request.ProveedorCreateRequest;
+import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 
 /**
  * Tests de integración para ProveedorController
- * 
- * Configuración:
- * - Usa TestContainers con MySQL 8.4.4
- * - Puerto aleatorio para evitar conflictos
- * - Perfil de pruebas activo
- * - Autenticación básica (test/test123)
  * 
  * Casos de uso cubiertos:
  * - 4.1 Crear proveedor
@@ -43,43 +28,19 @@ import mx.com.qtx.cotizador.dto.proveedor.request.ProveedorCreateRequest;
  * - 4.4 Eliminar proveedor
  * - Búsquedas adicionales
  * - Validaciones y manejo de errores
+ * 
+ * Usa base de datos MySQL compartida via BaseIntegrationTest.
+ * Configuración y datos de prueba heredados automáticamente.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-@Testcontainers
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-class ProveedorIntegrationTest {
+class ProveedorIntegrationTest extends BaseIntegrationTest {
 
-    @LocalServerPort
-    private int port;
-
-    @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4.4")
-            .withDatabaseName("cotizador_test")
-            .withUsername("cotizador_user")
-            .withPassword("cotizador_pass");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
-        registry.add("spring.datasource.username", mysql::getUsername);
-        registry.add("spring.datasource.password", mysql::getPassword);
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.show-sql", () -> "true");
-        registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.MySQL8Dialect");
-    }
-
-    @BeforeEach
-    void setUp() {
-        RestAssured.port = port;
-        RestAssured.authentication = RestAssured.basic("test", "test123");
-        RestAssured.basePath = "/cotizador/v1/api";
-    }
-
-    @AfterAll
-    static void stopContainer() {
-        mysql.stop();
-    }
+    // ✅ Configuración heredada de BaseIntegrationTest:
+    // - Base de datos MySQL compartida
+    // - RestAssured configurado automáticamente  
+    // - Autenticación (test/test123)
+    // - Puerto aleatorio
+    // - Scripts DDL + DML precargados
 
     // ==================== CASO DE USO 4.1: CREAR PROVEEDOR ====================
 
@@ -95,7 +56,8 @@ class ProveedorIntegrationTest {
             """;
 
         given()
-            .contentType(ContentType.JSON)
+            .contentType(ContentType.JSON) 
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
             .post("/proveedores")
@@ -119,6 +81,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
             .post("/proveedores")
@@ -140,6 +103,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
             .post("/proveedores")
@@ -157,6 +121,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBodyDuplicado)
         .when()
             .post("/proveedores")
@@ -181,6 +146,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
             .post("/proveedores")
@@ -197,6 +163,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestActualizacion)
         .when()
             .put("/proveedores/PROV004")
@@ -221,6 +188,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestActualizacion)
         .when()
             .put("/proveedores/NOEXISTE")
@@ -245,6 +213,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
             .post("/proveedores")
@@ -253,6 +222,7 @@ class ProveedorIntegrationTest {
 
         // Consultar el proveedor
         given()
+        .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/PROV005")
         .then()
@@ -268,6 +238,7 @@ class ProveedorIntegrationTest {
     @DisplayName("CU 4.3.2 - Debería retornar error para proveedor inexistente")
     void deberiaRetornarErrorProveedorInexistente() {
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/INEXISTENTE")
         .then()
@@ -299,6 +270,7 @@ class ProveedorIntegrationTest {
         for (String proveedor : proveedores) {
             given()
                 .contentType(ContentType.JSON)
+                .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
                 .body(proveedor)
             .when()
                 .post("/proveedores")
@@ -308,6 +280,7 @@ class ProveedorIntegrationTest {
 
         // Listar todos los proveedores
         given()
+        .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores")
         .then()
@@ -332,6 +305,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
             .post("/proveedores")
@@ -340,6 +314,7 @@ class ProveedorIntegrationTest {
 
         // Eliminar el proveedor
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .delete("/proveedores/ELIM001")
         .then()
@@ -349,6 +324,7 @@ class ProveedorIntegrationTest {
 
         // Verificar que ya no existe
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/ELIM001")
         .then()
@@ -360,6 +336,7 @@ class ProveedorIntegrationTest {
     @DisplayName("CU 4.4.2 - Debería rechazar eliminación de proveedor inexistente")
     void deberiaRechazarEliminacionProveedorInexistente() {
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .delete("/proveedores/NOEXISTE")
         .then()
@@ -393,6 +370,7 @@ class ProveedorIntegrationTest {
         for (String proveedor : proveedores) {
             given()
                 .contentType(ContentType.JSON)
+                .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
                 .body(proveedor)
             .when()
                 .post("/proveedores")
@@ -403,6 +381,7 @@ class ProveedorIntegrationTest {
         // Buscar por nombre
         given()
             .queryParam("nombre", "Tecnología")
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/buscar/nombre")
         .then()
@@ -425,6 +404,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
             .post("/proveedores")
@@ -434,6 +414,7 @@ class ProveedorIntegrationTest {
         // Buscar por razón social
         given()
             .queryParam("razonSocial", "Distribuidora")
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/buscar/razon-social")
         .then()
@@ -447,6 +428,7 @@ class ProveedorIntegrationTest {
     void deberiaRechazarBusquedaParametroVacio() {
         given()
             .queryParam("nombre", "")
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/buscar/nombre")
         .then()
@@ -455,6 +437,7 @@ class ProveedorIntegrationTest {
 
         given()
             .queryParam("razonSocial", "")
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/buscar/razon-social")
         .then()
@@ -476,6 +459,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
             .post("/proveedores")
@@ -496,6 +480,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
             .post("/proveedores")
@@ -519,6 +504,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
             .post("/proveedores")
@@ -528,6 +514,7 @@ class ProveedorIntegrationTest {
 
         // 2. Consultar proveedor
         given()
+        .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/" + clave)
         .then()
@@ -545,6 +532,7 @@ class ProveedorIntegrationTest {
 
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestActualizacion)
         .when()
             .put("/proveedores/" + clave)
@@ -555,6 +543,7 @@ class ProveedorIntegrationTest {
 
         // 4. Eliminar proveedor
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .delete("/proveedores/" + clave)
         .then()
@@ -563,6 +552,7 @@ class ProveedorIntegrationTest {
 
         // 5. Verificar eliminación
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/proveedores/" + clave)
         .then()
@@ -583,7 +573,7 @@ class ProveedorIntegrationTest {
         
         // Act & Assert - Capturar la respuesta completa
         String responseBody = given()
-                .auth().basic("test", "test123")
+                .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
                 .contentType(ContentType.JSON)
                 .body(request)
         .when()

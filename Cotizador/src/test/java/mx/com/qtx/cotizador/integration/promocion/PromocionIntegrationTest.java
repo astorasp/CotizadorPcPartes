@@ -3,23 +3,14 @@ package mx.com.qtx.cotizador.integration.promocion;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import mx.com.qtx.cotizador.dto.promocion.request.PromocionCreateRequest;
 import mx.com.qtx.cotizador.dto.promocion.request.PromocionUpdateRequest;
 import mx.com.qtx.cotizador.dto.promocion.request.DetallePromocionRequest;
 import mx.com.qtx.cotizador.dto.promocion.enums.TipoPromocionBase;
+import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,47 +27,18 @@ import static org.hamcrest.Matchers.*;
  * - 6.3: Consultar promociones (por ID y listar todas)
  * - 6.4: Eliminar promoción
  * 
- * Usa TestContainers con MySQL y RestAssured para tests end-to-end
- * Datos de prueba cargados desde archivos SQL en test/resources
+ * Usa base de datos MySQL compartida via BaseIntegrationTest.
+ * Configuración y datos de prueba heredados automáticamente.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-@Testcontainers
 @DisplayName("Integration Tests - Gestión de Promociones")
-class PromocionIntegrationTest {
+class PromocionIntegrationTest extends BaseIntegrationTest {
 
-    @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4.4")
-            .withDatabaseName("cotizador_test")
-            .withUsername("test_user")
-            .withPassword("test_password")
-            .withInitScript("sql/ddl.sql");
-
-    @LocalServerPort
-    private int port;
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
-        registry.add("spring.datasource.username", mysql::getUsername);
-        registry.add("spring.datasource.password", mysql::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "com.mysql.cj.jdbc.Driver");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
-        registry.add("spring.sql.init.mode", () -> "always");
-        registry.add("spring.sql.init.data-locations", () -> "classpath:sql/dml.sql");
-    }
-
-    @BeforeAll
-    static void setup() {
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    }
-
-    @BeforeEach
-    void setUp() {
-        RestAssured.port = port;
-        RestAssured.authentication = RestAssured.basic("test", "test123");
-        RestAssured.basePath = "/cotizador/v1/api";
-    }
+    // ✅ Configuración heredada de BaseIntegrationTest:
+    // - Base de datos MySQL compartida
+    // - RestAssured configurado automáticamente  
+    // - Autenticación (test/test123)
+    // - Puerto aleatorio
+    // - Scripts DDL + DML precargados
 
     // ==================== CASO DE USO 6.1: AGREGAR PROMOCIÓN ====================
 
@@ -100,6 +62,7 @@ class PromocionIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/promociones")
@@ -137,6 +100,7 @@ class PromocionIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/promociones")
@@ -162,6 +126,7 @@ class PromocionIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/promociones")
@@ -193,6 +158,7 @@ class PromocionIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .put("/promociones/2")
@@ -227,6 +193,7 @@ class PromocionIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .put("/promociones/99999")
@@ -245,6 +212,7 @@ class PromocionIntegrationTest {
         
         // Act & Assert - Consultar promoción existente del DML (ID 1: Regular)
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/promociones/1")
         .then()
@@ -266,6 +234,7 @@ class PromocionIntegrationTest {
         
         // Act & Assert
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/promociones/99999")
         .then()
@@ -281,6 +250,7 @@ class PromocionIntegrationTest {
         
         // Act & Assert
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/promociones")
         .then()
@@ -317,6 +287,7 @@ class PromocionIntegrationTest {
         // Crear promoción primero
         Integer promocionId = given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(createRequest)
         .when()
             .post("/promociones")
@@ -327,6 +298,7 @@ class PromocionIntegrationTest {
         
         // Act & Assert - Eliminar la promoción creada
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .delete("/promociones/" + promocionId)
         .then()
@@ -337,6 +309,7 @@ class PromocionIntegrationTest {
         
         // Verificar que realmente se eliminó
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/promociones/" + promocionId)
         .then()
@@ -351,6 +324,7 @@ class PromocionIntegrationTest {
         // Act & Assert - Intentar eliminar promoción con componentes asociados (ID 2: Monitores)
         // El sistema devuelve HTTP 500 por foreign key constraint (comportamiento actual)
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .delete("/promociones/2")
         .then()
@@ -366,6 +340,7 @@ class PromocionIntegrationTest {
         
         // Act & Assert
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .delete("/promociones/99999")
         .then()
@@ -480,6 +455,7 @@ class PromocionIntegrationTest {
         
         Integer promocionId = given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(createRequest)
         .when()
             .post("/promociones")
@@ -491,6 +467,7 @@ class PromocionIntegrationTest {
         
         // Paso 2: Consultar la promoción creada
         given()
+        .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/promociones/" + promocionId)
         .then()
@@ -514,6 +491,7 @@ class PromocionIntegrationTest {
         
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(updateRequest)
         .when()
             .put("/promociones/" + promocionId)
@@ -524,6 +502,7 @@ class PromocionIntegrationTest {
         
         // Paso 4: Eliminar la promoción
         given()
+        .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .delete("/promociones/" + promocionId)
         .then()

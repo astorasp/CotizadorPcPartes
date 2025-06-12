@@ -7,20 +7,13 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.greaterThan;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.AfterAll;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
-
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import mx.com.qtx.cotizador.config.TestContainerConfig;
+import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 
 /**
  * Tests de integración para casos de uso de Gestión de Cotizaciones
@@ -39,22 +32,10 @@ import mx.com.qtx.cotizador.config.TestContainerConfig;
  * - Datos de prueba precargados via DDL/DML de /sql
  * - Consume endpoints REST del CotizacionController
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test") 
-@Import(TestContainerConfig.class)  
 @TestMethodOrder(MethodOrderer.DisplayName.class)
-public class CotizacionIntegrationTest {
-
-    private static final String USER_ADMIN = "test";
-    private static final String PASSWORD_ADMIN = "test123";
-
-    @LocalServerPort
-    private int port;
+public class CotizacionIntegrationTest extends BaseIntegrationTest {
     
-    @BeforeEach
-    void setUp() {
-        RestAssured.baseURI = "http://localhost:" + port + "/cotizador/v1/api";
-    }
+    // setUp() y configuraciones heredadas de BaseIntegrationTest
 
     // ========================================================================
     // CASO DE USO 3.3: LISTAR COTIZACIONES  

@@ -3,20 +3,11 @@ package mx.com.qtx.cotizador.integration.pedido;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import mx.com.qtx.cotizador.dto.pedido.request.GenerarPedidoRequest;
+import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 
 import java.time.LocalDate;
 
@@ -30,47 +21,18 @@ import static org.hamcrest.Matchers.*;
  * - 5.2: Generar pedido desde cotización
  * - 5.3: Consultar pedidos (por ID y listar todos)
  * 
- * Usa TestContainers con MySQL y RestAssured para tests end-to-end
- * Datos de prueba cargados desde archivos SQL en test/resources
+ * Usa base de datos MySQL compartida via BaseIntegrationTest.
+ * Configuración y datos de prueba heredados automáticamente.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-@Testcontainers
 @DisplayName("Integration Tests - Gestión de Pedidos")
-class PedidoIntegrationTest {
+class PedidoIntegrationTest extends BaseIntegrationTest {
 
-    @Container
-    static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.4.4")
-            .withDatabaseName("cotizador_test")
-            .withUsername("test_user")
-            .withPassword("test_password")
-            .withInitScript("sql/ddl.sql");
-
-    @LocalServerPort
-    private int port;
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
-        registry.add("spring.datasource.username", mysql::getUsername);
-        registry.add("spring.datasource.password", mysql::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "com.mysql.cj.jdbc.Driver");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
-        registry.add("spring.sql.init.mode", () -> "always");
-        registry.add("spring.sql.init.data-locations", () -> "classpath:sql/dml.sql");
-    }
-
-    @BeforeAll
-    static void setup() {
-        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    }
-
-    @BeforeEach
-    void setUp() {
-        RestAssured.port = port;
-        RestAssured.authentication = RestAssured.basic("test", "test123");
-        RestAssured.basePath = "/cotizador/v1/api";
-    }
+    // ✅ Configuración heredada de BaseIntegrationTest:
+    // - Base de datos MySQL compartida
+    // - RestAssured configurado automáticamente  
+    // - Autenticación (test/test123)
+    // - Puerto aleatorio
+    // - Scripts DDL + DML precargados
 
     // ==================== CASO DE USO 5.2: GENERAR PEDIDO DESDE COTIZACIÓN ====================
 
@@ -90,6 +52,7 @@ class PedidoIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/pedidos/generar")
@@ -123,6 +86,7 @@ class PedidoIntegrationTest {
         
         // Act & Assert
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
             .body(request)
         .when()
@@ -150,6 +114,7 @@ class PedidoIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/pedidos/generar")
@@ -176,6 +141,7 @@ class PedidoIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/pedidos/generar")
@@ -202,6 +168,7 @@ class PedidoIntegrationTest {
         // Act & Assert
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/pedidos/generar")
@@ -220,6 +187,7 @@ class PedidoIntegrationTest {
         
         // Act & Assert - Usar pedido existente del DML (pedido #1)
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/pedidos/1")
         .then()
@@ -240,6 +208,7 @@ class PedidoIntegrationTest {
         
         // Act & Assert
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/pedidos/999999")
         .then()
@@ -255,6 +224,7 @@ class PedidoIntegrationTest {
         
         // Act & Assert - El endpoint actual devuelve 500 por error de conversión String->Integer
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/pedidos/null")
         .then()
@@ -271,6 +241,7 @@ class PedidoIntegrationTest {
         
         // Act & Assert
         given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
             .get("/pedidos")
         .then()
@@ -353,6 +324,7 @@ class PedidoIntegrationTest {
         
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request1)
         .when()
             .post("/pedidos/generar")
@@ -372,6 +344,7 @@ class PedidoIntegrationTest {
         
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request2)
         .when()
             .post("/pedidos/generar")
@@ -398,6 +371,7 @@ class PedidoIntegrationTest {
         // Nota: Hay un issue con auto-incremento de IDs que necesita investigación separada
         given()
             .contentType(ContentType.JSON)
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
             .post("/pedidos/generar")
