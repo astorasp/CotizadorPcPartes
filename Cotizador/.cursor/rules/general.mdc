@@ -12,6 +12,3 @@ alwaysApply: true
 
 - Do not make assumption.
 - Ask more questions before executing, until you think the requirement is clear enough.
-
-# write all changes
-- When you make new changes in the code, append them at the end of the file called CHANGELOG.md file that is in the root of the projec and use a format DD-MM-YYYYY hh:mm to have the exact date when it was modified

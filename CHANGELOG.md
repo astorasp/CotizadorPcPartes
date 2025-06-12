@@ -295,6 +295,52 @@ void deberiaFallarConIdPedidoInvalido() {
 
 ---
 
+## 11-06-2025 18:25 - Documentación Completa del Proyecto ✅ CREADO
+
+### 🎯 Objetivo Cumplido
+**Creación de README.md completo** en la raíz del repositorio para explicar la arquitectura, funcionamiento y uso del sistema.
+
+### 📚 Contenido del README.md
+
+#### **Secciones Principales**
+1. **🏗️ Arquitectura del Sistema** - Componentes y flujo de datos
+2. **🚀 Inicio Rápido** - Docker Compose y script automatizado
+3. **📁 Estructura del Proyecto** - Organización de archivos y carpetas
+4. **🔧 Configuración y Desarrollo** - Setup local sin Docker
+5. **🧪 Testing** - Suite completa de tests de integración
+6. **📚 API Documentation** - Endpoints y Swagger UI
+7. **🐳 Docker** - Gestión con Docker Compose
+8. **🛠️ Tecnologías** - Stack tecnológico completo
+9. **📖 Casos de Uso** - Flujos de negocio y patrones
+
+#### **Información Clave Incluida**
+- **URLs de Acceso**: Todos los servicios con credenciales
+- **Comandos Docker**: `docker-compose up -d` y `./docker-scripts.sh start`
+- **Estructura Detallada**: Explicación de cada carpeta y archivo
+- **Setup Local**: Instrucciones paso a paso sin Docker
+- **Tests**: Cobertura completa con TestContainers
+- **API Endpoints**: Documentación de todos los endpoints REST
+- **Tecnologías**: Stack completo con versiones
+- **Patrones de Diseño**: MVC, Repository, Service Layer, etc.
+
+#### **Características del README**
+- ✅ **Badges informativos** con tecnologías y versiones
+- ✅ **Tabla de contenidos** navegable
+- ✅ **Instrucciones claras** para cualquier persona ajena al proyecto
+- ✅ **Múltiples opciones** de instalación (Docker + Local)
+- ✅ **Documentación completa** de arquitectura y casos de uso
+- ✅ **Enlaces directos** a Swagger UI y health checks
+- ✅ **Formato profesional** con emojis y estructura clara
+
+### 📊 Resultado
+- ✅ **README.md creado** en la raíz del repositorio
+- ✅ **Documentación completa** para desarrolladores externos
+- ✅ **Instrucciones de instalación** con Docker Compose
+- ✅ **Arquitectura explicada** con componentes y flujos
+- ✅ **Casos de uso documentados** con patrones de diseño
+
+---
+
 ## 11-06-2025 18:17 - Protección de Datos Base del Sistema ✅ CRÍTICO
 
 ### 🎯 Problema Crítico Resuelto
