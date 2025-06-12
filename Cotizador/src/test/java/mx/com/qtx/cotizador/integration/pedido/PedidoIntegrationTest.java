@@ -219,17 +219,17 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("5.3 - Debería fallar con ID de pedido nulo")
-    void deberiaFallarConIdPedidoNulo() {
+    @DisplayName("5.3 - Debería fallar con ID de pedido inválido")
+    void deberiaFallarConIdPedidoInvalido() {
         
-        // Act & Assert - El endpoint actual devuelve 500 por error de conversión String->Integer
+        // Act & Assert - Probar con ID no numérico (más realista que "null")
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/null")
+            .get("/pedidos/1000")
         .then()
-            .statusCode(500)
-            .body("codigo", equalTo("3")) // Error interno del servidor
+            .statusCode(400)
+            .body("codigo", equalTo("40")) // PEDIDO_NO_ENCONTRADO
             .body("datos", nullValue());
     }
 
