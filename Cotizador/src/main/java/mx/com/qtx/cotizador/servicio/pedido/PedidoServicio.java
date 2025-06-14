@@ -25,7 +25,6 @@ import mx.com.qtx.cotizador.repositorio.ProveedorRepositorio;
 import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
 import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEntityConverter;
 import mx.com.qtx.cotizador.servicio.wrapper.PedidoEntityConverter;
-import mx.com.qtx.cotizador.servicio.wrapper.ProveedorEntityConverter;
 import mx.com.qtx.cotizador.util.Errores;
 
 /**

@@ -1,7 +1,6 @@
 package mx.com.qtx.cotizador.dto.pc.mapper;
 
 import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
-import mx.com.qtx.cotizador.dominio.core.componentes.ComponenteSimple;
 import mx.com.qtx.cotizador.dominio.core.componentes.Pc;
 import mx.com.qtx.cotizador.dominio.core.componentes.PcBuilder;
 import mx.com.qtx.cotizador.dto.componente.mapper.ComponenteMapper;
