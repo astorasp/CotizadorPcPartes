@@ -244,7 +244,7 @@ class KeyManagementServiceTest {
         assertEquals(keyInfo, result.get("keyInfo"));
 
         verify(rsaKeyProvider).areKeysAvailable();
-        verify(rsaKeyProvider, times(2)).getKeyGenerationTimestamp();
+        verify(rsaKeyProvider).getKeyGenerationTimestamp();
         verify(rsaKeyProvider).getKeyInfo();
     }
 
