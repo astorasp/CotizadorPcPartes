@@ -1,0 +1,11 @@
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/config/TestContainerConfig.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/integration/AuthControllerIntegrationTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/integration/BaseIntegrationTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/integration/KeyControllerIntegrationTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/integration/SimpleIntegrationTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/security/SecurityAttackProtectionTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/security/SpringSecurityConfigurationTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/service/AuthServiceTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/service/JwtServiceTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/service/KeyManagementServiceTest.java
+/home/usuario/Asp/github repositorios/curso/CotizadorPcPartes/ms-seguridad/src/test/java/mx/com/qtx/seguridad/util/BCryptPasswordGenerator.java

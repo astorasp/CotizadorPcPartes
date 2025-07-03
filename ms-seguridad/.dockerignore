@@ -1,0 +1,73 @@
+# .dockerignore para ms-seguridad
+# Excluir archivos innecesarios del contexto de Docker build
+
+# Directorios de Maven
+target/
+!target/ms-seguridad-1.0.0.jar
+
+# Archivos de configuración de IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentación
+README.md
+*.md
+docs/
+
+# Scripts de desarrollo
+scripts/
+*.sh
+
+# Archivos de test
+src/test/
+target/test-classes/
+target/surefire-reports/
+
+# Archivos de Maven
+.mvn/
+mvnw
+mvnw.cmd
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Variables de entorno locales
+.env
+.env.local
+
+# Archivos de cache
+.cache/
+node_modules/

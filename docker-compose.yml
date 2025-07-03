@@ -1,5 +1,5 @@
 services:
-  # Base de datos MySQL
+  # Base de datos MySQL para Cotizador
   mysql:
     image: mysql:8.4.4
     container_name: cotizador-mysql
@@ -14,8 +14,8 @@ services:
       - "3306:3306"
     volumes:
       #- mysql_data:/var/lib/mysql
-      - ./Cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
-      - ./Cotizador/sql/dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
+      - ./ms-cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
+      - ./ms-cotizador/sql/dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
     networks:
       - cotizador-network
     healthcheck:
@@ -25,10 +25,75 @@ services:
       interval: 10s
       start_period: 40s
 
+  # Base de datos MySQL para Seguridad
+  mysql-seguridad:
+    image: mysql:8.4.4
+    container_name: seguridad-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: seguridad_root_pass
+      MYSQL_DATABASE: seguridad
+      MYSQL_USER: seguridad_user
+      MYSQL_PASSWORD: seguridad_pass
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3307:3306"
+    volumes:
+      #- mysql_seguridad_data:/var/lib/mysql
+      - ./ms-seguridad/scripts/seguridad_ddl.sql:/docker-entrypoint-initdb.d/01-seguridad-ddl.sql
+      - ./ms-seguridad/scripts/seguridad_dml.sql:/docker-entrypoint-initdb.d/02-seguridad-dml.sql
+    networks:
+      - cotizador-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "seguridad_user", "-pseguridad_pass"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Microservicio de Seguridad
+  ms-seguridad:
+    build:
+      context: ./ms-seguridad
+      dockerfile: Dockerfile
+    container_name: ms-seguridad
+    restart: unless-stopped
+    environment:
+      # Base de datos
+      DB_HOST: mysql-seguridad
+      DB_PORT: 3306
+      DB_USERNAME: seguridad_user
+      DB_PASSWORD: seguridad_pass
+      # JWT Configuration
+      JWT_ACCESS_TOKEN_DURATION: 600
+      JWT_REFRESH_TOKEN_DURATION: 7200
+      JWT_ISSUER: ms-seguridad
+      # Seguridad
+      SECURITY_USERNAME: admin
+      SECURITY_PASSWORD: admin123
+      # Java
+      JAVA_OPTS: "-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8081:8081"
+      - "8091:8091"
+    networks:
+      - cotizador-network
+    depends_on:
+      mysql-seguridad:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8081/actuator/health || nc -z localhost 8081"]
+      timeout: 15s
+      retries: 8
+      interval: 30s
+      start_period: 120s
+
   # Backend Spring Boot
   backend:
     build: 
-      context: ./Cotizador
+      context: ./ms-cotizador
       dockerfile: Dockerfile
     container_name: cotizador-backend
     restart: unless-stopped
@@ -51,6 +116,8 @@ services:
       - cotizador-network
     depends_on:
       mysql:
+        condition: service_healthy
+      ms-seguridad:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -f http://localhost:8080/actuator/health || nc -z localhost 8080"]

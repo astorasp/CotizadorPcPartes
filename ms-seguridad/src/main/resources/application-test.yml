@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: ms-seguridad-test
+  
+  datasource:
+    url: jdbc:tc:mysql:8.4.4:///seguridad_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 300000
+      leak-detection-threshold: 30000
+      pool-name: SeguridadTestHikariPool
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        hbm2ddl:
+          import_files: classpath:test-data.sql
+  
+  security:
+    user:
+      name: test
+      password: test123
+      roles: ADMIN
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:test-data.sql
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    mx.com.qtx.seguridad: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.testcontainers: INFO
+    root: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/seguridad-testing.log
+
+# JWT Configuration for Testing
+jwt:
+  access-token:
+    expiration: 300000  # 5 minutos para tests
+  refresh-token:
+    expiration: 900000  # 15 minutos para tests
+  algorithm: RS256

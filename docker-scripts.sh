@@ -31,10 +31,14 @@ show_help() {
     echo -e "  ${GREEN}endpoints${NC} - Ver endpoints de Actuator disponibles"
     echo -e "  ${GREEN}monitor${NC}   - Monitorear el inicio del backend en tiempo real"
     echo -e "  ${GREEN}shell-backend${NC} - Acceder al shell del backend"
-    echo -e "  ${GREEN}shell-mysql${NC}   - Acceder al shell de MySQL"
+    echo -e "  ${GREEN}shell-seguridad${NC} - Acceder al shell del microservicio seguridad"
+    echo -e "  ${GREEN}shell-mysql${NC}   - Acceder al shell de MySQL Cotizador"
+    echo -e "  ${GREEN}shell-mysql-seguridad${NC} - Acceder al shell de MySQL Seguridad"
     echo ""
     echo "Servicios individuales:"
-    echo -e "  ${YELLOW}start-mysql${NC}     - Solo MySQL"
+    echo -e "  ${YELLOW}start-mysql${NC}     - Solo MySQL Cotizador"
+    echo -e "  ${YELLOW}start-mysql-seguridad${NC} - Solo MySQL Seguridad"
+    echo -e "  ${YELLOW}start-seguridad${NC} - Solo Microservicio Seguridad"
     echo -e "  ${YELLOW}start-backend${NC}   - Solo Backend"
     echo -e "  ${YELLOW}start-frontend${NC}  - Solo Frontend"
     echo ""
@@ -48,18 +52,41 @@ show_status() {
     echo -e "${BLUE}=== URLs de Acceso ===${NC}"
     echo -e "Frontend:  ${GREEN}http://localhost${NC}"
     echo -e "Backend:   ${GREEN}http://localhost:8080/cotizador/v1/api${NC}"
-    echo -e "Adminer:   ${GREEN}http://localhost:8081${NC}"
-    echo -e "MySQL:     ${GREEN}localhost:3306${NC}"
+    echo -e "Seguridad: ${GREEN}http://localhost:8081${NC}"
+    echo -e "MySQL Cotizador: ${GREEN}localhost:3306${NC}"
+    echo -e "MySQL Seguridad: ${GREEN}localhost:3307${NC}"
 }
 
 # Función para verificar salud
 check_health() {
     echo -e "${BLUE}=== Verificando Salud de los Servicios ===${NC}"
     
-    # MySQL
-    echo -n "MySQL: "
+    # MySQL Cotizador
+    echo -n "MySQL Cotizador: "
     if docker-compose exec mysql mysqladmin ping -h localhost -u cotizador_user -pcotizador_pass --silent 2>/dev/null; then
         echo -e "${GREEN}✓ Saludable${NC}"
+    else
+        echo -e "${RED}✗ No responde${NC}"
+    fi
+    
+    # MySQL Seguridad
+    echo -n "MySQL Seguridad: "
+    if docker-compose exec mysql-seguridad mysqladmin ping -h localhost -u seguridad_user -pseguridad_pass --silent 2>/dev/null; then
+        echo -e "${GREEN}✓ Saludable${NC}"
+    else
+        echo -e "${RED}✗ No responde${NC}"
+    fi
+    
+    # Microservicio Seguridad
+    echo -n "MS-Seguridad: "
+    health_response=$(curl -s -f http://localhost:8081/actuator/health 2>/dev/null)
+    if [ $? -eq 0 ]; then
+        status=$(echo "$health_response" | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+        if [ "$status" = "UP" ]; then
+            echo -e "${GREEN}✓ Saludable (Status: UP)${NC}"
+        else
+            echo -e "${YELLOW}⚠ Responde pero con problemas (Status: $status)${NC}"
+        fi
     else
         echo -e "${RED}✗ No responde${NC}"
     fi
@@ -211,11 +238,25 @@ reset_all() {
 
 # Función para reinicializar BD
 init_db() {
-    echo -e "${YELLOW}Reinicializando base de datos...${NC}"
+    echo -e "${YELLOW}Reinicializando bases de datos...${NC}"
+    
+    # Detener servicios que dependen de las bases de datos
+    docker-compose stop backend ms-seguridad
+    
+    # Detener y limpiar MySQL Cotizador
     docker-compose stop mysql
     docker volume rm cotizador_mysql_data 2>/dev/null || true
-    docker-compose up -d mysql
-    echo -e "${GREEN}Base de datos reinicializada${NC}"
+    
+    # Detener y limpiar MySQL Seguridad  
+    docker-compose stop mysql-seguridad
+    docker volume rm mysql_seguridad_data 2>/dev/null || true
+    
+    # Reiniciar ambas bases de datos
+    docker-compose up -d mysql mysql-seguridad
+    
+    echo -e "${GREEN}Bases de datos reinicializadas${NC}"
+    echo -e "${BLUE}Esperando que las bases de datos estén listas...${NC}"
+    sleep 30
 }
 
 # Script principal
@@ -282,11 +323,23 @@ case "$1" in
     "shell-backend")
         docker-compose exec backend /bin/bash
         ;;
+    "shell-seguridad")
+        docker-compose exec ms-seguridad /bin/bash
+        ;;
     "shell-mysql")
         docker-compose exec mysql mysql -u cotizador_user -pcotizador_pass cotizador
         ;;
+    "shell-mysql-seguridad")
+        docker-compose exec mysql-seguridad mysql -u seguridad_user -pseguridad_pass seguridad
+        ;;
     "start-mysql")
         docker-compose up -d mysql
+        ;;
+    "start-mysql-seguridad")
+        docker-compose up -d mysql-seguridad
+        ;;
+    "start-seguridad")
+        docker-compose up -d ms-seguridad
         ;;
     "start-backend")
         docker-compose up -d backend

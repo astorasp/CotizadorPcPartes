@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: cotizador-api
+  
+  datasource:
+    url: jdbc:mysql://${DB_HOST:192.168.200.5}:${DB_PORT:3306}/cotizador?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME:usuario}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: false
+  
+server:
+  port: 8080
+  servlet:
+    context-path: /cotizador/v1/api
+
+# Configuración de Seguridad
+security:
+  basic:
+    enabled: true
+    username: ${SECURITY_USERNAME:admin}
+    password: ${SECURITY_PASSWORD:admin123}
+    realm: "Cotizador API"
+
+# Configuración de Spring Boot Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
+logging:
+  level:
+    mx.com.qtx: INFO
+    org.springframework.web: WARN
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type: WARN
+    com.zaxxer.hikari: WARN
+    org.springframework.boot: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/cotizador-application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 500MB
