@@ -187,7 +187,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
         
-        if ("GET".equals(method) && "/keys/public".equals(path)) {
+        if ("GET".equals(method) && "/keys/jwks".equals(path)) {
             return true;
         }
         

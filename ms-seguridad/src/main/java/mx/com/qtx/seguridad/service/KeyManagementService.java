@@ -3,6 +3,8 @@ package mx.com.qtx.seguridad.service;
 import mx.com.qtx.seguridad.config.RsaKeyProvider;
 import mx.com.qtx.seguridad.dto.PublicKeyResponse;
 import mx.com.qtx.seguridad.dto.KeyPairResponse;
+import mx.com.qtx.seguridad.dto.JwksResponse;
+import mx.com.qtx.seguridad.dto.JwkKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,10 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
+import java.util.Arrays;
+import java.util.Base64;
+import java.math.BigInteger;
 
 @Service
 public class KeyManagementService {
@@ -312,5 +318,68 @@ public class KeyManagementService {
             logger.error("Error al generar nuevas llaves", e);
             return false;
         }
+    }
+
+    /**
+     * Obtiene la llave pública en formato JWKS (JSON Web Key Set)
+     * Cumple con el estándar RFC 7517 para distribución de claves públicas
+     * 
+     * @return JwksResponse con la llave pública en formato JWKS
+     */
+    public JwksResponse getPublicKeyAsJwks() {
+        try {
+            RSAPublicKey publicKey = rsaKeyProvider.getPublicKey();
+            String publicKeyPem = rsaKeyProvider.getPublicKeyAsPem();
+            
+            // Generar keyId consistente basado en la llave pública
+            String keyId = UUID.nameUUIDFromBytes(publicKeyPem.getBytes()).toString();
+            
+            // Extraer componentes RSA para JWKS
+            BigInteger modulus = publicKey.getModulus();
+            BigInteger exponent = publicKey.getPublicExponent();
+            
+            // Convertir a Base64URL sin padding
+            String modulusBase64 = encodeBase64Url(modulus.toByteArray());
+            String exponentBase64 = encodeBase64Url(exponent.toByteArray());
+            
+            // Crear JWK key
+            JwkKey jwkKey = new JwkKey(
+                "RSA",           // kty: Key Type
+                "sig",           // use: Public Key Use (signature)
+                keyId,           // kid: Key ID
+                "RS256",         // alg: Algorithm
+                modulusBase64,   // n: Modulus
+                exponentBase64   // e: Exponent
+            );
+            
+            // Crear JWKS response con un solo key
+            JwksResponse jwksResponse = new JwksResponse(Arrays.asList(jwkKey));
+            
+            logger.debug("Llave pública generada en formato JWKS con keyId: {}", keyId);
+            return jwksResponse;
+            
+        } catch (Exception e) {
+            logger.error("Error al generar JWKS", e);
+            throw new RuntimeException("Error al generar JWKS", e);
+        }
+    }
+
+    /**
+     * Codifica bytes en Base64URL sin padding según RFC 7515
+     * 
+     * @param bytes bytes a codificar
+     * @return String codificado en Base64URL
+     */
+    private String encodeBase64Url(byte[] bytes) {
+        // Remover bytes de signo para números positivos
+        if (bytes.length > 1 && bytes[0] == 0) {
+            byte[] trimmed = new byte[bytes.length - 1];
+            System.arraycopy(bytes, 1, trimmed, 0, trimmed.length);
+            bytes = trimmed;
+        }
+        
+        return Base64.getUrlEncoder()
+                     .withoutPadding()
+                     .encodeToString(bytes);
     }
 }

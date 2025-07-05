@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.GET, "/auth/health").permitAll()
-                .requestMatchers(HttpMethod.GET, "/keys/public").permitAll()
+                .requestMatchers(HttpMethod.GET, "/keys/jwks").permitAll()
                 .requestMatchers(HttpMethod.GET, "/keys/health").permitAll()
                 .requestMatchers("/error").permitAll()
                 

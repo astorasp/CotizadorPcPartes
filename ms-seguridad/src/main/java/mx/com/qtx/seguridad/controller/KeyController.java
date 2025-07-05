@@ -2,6 +2,7 @@ package mx.com.qtx.seguridad.controller;
 
 import mx.com.qtx.seguridad.dto.PublicKeyResponse;
 import mx.com.qtx.seguridad.dto.KeyPairResponse;
+import mx.com.qtx.seguridad.dto.JwksResponse;
 import mx.com.qtx.seguridad.service.KeyManagementService;
 
 import org.springframework.http.HttpStatus;
@@ -26,27 +27,33 @@ public class KeyController {
         this.keyManagementService = keyManagementService;
     }
 
+
     /**
-     * Obtener llave pública (acceso público)
-     * Endpoint usado por otros servicios para validar tokens JWT
+     * Obtener llave pública en formato JWKS estándar (acceso público)
+     * Endpoint JWKS compatible con estándar RFC 7517
+     * Usado por otros servicios para validar tokens JWT de forma estándar
      * 
-     * @return PublicKeyResponse con llave pública en formato PEM
+     * @return JwksResponse con llave pública en formato JWKS
      */
-    @GetMapping("/public")
-    public ResponseEntity<PublicKeyResponse> getPublicKey() {
+    @GetMapping("/jwks")
+    public ResponseEntity<JwksResponse> getPublicKeyAsJwks() {
         try {
-            PublicKeyResponse publicKeyResponse = keyManagementService.getPublicKeyPem();
+            JwksResponse jwksResponse = keyManagementService.getPublicKeyAsJwks();
             
-            if (publicKeyResponse != null && publicKeyResponse.hasPublicKey()) {
-                return ResponseEntity.ok(publicKeyResponse);
+            if (jwksResponse != null && jwksResponse.hasValidKeys()) {
+                return ResponseEntity.ok(jwksResponse);
             } else {
+                // Crear respuesta de error vacía JWKS
+                JwksResponse errorResponse = new JwksResponse(java.util.Collections.emptyList());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(PublicKeyResponse.error("No se pudo obtener la llave pública"));
+                        .body(errorResponse);
             }
             
         } catch (Exception e) {
+            // Crear respuesta de error vacía JWKS
+            JwksResponse errorResponse = new JwksResponse(java.util.Collections.emptyList());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(PublicKeyResponse.error("Error interno al obtener la llave pública"));
+                    .body(errorResponse);
         }
     }
 

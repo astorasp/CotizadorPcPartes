@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 /**
  * DTO para respuesta de llave pública en formato PEM
- * Utilizado en el endpoint público /keys/public
+ * Utilizado para operaciones internas de gestión de llaves
  */
 public class PublicKeyResponse {
 
