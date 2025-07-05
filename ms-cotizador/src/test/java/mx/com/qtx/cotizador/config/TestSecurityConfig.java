@@ -2,16 +2,13 @@ package mx.com.qtx.cotizador.config;
 
 import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
@@ -21,57 +18,41 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import lombok.RequiredArgsConstructor;
-import mx.com.qtx.cotizador.security.filter.JwtAuthenticationFilter;
-
 /**
- * Configuración de seguridad del sistema Cotizador.
+ * Configuración de seguridad específica para tests.
  * 
- * Implementa autenticación condicional por perfil:
- * - Perfil 'test': Solo Basic Auth
- * - Perfil 'default'/'docker': Solo JWT Auth
+ * Solo Basic Auth - Sin JWT para simplicidad en tests.
  * 
  * @author Sistema Cotizador
  * @version 1.0
  */
-@Configuration
-@EnableWebSecurity
-@EnableMethodSecurity
-public class SecurityConfig {
+@TestConfiguration
+@Profile("test")
+public class TestSecurityConfig {
     
-    @Autowired(required = false)
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-    
-    @Value("${security.basic.enabled:true}")
-    private boolean basicAuthEnabled;
-    
-    @Value("${security.basic.username}")
+    @Value("${security.basic.username:test}")
     private String username;
     
-    @Value("${security.basic.password}")
+    @Value("${security.basic.password:test123}")
     private String password;
     
-    @Value("${security.basic.realm}")
+    @Value("${security.basic.realm:Test Realm}")
     private String realm;
-    
+
     /**
-     * Configuración de seguridad híbrida.
-     * 
-     * - Tests: Solo Basic Auth (JWT beans no disponibles)
-     * - Producción: JWT + Basic Auth fallback
-     * - Docker: Solo JWT (mediante configuración)
+     * Configuración de seguridad para tests.
+     * Solo Basic Auth - Sin filtros JWT.
      */
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        HttpSecurity httpSecurity = http
+    @Bean("securityFilterChain")
+    @Primary
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
             // Deshabilitar CSRF para APIs REST
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(testCorsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             
             // Configurar autorización de requests
@@ -80,7 +61,7 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 
-                // Endpoints de API que requieren autenticación
+                // Endpoints de API que requieren autenticación Basic
                 .requestMatchers("/componentes/**").authenticated()
                 .requestMatchers("/pcs/**").authenticated()
                 .requestMatchers("/cotizaciones/**").authenticated()
@@ -90,19 +71,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ¡IMPORTANTE!
                 // Cualquier otro endpoint requiere autenticación
                 .anyRequest().authenticated()                
-            );
-        
-        // Agregar filtro JWT solo si está disponible (para producción)
-        if (jwtAuthenticationFilter != null) {
-            httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        }
-        
-        // Configurar Basic Auth solo si está habilitado
-        if (basicAuthEnabled) {
-            httpSecurity.httpBasic(basic -> basic.realmName(realm));
-        }
-        
-        return httpSecurity
+            )
+            
+            // Solo autenticación básica HTTP - SIN JWT
+            .httpBasic(basic -> basic
+                .realmName(realm)
+            )
             
             // Configurar sesiones como stateless (para APIs REST)
             .sessionManagement(session -> session
@@ -113,7 +87,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    @Primary
+    public CorsConfigurationSource testCorsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -126,25 +101,23 @@ public class SecurityConfig {
     }
     
     /**
-     * Encoder de contraseñas usando BCrypt.
+     * Encoder de contraseñas usando BCrypt para tests.
      */
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    @Primary
+    public PasswordEncoder testPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
     
     /**
-     * Servicio de usuarios en memoria.
-     * 
-     * Define el usuario único del sistema con credenciales desde configuration.
-     * Solo se crea si Basic Auth está habilitado.
+     * Servicio de usuarios en memoria para tests.
      */
     @Bean
-    @ConditionalOnProperty(name = "security.basic.enabled", havingValue = "true", matchIfMissing = true)
-    public UserDetailsService userDetailsService() {
+    @Primary
+    public UserDetailsService testUserDetailsService() {
         UserDetails user = User.builder()
             .username(username)
-            .password(passwordEncoder().encode(password))
+            .password(testPasswordEncoder().encode(password))
             .roles("ADMIN", "USER")
             .build();
         

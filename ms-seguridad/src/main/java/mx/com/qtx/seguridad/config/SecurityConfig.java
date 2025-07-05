@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,7 +37,6 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final AuthService authService;
 
-    @Autowired
     public SecurityConfig(JwtService jwtService, AuthService authService) {
         this.jwtService = jwtService;
         this.authService = authService;
@@ -108,8 +108,8 @@ public class SecurityConfig {
             
             // Configurar headers de seguridad
             .headers(headers -> headers
-                .cacheControl(cache -> cache.and())
-                .contentTypeOptions(content -> content.and())
+                .cacheControl(Customizer.withDefaults())
+                .contentTypeOptions(Customizer.withDefaults())
                 .frameOptions(frame -> frame.deny()))
             
             // Agregar filtros JWT

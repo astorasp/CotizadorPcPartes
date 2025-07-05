@@ -54,6 +54,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
     @DisplayName("CU 2.5.2: Debe fallar consulta sin autenticación")
     void deberiaFallarConsultaSinAutenticacion() {
         given()
+            .auth().none()
             .contentType(ContentType.JSON)
         .when()
             .get("/pcs")
@@ -1097,37 +1098,37 @@ class PcIntegrationTest extends BaseIntegrationTest {
             """;
         
         // GET sin auth - todas las PCs
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().get("/pcs")
         .then().statusCode(401);
         
         // GET sin auth - PC por ID
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().get("/pcs/PC001")
         .then().statusCode(401);
         
         // POST sin auth - crear PC
-        given().contentType(ContentType.JSON).body(pc)
+        given().auth().none().contentType(ContentType.JSON).body(pc)
         .when().post("/pcs")
         .then().statusCode(401);
         
         // PUT sin auth - actualizar PC
-        given().contentType(ContentType.JSON).body(pc)
+        given().auth().none().contentType(ContentType.JSON).body(pc)
         .when().put("/pcs/PC001")
         .then().statusCode(401);
         
         // DELETE sin auth - eliminar PC
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().delete("/pcs/PC001")
         .then().statusCode(401);
         
         // POST sin auth - agregar componente
-        given().contentType(ContentType.JSON).body(componente)
+        given().auth().none().contentType(ContentType.JSON).body(componente)
         .when().post("/pcs/PC001/componentes")
         .then().statusCode(401);
         
         // DELETE sin auth - quitar componente
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().delete("/pcs/PC001/componentes/COMP001")
         .then().statusCode(401);
     }

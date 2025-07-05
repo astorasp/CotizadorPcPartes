@@ -63,6 +63,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
     @DisplayName("CU 1.4.2: Debe fallar consulta sin autenticación")
     void deberiaFallarConsultaSinAutenticacion() {
         given()
+            .auth().none()
             .contentType(ContentType.JSON)
         .when()
             .get("/componentes")
@@ -371,22 +372,22 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             """;
         
         // GET sin auth
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().get("/componentes")
         .then().statusCode(401);
         
         // POST sin auth
-        given().contentType(ContentType.JSON).body(componente)
+        given().auth().none().contentType(ContentType.JSON).body(componente)
         .when().post("/componentes")
         .then().statusCode(401);
         
         // PUT sin auth
-        given().contentType(ContentType.JSON).body(componente)
+        given().auth().none().contentType(ContentType.JSON).body(componente)
         .when().put("/componentes/TEST-AUTH")
         .then().statusCode(401);
         
         // DELETE sin auth
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().delete("/componentes/TEST-AUTH")
         .then().statusCode(401);
     }

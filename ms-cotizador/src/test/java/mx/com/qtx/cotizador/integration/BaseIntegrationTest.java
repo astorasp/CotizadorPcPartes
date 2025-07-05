@@ -77,15 +77,13 @@ public abstract class BaseIntegrationTest {
      */
     @BeforeEach
     protected void setUp() {
+        // Resetear configuraciones que pueden cambiar entre tests
+        RestAssured.reset();
+        
         // Configurar RestAssured para cada test
         RestAssured.port = port;
         RestAssured.basePath = "/cotizador/v1/api";
         RestAssured.authentication = RestAssured.basic(USER_ADMIN, PASSWORD_ADMIN);
-        
-        // Resetear configuraciones que pueden cambiar entre tests
-        RestAssured.reset();
-        RestAssured.port = port;
-        RestAssured.basePath = "/cotizador/v1/api";
     }
     
     /**

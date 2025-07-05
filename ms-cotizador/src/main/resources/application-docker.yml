@@ -49,6 +49,28 @@ security:
     password: ${SECURITY_PASSWORD:admin123}
     realm: "Cotizador API - Docker"
 
+# Configuración JWT para Docker
+jwt:
+  ms-seguridad:
+    base-url: ${JWT_MS_SEGURIDAD_BASE_URL:http://ms-seguridad:8080}
+    context-path: ${JWT_MS_SEGURIDAD_CONTEXT_PATH:/seguridad/v1/api}
+    timeout: ${JWT_MS_SEGURIDAD_TIMEOUT:15000}
+    connect-timeout: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT:10000}
+  expected-issuer: ${JWT_EXPECTED_ISSUER:ms-seguridad}
+  cache-timeout-ms: ${JWT_CACHE_TIMEOUT_MS:300000}
+  jwks:
+    refresh-interval-ms: ${JWT_JWKS_REFRESH_INTERVAL_MS:300000}
+    max-retries: ${JWT_JWKS_MAX_RETRIES:5}
+    initial-delay-ms: ${JWT_JWKS_INITIAL_DELAY_MS:15000}
+
+# Configuración de seguridad para Docker - Deshabilitar Basic Auth
+security:
+  basic:
+    enabled: false
+    username: ${SECURITY_USERNAME:admin}
+    password: ${SECURITY_PASSWORD:admin123}
+    realm: "Cotizador API - Docker JWT Only"
+
 # Configuración completa de Spring Boot Actuator para Docker
 management:
   endpoints:
@@ -87,6 +109,7 @@ management:
 logging:
   level:
     mx.com.qtx: INFO
+    mx.com.qtx.cotizador.security: DEBUG
     org.springframework.web: WARN
     org.springframework.security: WARN
     org.hibernate.SQL: WARN

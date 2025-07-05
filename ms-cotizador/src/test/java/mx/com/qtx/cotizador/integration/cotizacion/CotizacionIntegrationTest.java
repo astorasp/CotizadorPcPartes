@@ -58,6 +58,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
     @DisplayName("CU 3.3.2: Debe fallar listar cotizaciones sin autenticación")
     void deberiaFallarListarSinAutenticacion() {
         given()
+            .auth().none()
             .contentType(ContentType.JSON)
         .when()
             .get("/cotizaciones")
@@ -460,22 +461,22 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             """;
         
         // GET sin auth - listar cotizaciones
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().get("/cotizaciones")
         .then().statusCode(401);
         
         // GET sin auth - cotización por ID
-        given().contentType(ContentType.JSON)
+        given().auth().none().contentType(ContentType.JSON)
         .when().get("/cotizaciones/1")
         .then().statusCode(401);
         
         // POST sin auth - crear cotización
-        given().contentType(ContentType.JSON).body(cotizacion)
+        given().auth().none().contentType(ContentType.JSON).body(cotizacion)
         .when().post("/cotizaciones")
         .then().statusCode(401);
         
         // GET sin auth - buscar por fecha
-        given().contentType(ContentType.JSON).queryParam("fecha", "2024-01-01")
+        given().auth().none().contentType(ContentType.JSON).queryParam("fecha", "2024-01-01")
         .when().get("/cotizaciones/buscar/fecha")
         .then().statusCode(401);
     }
