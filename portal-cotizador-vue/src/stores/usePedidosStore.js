@@ -286,7 +286,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
     
     // Verificar autenticación directamente
     if (!authStore.isLoggedIn) {
-      authStore.openLoginModal()
+      // El router guard ya se encargará de redirigir a login
       return
     }
     

@@ -60,8 +60,13 @@ class ApiClient {
           localStorage.removeItem('expiresIn')
           localStorage.removeItem('issuedAt')
           
-          // Emitir evento para que el componente muestre el modal de login
-          window.dispatchEvent(new CustomEvent('auth-required'))
+          // Emitir evento para que el authStore maneje la redirección
+          window.dispatchEvent(new CustomEvent('auth-expired', {
+            detail: { 
+              message: 'Su sesión ha expirado. Será redirigido al login.',
+              redirectToLogin: true 
+            }
+          }))
         }
         
         console.error('[API Response Error]', error)

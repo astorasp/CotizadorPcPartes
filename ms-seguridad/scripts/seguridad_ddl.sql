@@ -115,7 +115,7 @@ INSERT INTO rol (nombre, activo) VALUES
 
 -- Insertar usuario administrador por defecto
 INSERT INTO usuario (usuario, password, activo) VALUES 
-('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.', TRUE); -- password: password
+('admin', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE); -- password: password
 
 -- Asignar rol ADMIN al usuario admin
 INSERT INTO rol_asignado (id_usuario, id_rol, activo) VALUES 

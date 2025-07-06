@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const AUTH_BASE_URL = 'http://localhost:8081/seguridad/v1/api/auth'
+const AUTH_BASE_URL = (import.meta.env.VITE_SEGURIDAD_API_BASE_URL || '/api/seguridad') + '/auth'
 
 /**
  * Servicio de autenticación para manejar login/logout con JWT

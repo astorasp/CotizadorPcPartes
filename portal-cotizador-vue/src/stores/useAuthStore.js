@@ -10,7 +10,6 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
   const user = ref(null)
   const loading = ref(false)
-  const showLoginModal = ref(false)
   const pendingAction = ref(null)
 
   // Computed properties
@@ -35,6 +34,11 @@ export const useAuthStore = defineStore('auth', () => {
             roles: payload.roles || [],
             userId: payload.user_id
           }
+          
+          // Emitir evento de estado de autenticación actualizado
+          window.dispatchEvent(new CustomEvent('auth-state-changed', {
+            detail: { authenticated: true, user: user.value }
+          }))
         } catch (error) {
           console.error('Error decoding token:', error)
           logout()
@@ -42,9 +46,21 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } else {
       user.value = null
+      
+      // Emitir evento de estado de autenticación actualizado
+      window.dispatchEvent(new CustomEvent('auth-state-changed', {
+        detail: { authenticated: false, user: null }
+      }))
     }
     
     return authenticated
+  }
+
+  const handleTokenRefresh = () => {
+    // Método para ser llamado cuando se renueva el token exitosamente
+    checkAuthentication()
+    // Emitir evento para que el monitor reinicie
+    window.dispatchEvent(new CustomEvent('auth-token-refreshed'))
   }
 
   const login = async (usuario, password) => {
@@ -65,6 +81,9 @@ export const useAuthStore = defineStore('auth', () => {
           roles: payload.roles || [],
           userId: payload.user_id
         }
+        
+        // Emitir evento para iniciar el monitoreo de token
+        window.dispatchEvent(new CustomEvent('auth-login-success'))
         
         return { success: true }
       }
@@ -92,36 +111,37 @@ export const useAuthStore = defineStore('auth', () => {
       isAuthenticated.value = false
       user.value = null
       loading.value = false
-    }
-  }
-
-  const openLoginModal = () => {
-    showLoginModal.value = true
-  }
-
-  const closeLoginModal = () => {
-    showLoginModal.value = false
-  }
-
-  const handleLoginSuccess = (tokenData) => {
-    // El login ya fue manejado por el servicio y el estado ya está actualizado
-    // No necesitamos llamar checkAuthentication() de nuevo
-    closeLoginModal()
-    
-    // Ejecutar acción pendiente si existe
-    if (pendingAction.value) {
-      const action = pendingAction.value
+      
+      // Limpiar cualquier estado pendiente
       pendingAction.value = null
-      action()
+      
+      // Emitir evento para detener el monitoreo de token
+      window.dispatchEvent(new CustomEvent('auth-logout'))
     }
+  }
+
+  const forceLogout = () => {
+    // Logout inmediato sin llamar al servicio (para cuando ya se perdió la sesión)
+    isAuthenticated.value = false
+    user.value = null
+    loading.value = false
+    pendingAction.value = null
+    
+    // Limpiar localStorage
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('tokenType')
+    localStorage.removeItem('expiresIn')
+    localStorage.removeItem('issuedAt')
+    
+    // Emitir evento para detener el monitoreo de token
+    window.dispatchEvent(new CustomEvent('auth-logout'))
   }
 
   const requireAuth = (actionAfterLogin = null) => {
     if (!isLoggedIn.value) {
-      if (actionAfterLogin) {
-        pendingAction.value = actionAfterLogin
-      }
-      openLoginModal()
+      // En lugar de abrir modal, ahora redirigimos a login
+      // Este método se mantiene para compatibilidad pero ya no se usa
       return false
     }
     return true
@@ -139,11 +159,29 @@ export const useAuthStore = defineStore('auth', () => {
   const initialize = () => {
     checkAuthentication()
     
-    // Escuchar eventos de requerimiento de autenticación desde apiClient
+    // Escuchar eventos de expiración de sesión desde apiClient
+    window.addEventListener('auth-expired', async (event) => {
+      // Hacer logout forzado (limpiar todo el estado)
+      forceLogout()
+      
+      // Mostrar mensaje de sesión expirada si está disponible
+      if (event.detail?.message) {
+        console.warn('[Auth]', event.detail.message)
+        // Aquí podrías mostrar una notificación toast si tienes un sistema de notificaciones
+      }
+      
+      // Redirigir al login usando el router
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        // Usar location.href para forzar navegación completa y limpiar estado
+        window.location.href = '/login'
+      }
+    })
+    
+    // Mantener compatibilidad con eventos de auth-required (para casos futuros)
     window.addEventListener('auth-required', () => {
       isAuthenticated.value = false
       user.value = null
-      openLoginModal()
+      // El router guard se encargará de la redirección
     })
   }
 
@@ -152,7 +190,6 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     user,
     loading,
-    showLoginModal,
     
     // Computed
     isLoggedIn,
@@ -161,11 +198,10 @@ export const useAuthStore = defineStore('auth', () => {
     
     // Actions
     checkAuthentication,
+    handleTokenRefresh,
     login,
     logout,
-    openLoginModal,
-    closeLoginModal,
-    handleLoginSuccess,
+    forceLogout,
     requireAuth,
     hasRole,
     hasAnyRole,

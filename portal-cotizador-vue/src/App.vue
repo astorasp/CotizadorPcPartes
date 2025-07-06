@@ -4,18 +4,21 @@
     <Navbar />
     
     <!-- Contenido principal con router -->
-    <main class="container mx-auto px-4 py-8">
+    <main :class="authStore.isLoggedIn ? 'container mx-auto px-4 py-8' : ''">
       <RouterView />
     </main>
     
     <!-- Sistema de alertas global -->
     <AlertSystem />
     
-    <!-- Modal de login global -->
-    <LoginModal
-      :show="authStore.showLoginModal"
-      @close="authStore.closeLoginModal"
-      @success="authStore.handleLoginSuccess"
+    <!-- Modal de expiración de sesión - Solo mostrar si está autenticado -->
+    <SessionExpirationModal
+      v-if="authStore.isLoggedIn"
+      :show="tokenMonitor.showExpirationWarning.value"
+      :seconds-until-expiry="tokenMonitor.secondsUntilExpiry.value"
+      :is-renewing="tokenMonitor.isRenewing.value"
+      @extend="tokenMonitor.extendSession"
+      @reject="tokenMonitor.rejectExtension"
     />
   </div>
 </template>
@@ -24,10 +27,12 @@
 import { RouterView } from 'vue-router'
 import Navbar from '@/components/layout/Navbar.vue'
 import AlertSystem from '@/components/ui/AlertSystem.vue'
-import LoginModal from '@/components/auth/LoginModal.vue'
+import SessionExpirationModal from '@/components/auth/SessionExpirationModal.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useTokenMonitor } from '@/composables/useTokenMonitor'
 
 const authStore = useAuthStore()
+const tokenMonitor = useTokenMonitor()
 </script>
 
 <style scoped>
