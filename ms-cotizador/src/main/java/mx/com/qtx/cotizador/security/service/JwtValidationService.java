@@ -18,6 +18,7 @@ import java.security.PublicKey;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -114,7 +115,7 @@ public class JwtValidationService {
         
         String username = claims.getSubject();
         String email = claims.get("email", String.class);
-        String roles = claims.get("roles", String.class);
+        List<String> roles = claims.get("roles", List.class);
         Date expiration = claims.getExpiration();
         
         return new UserInfo(username, email, roles, expiration);
@@ -240,10 +241,10 @@ public class JwtValidationService {
     public static class UserInfo {
         private final String username;
         private final String email;
-        private final String roles;
+        private final List<String> roles;
         private final Date expiration;
 
-        public UserInfo(String username, String email, String roles, Date expiration) {
+        public UserInfo(String username, String email, List<String> roles, Date expiration) {
             this.username = username;
             this.email = email;
             this.roles = roles;
@@ -258,7 +259,7 @@ public class JwtValidationService {
             return email;
         }
 
-        public String getRoles() {
+        public List<String> getRoles() {
             return roles;
         }
 
@@ -271,7 +272,7 @@ public class JwtValidationService {
             return "UserInfo{" +
                     "username='" + username + '\'' +
                     ", email='" + email + '\'' +
-                    ", roles='" + roles + '\'' +
+                    ", roles=" + roles +
                     ", expiration=" + expiration +
                     '}';
         }

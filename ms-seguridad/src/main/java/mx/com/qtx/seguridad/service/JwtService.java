@@ -33,6 +33,7 @@ public class JwtService {
     private static final String ISSUER = "ms-seguridad";
 
     private final RsaKeyProvider rsaKeyProvider;
+    private final KeyManagementService keyManagementService;
     
     @Value("${jwt.access-token.expiration:3600000}") // 1 hora por defecto (para tests)
     private long accessTokenExpiration;
@@ -40,8 +41,25 @@ public class JwtService {
     @Value("${jwt.refresh-token.expiration:7200000}") // 2 horas por defecto
     private long refreshTokenExpiration;
 
-    public JwtService(RsaKeyProvider rsaKeyProvider) {
+    public JwtService(RsaKeyProvider rsaKeyProvider, KeyManagementService keyManagementService) {
         this.rsaKeyProvider = rsaKeyProvider;
+        this.keyManagementService = keyManagementService;
+    }
+
+    /**
+     * Obtiene el Key ID (kid) de la clave pública actual
+     * El kid se genera de forma consistente basado en el contenido de la clave pública
+     * 
+     * @return String Key ID
+     */
+    private String getCurrentKeyId() {
+        try {
+            String publicKeyPem = rsaKeyProvider.getPublicKeyAsPem();
+            return UUID.nameUUIDFromBytes(publicKeyPem.getBytes()).toString();
+        } catch (Exception e) {
+            logger.error("Error al obtener Key ID: {}", e.getMessage());
+            return UUID.randomUUID().toString(); // Fallback a UUID aleatorio
+        }
     }
 
     /**
@@ -61,8 +79,10 @@ public class JwtService {
             logger.debug("Token times - now: {}, expiration: {}", now, expiration);
             
             RSAPrivateKey privateKey = rsaKeyProvider.getPrivateKey();
+            String keyId = getCurrentKeyId();
             
             String token = Jwts.builder()
+                    .setHeaderParam("kid", keyId)
                     .setIssuer(ISSUER)
                     .setSubject(username)
                     .setAudience("ms-seguridad-client")
@@ -76,7 +96,7 @@ public class JwtService {
                     .signWith(privateKey, SignatureAlgorithm.RS256)
                     .compact();
             
-            logger.debug("Access token generado para usuario: {} con roles: {}", username, roles);
+            logger.debug("Access token generado para usuario: {} con roles: {}, kid: {}", username, roles, keyId);
             return token;
             
         } catch (Exception e) {
@@ -98,8 +118,10 @@ public class JwtService {
             Date expiration = new Date(now.getTime() + refreshTokenExpiration);
             
             RSAPrivateKey privateKey = rsaKeyProvider.getPrivateKey();
+            String keyId = getCurrentKeyId();
             
             String token = Jwts.builder()
+                    .setHeaderParam("kid", keyId)
                     .setIssuer(ISSUER)
                     .setSubject(username)
                     .setAudience("ms-seguridad-client")
@@ -112,7 +134,7 @@ public class JwtService {
                     .signWith(privateKey, SignatureAlgorithm.RS256)
                     .compact();
             
-            logger.debug("Refresh token generado para usuario: {}", username);
+            logger.debug("Refresh token generado para usuario: {}, kid: {}", username, keyId);
             return token;
             
         } catch (Exception e) {

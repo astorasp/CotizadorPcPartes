@@ -1,0 +1,349 @@
+<template>
+  <div class="space-y-6">
+    <!-- Header de la página -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Gestión de PCs</h1>
+          <p class="mt-1 text-sm text-gray-600">
+            Administrar PCs y armado de componentes
+          </p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex space-x-4">
+          <button 
+            @click="navigateToComponents" 
+            class="btn-outline btn-md"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Ver Componentes
+          </button>
+          <button @click="openCreateModal" class="btn-primary btn-md">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva PC
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="form-label">Buscar PCs</label>
+          <input
+            type="text"
+            placeholder="ID, descripción, marca, modelo..."
+            class="form-field"
+            v-model="searchTerm"
+          />
+        </div>
+        
+        <div>
+          <label class="form-label">Filtrar por precio</label>
+          <select class="form-field" v-model="selectedPriceRange">
+            <option value="">Todos los precios</option>
+            <option value="0-1000">$0 - $1,000</option>
+            <option value="1000-2000">$1,001 - $2,000</option>
+            <option value="2000-5000">$2,001 - $5,000</option>
+            <option value="5000+">Más de $5,000</option>
+          </select>
+        </div>
+        
+        <div class="flex items-end">
+          <button @click="applyFilters" class="btn-secondary btn-md w-full">
+            Aplicar Filtros
+          </button>
+        </div>
+        
+        <div class="flex items-end">
+          <button @click="clearFilters" class="btn-outline btn-md w-full">
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de PCs -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">
+          PCs ({{ totalItems }})
+        </h3>
+      </div>
+      
+      <!-- Estado de carga -->
+      <div v-if="loading" class="p-8 text-center">
+        <div class="inline-flex items-center px-4 py-2 text-sm text-gray-600">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Cargando PCs...
+        </div>
+      </div>
+      
+      <!-- Estado vacío -->
+      <div v-else-if="!hasData" class="p-8 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay PCs</h3>
+        <p class="mt-1 text-sm text-gray-500">Comience creando una nueva PC.</p>
+        <div class="mt-6">
+          <button @click="openCreateModal" class="btn-primary btn-md">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva PC
+          </button>
+        </div>
+      </div>
+      
+      <!-- Tabla con datos -->
+      <div v-else class="table-container">
+        <table class="table-base">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="table-header">ID</th>
+              <th class="table-header">Descripción</th>
+              <th class="table-header">Marca/Modelo</th>
+              <th class="table-header">Componentes</th>
+              <th class="table-header">Precios</th>
+              <th class="table-header">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr 
+              v-for="pc in paginatedPcs" 
+              :key="pc.id"
+              class="table-row"
+            >
+              <td class="table-cell">
+                <div class="font-medium">{{ pc.id }}</div>
+                <div class="text-xs text-gray-500">{{ pc.descripcion }}</div>
+              </td>
+              <td class="table-cell">
+                <div class="font-medium">{{ pc.descripcion }}</div>
+              </td>
+              <td class="table-cell">
+                <div class="text-sm text-gray-900">{{ pc.marca }}</div>
+                <div class="text-sm text-gray-500">{{ pc.modelo }}</div>
+              </td>
+              <td class="table-cell">
+                <ComponentCount :pc="pc" />
+              </td>
+              <td class="table-cell">
+                <div class="text-sm text-gray-900">
+                  <div>Costo: {{ formatCurrency(pc.costo) }}</div>
+                  <div>Precio: {{ formatCurrency(pc.precioBase) }}</div>
+                </div>
+              </td>
+              <td class="table-cell">
+                <div class="flex space-x-2">
+                  <button 
+                    @click="handleOpenManageModal(pc.id)"
+                    class="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                    title="Gestionar armado"
+                  >
+                    Gestionar Armado
+                  </button>
+                  <button 
+                    @click="handleDelete(pc)"
+                    class="text-danger-600 hover:text-danger-700 text-sm font-medium"
+                    title="Eliminar PC"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Paginación -->
+      <div v-if="hasData" class="px-6 py-4 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-700">
+            Mostrando {{ startItem }} a {{ endItem }} de {{ totalItems }} resultados
+          </div>
+          <div class="flex space-x-2">
+            <button 
+              :disabled="!canGoPrevious"
+              @click="pcsStore.goToPreviousPage()"
+              class="btn-outline btn-sm"
+              :class="{ 'opacity-50 cursor-not-allowed': !canGoPrevious }"
+            >
+              Anterior
+            </button>
+            <button 
+              v-for="page in visiblePages" 
+              :key="page"
+              @click="handlePageChange(page)"
+              :class="page === currentPage ? 'btn-primary' : 'btn-outline'"
+              class="btn-sm"
+            >
+              {{ page }}
+            </button>
+            <button 
+              :disabled="!canGoNext"
+              @click="pcsStore.goToNextPage()"
+              class="btn-outline btn-sm"
+              :class="{ 'opacity-50 cursor-not-allowed': !canGoNext }"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de gestión de componentes -->
+    <ManageComponentsModal />
+
+    <!-- Modal de creación/edición de PC -->
+    <CreatePcModal
+      :show="showCreateModal || false"
+      :loading="modalLoading"
+      :is-edit-mode="isEditMode"
+      :is-view-mode="isViewMode"
+      :form-data="formData"
+      :modal-title="modalTitle"
+      :is-form-valid="isFormValid"
+      :current-pc="currentPc"
+      @close="closeCreateModal"
+      @submit="submitPc"
+    />
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { usePcsStore } from '@/stores/usePcsStore'
+import { useUtils } from '@/composables/useUtils'
+import { useRouter } from 'vue-router'
+import ComponentCount from '@/components/pcs/ComponentCount.vue'
+import ManageComponentsModal from '@/components/pcs/ManageComponentsModal.vue'
+import CreatePcModal from '@/components/pcs/CreatePcModal.vue'
+
+// Composables y stores
+const pcsStore = usePcsStore()
+const { formatCurrency, confirm } = useUtils()
+const router = useRouter()
+
+// Estado del store
+const {
+  paginatedPcs,
+  loading,
+  hasFilteredPcs,
+  paginationInfo,
+  canGoPrevious,
+  canGoNext,
+  pagination,
+  filters,
+  showCreateModal,
+  modalLoading,
+  isEditMode,
+  isViewMode,
+  formData,
+  modalTitle,
+  isFormValid,
+  currentPc
+} = storeToRefs(pcsStore)
+
+// Estado local para los inputs
+const searchTerm = ref('')
+const selectedPriceRange = ref('')
+
+// Computed properties
+const hasData = computed(() => hasFilteredPcs.value)
+const totalItems = computed(() => paginationInfo.value.totalItems)
+const totalPages = computed(() => pagination.value.totalPages)
+const startItem = computed(() => paginationInfo.value.startItem)
+const endItem = computed(() => paginationInfo.value.endItem)
+const currentPage = computed(() => pagination.value.currentPage)
+
+const visiblePages = computed(() => {
+  const pages = []
+  const start = Math.max(1, currentPage.value - 2)
+  const end = Math.min(totalPages.value, start + 4)
+  
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  
+  return pages
+})
+
+// Métodos
+const applyFilters = () => {
+  pcsStore.setSearchFilter(searchTerm.value)
+  pcsStore.setPriceFilter(selectedPriceRange.value)
+}
+
+const clearFilters = () => {
+  searchTerm.value = ''
+  selectedPriceRange.value = ''
+  pcsStore.clearFilters()
+}
+
+const handlePageChange = (page) => {
+  pcsStore.goToPage(page)
+}
+
+const openCreateModal = () => {
+  pcsStore.openCreateModal()
+}
+
+const closeCreateModal = () => {
+  pcsStore.closeCreateModal()
+}
+
+const submitPc = async () => {
+  await pcsStore.submitPc()
+}
+
+const handleOpenManageModal = async (pcId) => {
+  await pcsStore.openManageModal(pcId)
+}
+
+const handleDelete = async (pc) => {
+  const confirmed = await confirm(
+    'Eliminar PC',
+    `¿Está seguro de que desea eliminar la PC "${pc.descripcion}"?`
+  )
+  
+  if (confirmed) {
+    await pcsStore.deletePc(pc.id)
+  }
+}
+
+const navigateToComponents = () => {
+  router.push('/componentes')
+}
+
+// Watchers para sincronizar filtros automáticamente
+watch(searchTerm, (newValue) => {
+  // Debounce la búsqueda automática
+  clearTimeout(searchTerm._timeout)
+  searchTerm._timeout = setTimeout(() => {
+    pcsStore.setSearchFilter(newValue)
+  }, 300)
+})
+
+watch(selectedPriceRange, (newValue) => {
+  pcsStore.setPriceFilter(newValue)
+})
+
+// Lifecycle
+onMounted(async () => {
+  await pcsStore.fetchPcs()
+  // Cargar conteos de componentes después de cargar las PCs
+  await pcsStore.loadComponentsCounts()
+})
+</script>

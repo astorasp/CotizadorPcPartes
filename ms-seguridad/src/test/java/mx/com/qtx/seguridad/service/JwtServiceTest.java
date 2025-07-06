@@ -37,6 +37,9 @@ class JwtServiceTest {
     @Mock
     private RsaKeyProvider rsaKeyProvider;
 
+    @Mock
+    private KeyManagementService keyManagementService;
+
     private JwtService jwtService;
     private RSAPrivateKey privateKey;
     private RSAPublicKey publicKey;
@@ -54,8 +57,9 @@ class JwtServiceTest {
         // Configurar mocks
         when(rsaKeyProvider.getPrivateKey()).thenReturn(privateKey);
         when(rsaKeyProvider.getPublicKey()).thenReturn(publicKey);
+        when(rsaKeyProvider.getPublicKeyAsPem()).thenReturn("-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtest...\n-----END PUBLIC KEY-----");
 
-        jwtService = new JwtService(rsaKeyProvider);
+        jwtService = new JwtService(rsaKeyProvider, keyManagementService);
         
         // Configurar valores de expiración manualmente usando reflexión
         setAccessTokenExpiration(3600000L); // 1 hora

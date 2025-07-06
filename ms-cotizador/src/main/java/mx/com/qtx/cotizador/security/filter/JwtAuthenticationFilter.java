@@ -111,14 +111,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Extrae las autoridades (roles) del string de roles
+     * Extrae las autoridades (roles) de la lista de roles
      */
-    private List<SimpleGrantedAuthority> extractAuthorities(String roles) {
-        if (roles == null || roles.trim().isEmpty()) {
+    private List<SimpleGrantedAuthority> extractAuthorities(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
             return List.of(new SimpleGrantedAuthority("ROLE_USER"));
         }
         
-        return Arrays.stream(roles.split(","))
+        return roles.stream()
                 .map(String::trim)
                 .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                 .map(SimpleGrantedAuthority::new)
