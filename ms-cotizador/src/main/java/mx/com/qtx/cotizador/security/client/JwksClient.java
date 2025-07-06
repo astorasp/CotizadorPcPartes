@@ -28,15 +28,16 @@ public class JwksClient {
     private final Duration timeout;
 
     public JwksClient(
-            @Value("${jwt.jwks.url}") String jwksUrl,
-            @Value("${jwt.jwks.timeout:5000}") int timeoutMs) {
-        this.jwksUrl = jwksUrl;
+            @Value("${jwt.ms-seguridad.base-url}") String baseUrl,
+            @Value("${jwt.ms-seguridad.context-path}") String contextPath,
+            @Value("${jwt.ms-seguridad.timeout:15000}") int timeoutMs) {
+        this.jwksUrl = baseUrl + contextPath + "/keys/jwks";
         this.timeout = Duration.ofMillis(timeoutMs);
         this.webClient = WebClient.builder()
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024)) // 1MB max
                 .build();
         
-        logger.info("JwksClient inicializado con URL: {} y timeout: {}ms", jwksUrl, timeoutMs);
+        logger.info("JwksClient inicializado con URL: {} y timeout: {}ms", this.jwksUrl, timeoutMs);
     }
 
     /**

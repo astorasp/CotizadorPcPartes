@@ -41,18 +41,11 @@ server:
     min-spare-threads: 10
     max-connections: 8192
 
-# Configuración de Seguridad para Docker
-security:
-  basic:
-    enabled: true
-    username: ${SECURITY_USERNAME:admin}
-    password: ${SECURITY_PASSWORD:admin123}
-    realm: "Cotizador API - Docker"
 
 # Configuración JWT para Docker
 jwt:
   ms-seguridad:
-    base-url: ${JWT_MS_SEGURIDAD_BASE_URL:http://ms-seguridad:8080}
+    base-url: ${JWT_MS_SEGURIDAD_BASE_URL:http://ms-seguridad:8081}
     context-path: ${JWT_MS_SEGURIDAD_CONTEXT_PATH:/seguridad/v1/api}
     timeout: ${JWT_MS_SEGURIDAD_TIMEOUT:15000}
     connect-timeout: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT:10000}
@@ -63,7 +56,7 @@ jwt:
     max-retries: ${JWT_JWKS_MAX_RETRIES:5}
     initial-delay-ms: ${JWT_JWKS_INITIAL_DELAY_MS:15000}
 
-# Configuración de seguridad para Docker - Deshabilitar Basic Auth
+# Configuración de seguridad para Docker - Deshabilitar Basic Auth  
 security:
   basic:
     enabled: false

@@ -5,13 +5,13 @@ services:
     container_name: cotizador-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: cotizador
-      MYSQL_USER: cotizador_user
-      MYSQL_PASSWORD: cotizador_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_COTIZADOR_DATABASE}
+      MYSQL_USER: ${MYSQL_COTIZADOR_USER}
+      MYSQL_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
       MYSQL_ROOT_HOST: '%'
     ports:
-      - "3306:3306"
+      - "${MYSQL_COTIZADOR_PORT}:3306"
     volumes:
       #- mysql_data:/var/lib/mysql
       - ./ms-cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
@@ -31,13 +31,13 @@ services:
     container_name: seguridad-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: seguridad_root_pass
-      MYSQL_DATABASE: seguridad
-      MYSQL_USER: seguridad_user
-      MYSQL_PASSWORD: seguridad_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_SEGURIDAD_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_SEGURIDAD_DATABASE}
+      MYSQL_USER: ${MYSQL_SEGURIDAD_USER}
+      MYSQL_PASSWORD: ${MYSQL_SEGURIDAD_PASSWORD}
       MYSQL_ROOT_HOST: '%'
     ports:
-      - "3307:3306"
+      - "${MYSQL_SEGURIDAD_PORT}:3306"
     volumes:
       #- mysql_seguridad_data:/var/lib/mysql
       - ./ms-seguridad/scripts/seguridad_ddl.sql:/docker-entrypoint-initdb.d/01-seguridad-ddl.sql
@@ -62,22 +62,22 @@ services:
       # Base de datos
       DB_HOST: mysql-seguridad
       DB_PORT: 3306
-      DB_USERNAME: seguridad_user
-      DB_PASSWORD: seguridad_pass
+      DB_USERNAME: ${MYSQL_SEGURIDAD_USER}
+      DB_PASSWORD: ${MYSQL_SEGURIDAD_PASSWORD}
       # JWT Configuration
-      JWT_ACCESS_TOKEN_DURATION: 600
-      JWT_REFRESH_TOKEN_DURATION: 7200
-      JWT_ISSUER: ms-seguridad
+      JWT_ACCESS_TOKEN_DURATION: ${JWT_ACCESS_TOKEN_DURATION}
+      JWT_REFRESH_TOKEN_DURATION: ${JWT_REFRESH_TOKEN_DURATION}
+      JWT_ISSUER: ${JWT_ISSUER}
       # Seguridad
-      SECURITY_USERNAME: admin
-      SECURITY_PASSWORD: admin123
+      SECURITY_USERNAME: ${SECURITY_USERNAME}
+      SECURITY_PASSWORD: ${SECURITY_PASSWORD}
       # Java
-      JAVA_OPTS: "-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+      JAVA_OPTS: "${SEGURIDAD_JAVA_OPTS}"
       # Spring profiles
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     ports:
-      - "8081:8081"
-      - "8091:8091"
+      - "${SEGURIDAD_PORT}:8081"
+      - "${SEGURIDAD_MANAGEMENT_PORT}:8091"
     networks:
       - cotizador-network
     depends_on:
@@ -101,17 +101,27 @@ services:
       # Base de datos
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USERNAME: cotizador_user
-      DB_PASSWORD: cotizador_pass
+      DB_USERNAME: ${MYSQL_COTIZADOR_USER}
+      DB_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
       # Seguridad
-      SECURITY_USERNAME: admin
-      SECURITY_PASSWORD: admin123
+      SECURITY_USERNAME: ${SECURITY_USERNAME}
+      SECURITY_PASSWORD: ${SECURITY_PASSWORD}
+      # JWT Configuration
+      JWT_MS_SEGURIDAD_BASE_URL: http://ms-seguridad:8081
+      JWT_MS_SEGURIDAD_CONTEXT_PATH: /seguridad/v1/api
+      JWT_EXPECTED_ISSUER: ${JWT_ISSUER}
+      JWT_CACHE_TIMEOUT_MS: ${JWT_CACHE_TIMEOUT_MS}
+      JWT_JWKS_REFRESH_INTERVAL_MS: ${JWT_JWKS_REFRESH_INTERVAL_MS}
+      JWT_JWKS_MAX_RETRIES: ${JWT_JWKS_MAX_RETRIES}
+      JWT_JWKS_INITIAL_DELAY_MS: ${JWT_JWKS_INITIAL_DELAY_MS}
+      JWT_MS_SEGURIDAD_TIMEOUT: ${JWT_MS_SEGURIDAD_TIMEOUT}
+      JWT_MS_SEGURIDAD_CONNECT_TIMEOUT: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT}
       # Java
-      JAVA_OPTS: "-Xmx1g -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+      JAVA_OPTS: "${COTIZADOR_JAVA_OPTS}"
       # Spring profiles
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
     ports:
-      - "8080:8080"
+      - "${COTIZADOR_PORT}:8080"
     networks:
       - cotizador-network
     depends_on:

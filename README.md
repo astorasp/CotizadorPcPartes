@@ -285,6 +285,84 @@ DELETE /promociones/{id}         # Eliminar promoción
 
 ---
 
+## 🔐 Configuración de Variables de Entorno
+
+### 🛡️ **Seguridad y Variables Sensibles**
+
+Para proteger datos sensibles (contraseñas, secrets, etc.), el proyecto usa archivos `.env` que **nunca deben commitearse** al repositorio.
+
+#### **🚀 Configuración Automática (Recomendado)**
+
+**Para Linux/macOS:**
+```bash
+# Ejecutar script de inicialización
+./init-env.sh
+
+# El script:
+# ✅ Crea .env desde .env.example
+# ✅ Genera contraseñas seguras automáticamente
+# ✅ Verifica herramientas necesarias (Docker)
+# ✅ Muestra URLs de servicios
+```
+
+**Para Windows (PowerShell):**
+```powershell
+# Ejecutar script de PowerShell
+.\init-env.ps1
+
+# Con parámetros opcionales:
+.\init-env.ps1 -AutoGeneratePasswords -Force
+```
+
+#### **⚙️ Configuración Manual**
+
+Si prefieres configurar manualmente:
+
+```bash
+# 1. Copiar archivo de ejemplo
+cp .env.example .env
+
+# 2. Editar variables sensibles
+nano .env  # o tu editor preferido
+
+# 3. Cambiar al menos estas variables:
+# - MYSQL_ROOT_PASSWORD
+# - MYSQL_COTIZADOR_PASSWORD  
+# - MYSQL_SEGURIDAD_PASSWORD
+# - SECURITY_PASSWORD
+```
+
+#### **📋 Variables Importantes**
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `MYSQL_ROOT_PASSWORD` | Contraseña root MySQL | `root_password_change_me` |
+| `MYSQL_COTIZADOR_PASSWORD` | Contraseña BD cotizador | `cotizador_pass_change_me` |
+| `MYSQL_SEGURIDAD_PASSWORD` | Contraseña BD seguridad | `seguridad_pass_change_me` |
+| `SECURITY_PASSWORD` | Contraseña admin sistema | `admin123_change_me` |
+| `JWT_ACCESS_TOKEN_DURATION` | Duración token JWT (ms) | `600000` (10 min) |
+| `COTIZADOR_PORT` | Puerto ms-cotizador | `8080` |
+| `SEGURIDAD_PORT` | Puerto ms-seguridad | `8081` |
+
+#### **🔒 Mejores Prácticas de Seguridad**
+
+```bash
+# ❌ NUNCA hagas esto:
+git add .env
+git commit -m "Adding environment config"
+
+# ✅ El archivo .env está en .gitignore automáticamente
+
+# ✅ Para producción, usa secrets manager:
+# - Docker Secrets
+# - Kubernetes Secrets  
+# - HashiCorp Vault
+# - AWS Secrets Manager
+# - Azure Key Vault
+```
+
+---
+
 ## 🐳 Docker
 
 ### 🐋 **Gestión con Docker Compose**

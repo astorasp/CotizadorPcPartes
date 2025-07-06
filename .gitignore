@@ -201,6 +201,7 @@ Thumbs.db
 
 # Docker
 .dockerignore
+.env
 
 # Application specific
 application-local.yml
