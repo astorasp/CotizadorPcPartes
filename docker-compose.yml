@@ -10,10 +10,8 @@ services:
       MYSQL_USER: ${MYSQL_COTIZADOR_USER}
       MYSQL_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-    ports:
-      - "${MYSQL_COTIZADOR_PORT}:3306"
+    # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
-      #- mysql_data:/var/lib/mysql
       - ./ms-cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
       - ./ms-cotizador/sql/dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
     networks:
@@ -36,12 +34,9 @@ services:
       MYSQL_USER: ${MYSQL_SEGURIDAD_USER}
       MYSQL_PASSWORD: ${MYSQL_SEGURIDAD_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-    ports:
-      - "${MYSQL_SEGURIDAD_PORT}:3306"
+    # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
-      #- mysql_seguridad_data:/var/lib/mysql
       - ./ms-seguridad/scripts/seguridad_ddl.sql:/docker-entrypoint-initdb.d/01-seguridad-ddl.sql
-      - ./ms-seguridad/scripts/seguridad_dml.sql:/docker-entrypoint-initdb.d/02-seguridad-dml.sql
     networks:
       - cotizador-network
     healthcheck:
@@ -75,9 +70,7 @@ services:
       JAVA_OPTS: "${SEGURIDAD_JAVA_OPTS}"
       # Spring profiles
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-    ports:
-      - "${SEGURIDAD_PORT}:8081"
-      - "${SEGURIDAD_MANAGEMENT_PORT}:8091"
+    # PUERTOS NO EXPUESTOS - Solo acceso a través del gateway
     networks:
       - cotizador-network
     depends_on:
@@ -120,8 +113,7 @@ services:
       JAVA_OPTS: "${COTIZADOR_JAVA_OPTS}"
       # Spring profiles
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-    ports:
-      - "${COTIZADOR_PORT}:8080"
+    # PUERTO NO EXPUESTO - Solo acceso a través del gateway
     networks:
       - cotizador-network
     depends_on:
@@ -136,15 +128,14 @@ services:
       interval: 30s
       start_period: 120s
 
-  # Frontend Portal Vue
+  # Frontend Vue.js
   frontend:
     build:
-      context: ./portal-cotizador-vue
+      context: ./portal-cotizador
       dockerfile: Dockerfile
     container_name: cotizador-frontend-vue
     restart: unless-stopped
-    ports:
-      - "80:80"
+    # PUERTO NO EXPUESTO - Solo acceso a través del gateway
     networks:
       - cotizador-network
     depends_on:
@@ -159,14 +150,33 @@ services:
       interval: 30s
       start_period: 10s
 
-# Volúmenes persistentes
-#volumes:
-  #mysql_data:
-  #  driver: local
-  #  name: cotizador_mysql_data
+  # API Gateway con Nginx
+  gateway:
+    build:
+      context: ./nginx-gateway
+      dockerfile: Dockerfile
+    container_name: cotizador-gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"  # ÚNICO PUERTO EXPUESTO
+    networks:
+      - cotizador-network
+    depends_on:
+      backend:
+        condition: service_healthy
+      ms-seguridad:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 10s
 
 # Red personalizada
 networks:
   cotizador-network:
     driver: bridge
-    name: cotizador-network 
+    name: cotizador-network
