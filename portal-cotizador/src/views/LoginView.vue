@@ -8,7 +8,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 class="text-3xl font-bold text-gray-900 mb-2">Portal Cotizador Vue</h2>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Portal Cotizador</h2>
         <p class="text-gray-600">Inicia sesión para acceder al sistema</p>
       </div>
 
@@ -41,7 +41,7 @@
               required
               class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
               placeholder="Ingrese su usuario"
-              :disabled="loading"
+              :disabled="authStore.isLoggingIn"
               @input="clearErrorOnInput"
             />
           </div>
@@ -58,20 +58,26 @@
               required
               class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
               placeholder="Ingrese su contraseña"
-              :disabled="loading"
+              :disabled="authStore.isLoggingIn"
               @input="clearErrorOnInput"
             />
           </div>
 
           <!-- Submit Button -->
-          <button
+          <LoadingButton
             type="submit"
-            :disabled="loading || !isFormValid"
-            class="w-full px-4 py-3 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            :loading="authStore.isLoggingIn"
+            :disabled="!isFormValid"
+            variant="primary"
+            size="lg"
+            full-width
+            loading-text="Iniciando sesión..."
           >
-            <div v-if="loading" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-            {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
-          </button>
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            Iniciar Sesión
+          </LoadingButton>
         </form>
 
         <!-- Footer -->
@@ -85,7 +91,7 @@
       <!-- Additional Info -->
       <div class="text-center">
         <p class="text-xs text-gray-500">
-          © 2025 Portal Cotizador Vue. Todos los derechos reservados.
+          © 2025 Portal Cotizador. Todos los derechos reservados.
         </p>
       </div>
     </div>
@@ -96,6 +102,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import LoadingButton from '@/components/ui/LoadingButton.vue'
 
 // Router
 const router = useRouter()
@@ -109,7 +116,6 @@ const credentials = ref({
   password: ''
 })
 
-const loading = ref(false)
 const error = ref('')
 
 // Computed
@@ -121,8 +127,8 @@ const isFormValid = computed(() => {
 const handleSubmit = async () => {
   if (!isFormValid.value) return
 
-  loading.value = true
-  // NO limpiar el error aquí - solo cuando sea exitoso o haya un nuevo error
+  // Limpiar error antes de intentar login
+  error.value = ''
 
   try {
     const result = await authStore.login(
@@ -131,19 +137,15 @@ const handleSubmit = async () => {
     )
 
     if (result.success) {
-      // Limpiar error solo en caso de éxito
-      error.value = ''
       // Redirigir al dashboard después del login exitoso
       router.push('/dashboard')
     } else {
-      // Mostrar nuevo error (reemplaza el anterior si existía)
+      // Mostrar error específico del login
       error.value = result.error || 'Error de autenticación'
     }
   } catch (err) {
     error.value = 'Error de conexión. Verifique su conexión e intente nuevamente.'
     console.error('Login error:', err)
-  } finally {
-    loading.value = false
   }
 }
 

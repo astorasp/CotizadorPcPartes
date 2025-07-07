@@ -11,6 +11,9 @@
     <!-- Sistema de alertas global -->
     <AlertSystem />
     
+    <!-- Sistema de loading global -->
+    <GlobalLoadingManager />
+    
     <!-- Modal de expiración de sesión - Solo mostrar si está autenticado -->
     <SessionExpirationModal
       v-if="authStore.isLoggedIn"
@@ -27,6 +30,7 @@
 import { RouterView } from 'vue-router'
 import Navbar from '@/components/layout/Navbar.vue'
 import AlertSystem from '@/components/ui/AlertSystem.vue'
+import GlobalLoadingManager from '@/components/ui/GlobalLoadingManager.vue'
 import SessionExpirationModal from '@/components/auth/SessionExpirationModal.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useTokenMonitor } from '@/composables/useTokenMonitor'

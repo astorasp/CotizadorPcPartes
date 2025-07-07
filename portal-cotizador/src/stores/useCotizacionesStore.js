@@ -4,6 +4,7 @@ import { cotizacionesApi } from '@/services/cotizacionesApi'
 import { componentesApi } from '@/services/componentesApi'
 import { useUtils } from '@/composables/useUtils'
 import { authService } from '@/services/authService'
+import { useCrudOperations } from '@/composables/useAsyncOperation'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -19,6 +20,9 @@ import {
  */
 export const useCotizacionesStore = defineStore('cotizaciones', () => {
   const { showAlert, validateRequired, validatePrice, formatCurrency, confirm } = useUtils()
+  
+  // Sistema de loading centralizado para cotizaciones
+  const crudOps = useCrudOperations('cotización')
 
   // ==========================================
   // ESTADO REACTIVO (migración del constructor)
@@ -136,6 +140,15 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
   const primaryRole = computed(() => authService.getPrimaryRole())
 
   // ==========================================
+  // COMPUTED PROPERTIES - LOADING STATES
+  // ==========================================
+  
+  const isFetching = computed(() => crudOps.loadingStore.isOperationActive('fetch-cotización'))
+  const isCreating = computed(() => crudOps.loadingStore.isOperationActive('create-cotización'))
+  const isUpdating = computed(() => crudOps.loadingStore.isOperationActive('update-cotización'))
+  const isDeleting = computed(() => crudOps.loadingStore.isOperationActive('delete-cotización'))
+
+  // ==========================================
   // ACTIONS - CRUD OPERATIONS
   // ==========================================
   
@@ -147,10 +160,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       console.log('[CotizacionesStore] Fetching cotizaciones...')
     }
     
-    try {
-      loading.value = true
-      tableLoading.value = true
-      
+    const result = await crudOps.fetch(async () => {
       const data = await cotizacionesApi.getAll()
       cotizaciones.value = data || []
       
@@ -164,15 +174,16 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
         console.log(`[CotizacionesStore] Loaded ${cotizaciones.value.length} cotizaciones`)
       }
       
-    } catch (error) {
-      console.error('[CotizacionesStore] Error fetching cotizaciones:', error)
-      showAlert('error', error.message || MESSAGES.NETWORK_ERROR)
+      return data
+    })
+    
+    if (!result.success) {
+      showAlert('error', result.error || MESSAGES.NETWORK_ERROR)
       cotizaciones.value = []
       filteredCotizaciones.value = []
-    } finally {
-      loading.value = false
-      tableLoading.value = false
     }
+    
+    return result
   }
 
   /**
@@ -190,33 +201,28 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.create(async () => {
       // Validar datos antes de enviar
       const validation = cotizacionesApi.validateCotizacion(cotizacionData)
       if (!validation.isValid) {
-        showAlert('error', validation.errors.join('\n'))
-        return { success: false, errors: validation.errors }
+        throw new Error(validation.errors.join('\n'))
       }
       
       const response = await cotizacionesApi.create(cotizacionData)
       
-      showAlert('success', MESSAGES.COTIZACION_CREATED)
-      
       // Recargar cotizaciones para obtener datos actualizados
       await fetchCotizaciones()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[CotizacionesStore] Error creating cotización:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.COTIZACION_CREATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -234,32 +240,27 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.update(async () => {
       const validation = cotizacionesApi.validateCotizacion(cotizacionData)
       if (!validation.isValid) {
-        showAlert('error', validation.errors.join('\n'))
-        return { success: false, errors: validation.errors }
+        throw new Error(validation.errors.join('\n'))
       }
       
       const response = await cotizacionesApi.update(id, cotizacionData)
       
-      showAlert('success', MESSAGES.COTIZACION_UPDATED)
-      
       // Recargar cotizaciones para obtener datos actualizados
       await fetchCotizaciones()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[CotizacionesStore] Error updating cotización:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.COTIZACION_UPDATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -277,26 +278,22 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.remove(async () => {
       await cotizacionesApi.delete(id)
-      
-      showAlert('success', MESSAGES.COTIZACION_DELETED)
       
       // Recargar cotizaciones para obtener datos actualizados
       await fetchCotizaciones()
       
-      return { success: true }
-      
-    } catch (error) {
-      console.error('[CotizacionesStore] Error deleting cotización:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return true
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.COTIZACION_DELETED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   // ==========================================
@@ -866,6 +863,12 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     userRoles,
     isAdmin,
     primaryRole,
+    
+    // Loading states
+    isFetching,
+    isCreating,
+    isUpdating,
+    isDeleting,
     
     // Actions - CRUD
     fetchCotizaciones,

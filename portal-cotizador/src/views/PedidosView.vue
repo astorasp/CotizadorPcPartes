@@ -33,29 +33,27 @@
 
         <!-- Botones de acción -->
         <div class="flex gap-2">
-          <button
+          <LoadingButton
             @click="clearLocalFilters"
-            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <XMarkIcon class="h-5 w-5 inline mr-2" />
-            Limpiar
-          </button>
-          <button
+            variant="secondary"
+            :icon="XMarkIcon"
+            text="Limpiar"
+          />
+          <LoadingButton
             @click="openCreateModal"
-            class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
-          >
-            <PlusIcon class="h-5 w-5 inline mr-2" />
-            Nuevo Pedido
-          </button>
+            variant="primary"
+            :icon="PlusIcon"
+            text="Nuevo Pedido"
+            :disabled="!canCreatePedidos"
+          />
         </div>
       </div>
     </div>
 
     <!-- Estados de carga -->
-    <div v-if="tableLoading" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div v-if="isFetching" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Cargando pedidos...</p>
+        <LoadingSpinner size="lg" message="Cargando pedidos..." />
       </div>
     </div>
 
@@ -69,14 +67,14 @@
         <p class="text-gray-600 mb-6">
           {{ hasPedidos ? 'Intente con otros términos de búsqueda o filtros' : 'Genere su primer pedido desde una cotización existente' }}
         </p>
-        <button
+        <LoadingButton
           v-if="!hasPedidos"
           @click="openCreateModal"
-          class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
-        >
-          <PlusIcon class="h-5 w-5 inline mr-2" />
-          Generar Primer Pedido
-        </button>
+          variant="primary"
+          :icon="PlusIcon"
+          text="Generar Primer Pedido"
+          :disabled="!canCreatePedidos"
+        />
       </div>
     </div>
 
@@ -135,14 +133,15 @@
                 <div class="text-lg font-bold text-green-600">{{ formatCurrency(pedido.total) }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
+                <LoadingButton
                   @click="openDetailModal(pedido.numPedido)"
-                  class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700"
-                  :disabled="loading"
-                >
-                  <EyeIcon class="h-4 w-4 mr-1" />
-                  Ver Detalle
-                </button>
+                  variant="primary"
+                  size="sm"
+                  :icon="EyeIcon"
+                  text="Ver Detalle"
+                  :loading="isLoadingDetails"
+                  loading-text="Cargando..."
+                />
               </td>
             </tr>
           </tbody>
@@ -182,14 +181,15 @@
             </div>
             
             <div class="flex justify-end">
-              <button
+              <LoadingButton
                 @click="openDetailModal(pedido.numPedido)"
-                class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                :disabled="loading"
-              >
-                <EyeIcon class="h-5 w-5 mr-2" />
-                Ver Detalle
-              </button>
+                variant="primary"
+                size="sm"
+                :icon="EyeIcon"
+                text="Ver Detalle"
+                :loading="isLoadingDetails"
+                loading-text="Cargando..."
+              />
             </div>
           </div>
         </div>
@@ -267,7 +267,7 @@
     <!-- Modal de creación de pedido -->
     <CreatePedidoModal
       :show="showCreateModal"
-      :loading="modalLoading"
+      :loading="isGeneratingPedido"
       :form-data="formData"
       :is-form-valid="isFormValid"
       :available-cotizaciones="availableCotizaciones"
@@ -275,6 +275,8 @@
       :selected-cotizacion="selectedCotizacion"
       :selected-proveedor="selectedProveedor"
       :pedido-preview="pedidoPreview"
+      :loading-cotizaciones="isFetchingCotizaciones"
+      :loading-proveedores="isFetchingProveedores"
       @close="closeCreateModal"
       @submit="submitPedido"
       @cotizacion-change="handleCotizacionChange"
@@ -285,7 +287,7 @@
     <!-- Modal de detalles de pedido -->
     <PedidoDetailModal
       :show="showDetailModal"
-      :loading="modalLoading"
+      :loading="isLoadingDetails"
       :pedido="currentPedido"
       @close="closeDetailModal"
     />
@@ -301,6 +303,8 @@ import { useUtils } from '@/composables/useUtils'
 import { pedidosApi } from '@/services/pedidosApi'
 import CreatePedidoModal from '@/components/pedidos/CreatePedidoModal.vue'
 import PedidoDetailModal from '@/components/pedidos/PedidoDetailModal.vue'
+import LoadingButton from '@/components/ui/LoadingButton.vue'
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import {
   MagnifyingGlassIcon,
   PlusIcon,
@@ -325,9 +329,6 @@ const {
   pedidos,
   filteredPedidos,
   currentPedido,
-  loading,
-  tableLoading,
-  modalLoading,
   showCreateModal,
   showDetailModal,
   formData,
@@ -346,7 +347,20 @@ const {
   canGoNext,
   isFormValid,
   availableCotizaciones,
-  availableProveedores
+  availableProveedores,
+  
+  // Permisos
+  canCreatePedidos,
+  canViewPedidos,
+  canEditPedidos,
+  canDeletePedidos,
+  
+  // Loading states
+  isFetching,
+  isFetchingCotizaciones,
+  isFetchingProveedores,
+  isGeneratingPedido,
+  isLoadingDetails
 } = storeToRefs(pedidosStore)
 
 // Actions del store

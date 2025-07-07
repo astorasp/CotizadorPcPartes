@@ -18,16 +18,20 @@
           </p>
         </div>
         <div class="mt-4 sm:mt-0">
-          <button 
+          <LoadingButton 
             v-if="cotizacionesStore.canCreateCotizaciones"
             @click="openCreateModal" 
-            class="btn-primary btn-md"
+            :loading="cotizacionesStore.isCreating"
+            text="Nueva Cotización"
+            loading-text="Creando..."
+            variant="primary"
+            size="md"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Nueva Cotización
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
@@ -55,15 +59,31 @@
         </div>
         
         <div class="flex items-end">
-          <button @click="applyFilters" class="btn-secondary btn-md w-full">
+          <LoadingButton 
+            @click="applyFilters" 
+            :loading="cotizacionesStore.isFetching"
+            text="Aplicar Filtros"
+            loading-text="Filtrando..."
+            variant="secondary"
+            size="md"
+            full-width
+          >
             Aplicar Filtros
-          </button>
+          </LoadingButton>
         </div>
         
         <div class="flex items-end">
-          <button @click="clearFilters" class="btn-outline btn-md w-full">
+          <LoadingButton 
+            @click="clearFilters" 
+            :loading="cotizacionesStore.isFetching"
+            text="Limpiar"
+            loading-text="Limpiando..."
+            variant="outline"
+            size="md"
+            full-width
+          >
             Limpiar
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
@@ -77,39 +97,42 @@
       </div>
       
       <!-- Estado de carga -->
-      <div v-if="loading" class="p-8 text-center">
-        <div class="inline-flex items-center px-4 py-2 text-sm text-gray-600">
-          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Cargando cotizaciones...
-        </div>
+      <div v-if="cotizacionesStore.isFetching" class="p-8 text-center">
+        <LoadingSpinner 
+          size="lg"
+          message="Cargando cotizaciones..."
+          color="primary"
+          centered
+        />
       </div>
       
       <!-- Estado vacío -->
-      <div v-else-if="!hasData" class="p-8 text-center">
+      <div v-else-if="!hasData && !cotizacionesStore.isFetching" class="p-8 text-center">
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <h3 class="mt-2 text-sm font-medium text-gray-900">No hay cotizaciones</h3>
         <p class="mt-1 text-sm text-gray-500">Comience creando una nueva cotización.</p>
         <div class="mt-6">
-          <button 
+          <LoadingButton 
             v-if="cotizacionesStore.canCreateCotizaciones"
             @click="openCreateModal" 
-            class="btn-primary btn-md"
+            :loading="cotizacionesStore.isCreating"
+            text="Nueva Cotización"
+            loading-text="Creando..."
+            variant="primary"
+            size="md"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Nueva Cotización
-          </button>
+          </LoadingButton>
         </div>
       </div>
       
       <!-- Tabla con datos -->
-      <div v-else class="table-container">
+      <div v-else-if="hasData && !cotizacionesStore.isFetching" class="table-container">
         <table class="table-base">
           <thead class="bg-gray-50">
             <tr>
@@ -166,46 +189,71 @@
               </td>
               <td class="table-cell">
                 <div class="flex flex-wrap space-x-2">
-                  <button 
+                  <LoadingButton 
                     v-if="cotizacionesStore.canViewCotizacionDetails"
                     @click="handleOpenViewModal(getCotizacionSummary(cotizacion).id)"
+                    :loading="cotizacionesStore.isFetching"
+                    text="Ver detalles"
+                    loading-text="Cargando..."
+                    variant="ghost"
+                    size="sm"
                     class="text-primary-600 hover:text-primary-700 text-sm font-medium"
                     title="Ver detalles"
                   >
                     Ver detalles
-                  </button>
-                  <button 
+                  </LoadingButton>
+                  <LoadingButton 
                     v-if="cotizacionesStore.canEditCotizaciones"
                     @click="handleEdit(cotizacion)"
+                    :loading="cotizacionesStore.isUpdating"
+                    text="Editar"
+                    loading-text="Editando..."
+                    variant="ghost"
+                    size="sm"
                     class="text-green-600 hover:text-green-700 text-sm font-medium"
                     title="Editar cotización"
                   >
                     Editar
-                  </button>
-                  <button 
+                  </LoadingButton>
+                  <LoadingButton 
                     v-if="cotizacionesStore.canConvertCotizacionToOrder"
                     @click="handleConvertToOrder(cotizacion)"
+                    :loading="cotizacionesStore.isUpdating"
+                    text="A Pedido"
+                    loading-text="Convirtiendo..."
+                    variant="ghost"
+                    size="sm"
                     class="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     title="Convertir a pedido"
                   >
                     A Pedido
-                  </button>
-                  <button 
+                  </LoadingButton>
+                  <LoadingButton 
                     v-if="cotizacionesStore.canExportCotizaciones"
                     @click="handleExport(cotizacion)"
+                    :loading="cotizacionesStore.isFetching"
+                    text="Exportar"
+                    loading-text="Exportando..."
+                    variant="ghost"
+                    size="sm"
                     class="text-purple-600 hover:text-purple-700 text-sm font-medium"
                     title="Exportar"
                   >
                     Exportar
-                  </button>
-                  <button 
+                  </LoadingButton>
+                  <LoadingButton 
                     v-if="cotizacionesStore.canDeleteCotizaciones"
                     @click="handleDelete(cotizacion)"
+                    :loading="cotizacionesStore.isDeleting"
+                    text="Eliminar"
+                    loading-text="Eliminando..."
+                    variant="ghost"
+                    size="sm"
                     class="text-danger-600 hover:text-danger-700 text-sm font-medium"
                     title="Eliminar cotización"
                   >
                     Eliminar
-                  </button>
+                  </LoadingButton>
                 </div>
               </td>
             </tr>
@@ -214,37 +262,48 @@
       </div>
       
       <!-- Paginación -->
-      <div v-if="hasData" class="px-6 py-4 border-t border-gray-200">
+      <div v-if="hasData && !cotizacionesStore.isFetching" class="px-6 py-4 border-t border-gray-200">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700">
             Mostrando {{ startItem }} a {{ endItem }} de {{ totalItems }} resultados
           </div>
           <div class="flex space-x-2">
-            <button 
+            <LoadingButton 
               :disabled="!canGoPrevious"
               @click="cotizacionesStore.goToPreviousPage()"
-              class="btn-outline btn-sm"
+              :loading="cotizacionesStore.isFetching"
+              text="Anterior"
+              loading-text="Cargando..."
+              variant="outline"
+              size="sm"
               :class="{ 'opacity-50 cursor-not-allowed': !canGoPrevious }"
             >
               Anterior
-            </button>
-            <button 
+            </LoadingButton>
+            <LoadingButton 
               v-for="page in visiblePages" 
               :key="page"
               @click="handlePageChange(page)"
-              :class="page === currentPage ? 'btn-primary' : 'btn-outline'"
-              class="btn-sm"
+              :loading="cotizacionesStore.isFetching"
+              :text="page.toString()"
+              loading-text="..."
+              :variant="page === currentPage ? 'primary' : 'outline'"
+              size="sm"
             >
               {{ page }}
-            </button>
-            <button 
+            </LoadingButton>
+            <LoadingButton 
               :disabled="!canGoNext"
               @click="cotizacionesStore.goToNextPage()"
-              class="btn-outline btn-sm"
+              :loading="cotizacionesStore.isFetching"
+              text="Siguiente"
+              loading-text="Cargando..."
+              variant="outline"
+              size="sm"
               :class="{ 'opacity-50 cursor-not-allowed': !canGoNext }"
             >
               Siguiente
-            </button>
+            </LoadingButton>
           </div>
         </div>
       </div>
@@ -265,6 +324,8 @@ import { useCotizacionesStore } from '@/stores/useCotizacionesStore'
 import { useUtils } from '@/composables/useUtils'
 import CreateCotizacionModal from '@/components/cotizaciones/CreateCotizacionModal.vue'
 import ViewCotizacionModal from '@/components/cotizaciones/ViewCotizacionModal.vue'
+import LoadingButton from '@/components/ui/LoadingButton.vue'
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 
 // Composables y stores
 const cotizacionesStore = useCotizacionesStore()
@@ -273,7 +334,6 @@ const { formatCurrency, formatDate, confirm } = useUtils()
 // Estado del store
 const {
   paginatedCotizaciones,
-  loading,
   hasFilteredCotizaciones,
   paginationInfo,
   canGoPrevious,

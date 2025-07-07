@@ -22,8 +22,12 @@
       <!-- Loading State -->
       <div v-if="loading" class="py-8">
         <div class="text-center">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p class="text-gray-600">Cargando...</p>
+          <LoadingSpinner 
+            size="md" 
+            color="primary" 
+            message="Cargando información del proveedor..."
+            centered
+          />
         </div>
       </div>
 
@@ -118,30 +122,25 @@
 
       <!-- Modal Footer -->
       <div class="flex items-center justify-end pt-4 border-t border-gray-200 space-x-3">
-        <button
+        <LoadingButton
           @click="$emit('close')"
           type="button"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          :disabled="loading"
-        >
-          {{ isViewMode ? 'Cerrar' : 'Cancelar' }}
-        </button>
+          variant="secondary"
+          :text="isViewMode ? 'Cerrar' : 'Cancelar'"
+          :loading="loading"
+          loading-text="Cerrando..."
+        />
 
-        <button
+        <LoadingButton
           v-if="!isViewMode"
           @click="handleSubmit"
           type="button"
-          :disabled="!isFormValid || loading"
-          class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors"
-        >
-          <span v-if="loading" class="flex items-center">
-            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            Guardando...
-          </span>
-          <span v-else>
-            {{ isEditMode ? 'Actualizar Proveedor' : 'Guardar Proveedor' }}
-          </span>
-        </button>
+          variant="primary"
+          :text="isEditMode ? 'Actualizar Proveedor' : 'Guardar Proveedor'"
+          :loading-text="isEditMode ? 'Actualizando...' : 'Guardando...'"
+          :disabled="!isFormValid"
+          :loading="loading"
+        />
       </div>
     </div>
   </div>
@@ -149,6 +148,8 @@
 
 <script setup>
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import LoadingButton from '@/components/ui/LoadingButton.vue'
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 
 // Props
 const props = defineProps({

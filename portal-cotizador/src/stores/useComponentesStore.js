@@ -3,6 +3,7 @@ import { ref, computed, readonly } from 'vue'
 import { componentesApi } from '@/services/componentesApi'
 import { useUtils } from '@/composables/useUtils'
 import { authService } from '@/services/authService'
+import { useCrudOperations } from '@/composables/useAsyncOperation'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -16,6 +17,9 @@ import {
  */
 export const useComponentesStore = defineStore('componentes', () => {
   const { showAlert, validateRequired, validatePrice, parseNumber } = useUtils()
+  
+  // Usar el sistema de loading centralizado
+  const crudOps = useCrudOperations('componente')
 
   // ==========================================
   // ESTADO REACTIVO (migración del constructor)
@@ -123,6 +127,15 @@ export const useComponentesStore = defineStore('componentes', () => {
   const userRoles = computed(() => authService.getUserRoles())
   const isAdmin = computed(() => authService.isAdmin())
   const primaryRole = computed(() => authService.getPrimaryRole())
+  
+  // ==========================================
+  // COMPUTED PROPERTIES - LOADING STATES
+  // ==========================================
+  
+  const isFetching = computed(() => crudOps.loadingStore.isOperationActive('fetch-componente'))
+  const isCreating = computed(() => crudOps.loadingStore.isOperationActive('create-componente'))
+  const isUpdating = computed(() => crudOps.loadingStore.isOperationActive('update-componente'))
+  const isDeleting = computed(() => crudOps.loadingStore.isOperationActive('delete-componente'))
 
   // ==========================================
   // ACTIONS - CRUD OPERATIONS
@@ -136,10 +149,7 @@ export const useComponentesStore = defineStore('componentes', () => {
       console.log('[ComponentesStore] Fetching componentes...')
     }
     
-    try {
-      loading.value = true
-      tableLoading.value = true
-      
+    const result = await crudOps.fetch(async () => {
       const data = await componentesApi.getAll()
       componentes.value = data || []
       
@@ -150,15 +160,16 @@ export const useComponentesStore = defineStore('componentes', () => {
         console.log(`[ComponentesStore] Loaded ${componentes.value.length} componentes`)
       }
       
-    } catch (error) {
-      console.error('[ComponentesStore] Error fetching componentes:', error)
-      showAlert('error', error.message || MESSAGES.NETWORK_ERROR)
+      return data
+    })
+    
+    if (!result.success) {
+      showAlert('error', result.error || MESSAGES.NETWORK_ERROR)
       componentes.value = []
       filteredComponentes.value = []
-    } finally {
-      loading.value = false
-      tableLoading.value = false
     }
+    
+    return result
   }
 
   /**
@@ -176,33 +187,28 @@ export const useComponentesStore = defineStore('componentes', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.create(async () => {
       // Validar datos antes de enviar
       const validationErrors = validateComponenteData(componenteData)
       if (validationErrors.length > 0) {
-        showAlert('error', validationErrors.join('\n'))
-        return { success: false, errors: validationErrors }
+        throw new Error(validationErrors.join('\n'))
       }
       
       const response = await componentesApi.create(componenteData)
       
-      showAlert('success', MESSAGES.COMPONENT_CREATED)
-      
       // Recargar componentes para obtener datos actualizados
       await fetchComponentes()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[ComponentesStore] Error creating componente:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.COMPONENT_CREATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -220,33 +226,28 @@ export const useComponentesStore = defineStore('componentes', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.update(async () => {
       // Validar datos antes de enviar
       const validationErrors = validateComponenteData(componenteData, true)
       if (validationErrors.length > 0) {
-        showAlert('error', validationErrors.join('\n'))
-        return { success: false, errors: validationErrors }
+        throw new Error(validationErrors.join('\n'))
       }
       
       const response = await componentesApi.update(id, componenteData)
       
-      showAlert('success', MESSAGES.COMPONENT_UPDATED)
-      
       // Recargar componentes para obtener datos actualizados
       await fetchComponentes()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[ComponentesStore] Error updating componente:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.COMPONENT_UPDATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -264,26 +265,22 @@ export const useComponentesStore = defineStore('componentes', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.remove(async () => {
       await componentesApi.delete(id)
-      
-      showAlert('success', MESSAGES.COMPONENT_DELETED)
       
       // Recargar componentes para obtener datos actualizados
       await fetchComponentes()
       
-      return { success: true }
-      
-    } catch (error) {
-      console.error('[ComponentesStore] Error deleting componente:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return true
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.COMPONENT_DELETED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   // ==========================================
@@ -676,6 +673,12 @@ export const useComponentesStore = defineStore('componentes', () => {
     userRoles,
     isAdmin,
     primaryRole,
+    
+    // Loading states
+    isFetching,
+    isCreating,
+    isUpdating,
+    isDeleting,
     
     // Actions - CRUD
     fetchComponentes,

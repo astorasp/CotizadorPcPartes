@@ -18,25 +18,32 @@
           </p>
         </div>
         <div class="mt-4 sm:mt-0 flex space-x-4">
-          <button 
+          <LoadingButton 
             @click="navigateToComponents" 
-            class="btn-outline btn-md"
+            variant="outline"
+            size="md"
+            text="Ver Componentes"
+            :loading="false"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0716.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             Ver Componentes
-          </button>
-          <button 
+          </LoadingButton>
+          <LoadingButton 
             v-if="pcsStore.canCreatePcs"
             @click="openCreateModal" 
-            class="btn-primary btn-md"
+            variant="primary"
+            size="md"
+            text="Nueva PC"
+            loading-text="Preparando..."
+            :loading="pcsStore.isCreating"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Nueva PC
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
@@ -66,15 +73,27 @@
         </div>
         
         <div class="flex items-end">
-          <button @click="applyFilters" class="btn-secondary btn-md w-full">
-            Aplicar Filtros
-          </button>
+          <LoadingButton 
+            @click="applyFilters" 
+            variant="secondary"
+            size="md"
+            text="Aplicar Filtros"
+            loading-text="Aplicando..."
+            :loading="pcsStore.isFetching"
+            full-width
+          />
         </div>
         
         <div class="flex items-end">
-          <button @click="clearFilters" class="btn-outline btn-md w-full">
-            Limpiar
-          </button>
+          <LoadingButton 
+            @click="clearFilters" 
+            variant="outline"
+            size="md"
+            text="Limpiar"
+            loading-text="Limpiando..."
+            :loading="pcsStore.isFetching"
+            full-width
+          />
         </div>
       </div>
     </div>
@@ -88,14 +107,13 @@
       </div>
       
       <!-- Estado de carga -->
-      <div v-if="loading" class="p-8 text-center">
-        <div class="inline-flex items-center px-4 py-2 text-sm text-gray-600">
-          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Cargando PCs...
-        </div>
+      <div v-if="pcsStore.isFetching" class="p-8 text-center">
+        <LoadingSpinner 
+          size="lg"
+          color="primary"
+          message="Cargando PCs..."
+          centered
+        />
       </div>
       
       <!-- Estado vacío -->
@@ -106,16 +124,20 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">No hay PCs</h3>
         <p class="mt-1 text-sm text-gray-500">Comience creando una nueva PC.</p>
         <div class="mt-6">
-          <button 
+          <LoadingButton 
             v-if="pcsStore.canCreatePcs"
             @click="openCreateModal" 
-            class="btn-primary btn-md"
+            variant="primary"
+            size="md"
+            text="Nueva PC"
+            loading-text="Preparando..."
+            :loading="pcsStore.isCreating"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Nueva PC
-          </button>
+          </LoadingButton>
         </div>
       </div>
       
@@ -160,37 +182,49 @@
               </td>
               <td class="table-cell">
                 <div class="flex space-x-2">
-                  <button 
+                  <LoadingButton 
                     @click="pcsStore.openViewModal(pc.id)"
+                    variant="ghost"
+                    size="sm"
+                    text="Ver"
+                    loading-text="Cargando..."
+                    :loading="pcsStore.isFetching"
                     class="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     title="Ver detalles"
-                  >
-                    Ver
-                  </button>
-                  <button 
+                  />
+                  <LoadingButton 
                     v-if="pcsStore.canEditPcs || pcsStore.canAddComponentToPc"
                     @click="handleOpenManageModal(pc.id)"
+                    variant="ghost"
+                    size="sm"
+                    text="Gestionar Armado"
+                    loading-text="Cargando..."
+                    :loading="pcsStore.isAddingComponent || pcsStore.isRemovingComponent"
                     class="text-primary-600 hover:text-primary-700 text-sm font-medium"
                     title="Gestionar armado"
-                  >
-                    Gestionar Armado
-                  </button>
-                  <button 
+                  />
+                  <LoadingButton 
                     v-if="pcsStore.canEditPcs"
                     @click="pcsStore.openEditModal(pc.id)"
+                    variant="ghost"
+                    size="sm"
+                    text="Editar"
+                    loading-text="Cargando..."
+                    :loading="pcsStore.isUpdating"
                     class="text-green-600 hover:text-green-700 text-sm font-medium"
                     title="Editar PC"
-                  >
-                    Editar
-                  </button>
-                  <button 
+                  />
+                  <LoadingButton 
                     v-if="pcsStore.canDeletePcs"
                     @click="handleDelete(pc)"
+                    variant="ghost"
+                    size="sm"
+                    text="Eliminar"
+                    loading-text="Eliminando..."
+                    :loading="pcsStore.isDeleting"
                     class="text-danger-600 hover:text-danger-700 text-sm font-medium"
                     title="Eliminar PC"
-                  >
-                    Eliminar
-                  </button>
+                  />
                 </div>
               </td>
             </tr>
@@ -205,31 +239,36 @@
             Mostrando {{ startItem }} a {{ endItem }} de {{ totalItems }} resultados
           </div>
           <div class="flex space-x-2">
-            <button 
+            <LoadingButton 
               :disabled="!canGoPrevious"
               @click="pcsStore.goToPreviousPage()"
-              class="btn-outline btn-sm"
+              variant="outline"
+              size="sm"
+              text="Anterior"
+              loading-text="Cargando..."
+              :loading="pcsStore.isFetching"
               :class="{ 'opacity-50 cursor-not-allowed': !canGoPrevious }"
-            >
-              Anterior
-            </button>
-            <button 
+            />
+            <LoadingButton 
               v-for="page in visiblePages" 
               :key="page"
               @click="handlePageChange(page)"
-              :class="page === currentPage ? 'btn-primary' : 'btn-outline'"
-              class="btn-sm"
-            >
-              {{ page }}
-            </button>
-            <button 
+              :variant="page === currentPage ? 'primary' : 'outline'"
+              size="sm"
+              :text="page.toString()"
+              loading-text="..."
+              :loading="pcsStore.isFetching"
+            />
+            <LoadingButton 
               :disabled="!canGoNext"
               @click="pcsStore.goToNextPage()"
-              class="btn-outline btn-sm"
+              variant="outline"
+              size="sm"
+              text="Siguiente"
+              loading-text="Cargando..."
+              :loading="pcsStore.isFetching"
               :class="{ 'opacity-50 cursor-not-allowed': !canGoNext }"
-            >
-              Siguiente
-            </button>
+            />
           </div>
         </div>
       </div>
@@ -241,7 +280,7 @@
     <!-- Modal de creación/edición de PC -->
     <CreatePcModal
       :show="showCreateModal || false"
-      :loading="modalLoading"
+      :loading="pcsStore.isCreating || pcsStore.isUpdating"
       :is-edit-mode="isEditMode"
       :is-view-mode="isViewMode"
       :form-data="formData"
@@ -263,6 +302,8 @@ import { useRouter } from 'vue-router'
 import ComponentCount from '@/components/pcs/ComponentCount.vue'
 import ManageComponentsModal from '@/components/pcs/ManageComponentsModal.vue'
 import CreatePcModal from '@/components/pcs/CreatePcModal.vue'
+import LoadingButton from '@/components/ui/LoadingButton.vue'
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 
 // Composables y stores
 const pcsStore = usePcsStore()
@@ -272,7 +313,6 @@ const router = useRouter()
 // Estado del store
 const {
   paginatedPcs,
-  loading,
   hasFilteredPcs,
   paginationInfo,
   canGoPrevious,
@@ -280,7 +320,6 @@ const {
   pagination,
   filters,
   showCreateModal,
-  modalLoading,
   isEditMode,
   isViewMode,
   formData,

@@ -4,6 +4,7 @@ import { promocionesApi } from '@/services/promocionesApi'
 import { useUtils } from '@/composables/useUtils'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { authService } from '@/services/authService'
+import { useCrudOperations } from '@/composables/useAsyncOperation'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -16,6 +17,9 @@ import {
  */
 export const usePromocionesStore = defineStore('promociones', () => {
   const { showAlert, validateRequired, confirm } = useUtils()
+  
+  // Usar el sistema de loading centralizado
+  const crudOps = useCrudOperations('promocion')
 
   // ==========================================
   // ESTADO REACTIVO (migración del constructor)
@@ -96,7 +100,23 @@ export const usePromocionesStore = defineStore('promociones', () => {
   const canGoPrevious = computed(() => pagination.value.currentPage > 1)
   const canGoNext = computed(() => pagination.value.currentPage < pagination.value.totalPages)
 
-  // Computed para permisos de usuario
+  // ==========================================
+  // COMPUTED PROPERTIES - PERMISOS
+  // ==========================================
+  
+  const canViewPromociones = computed(() => authService.canViewPromociones())
+  const canCreatePromociones = computed(() => authService.canCreatePromociones())
+  const canEditPromociones = computed(() => authService.canEditPromociones())
+  const canDeletePromociones = computed(() => authService.canDeletePromociones())
+  const canApplyPromociones = computed(() => authService.canApplyPromociones())
+  const canViewPromocionFinancialImpact = computed(() => authService.canViewPromocionFinancialImpact())
+  const canManagePromocionStacking = computed(() => authService.canManagePromocionStacking())
+  const canViewPromocionReports = computed(() => authService.canViewPromocionReports())
+  const userRoles = computed(() => authService.getUserRoles())
+  const isAdmin = computed(() => authService.isAdmin())
+  const primaryRole = computed(() => authService.getPrimaryRole())
+  
+  // Computed para permisos de usuario (mantener compatibilidad)
   const userPermissions = computed(() => ({
     view: authService.canViewPromociones(),
     create: authService.canCreatePromociones(),
@@ -107,6 +127,15 @@ export const usePromocionesStore = defineStore('promociones', () => {
     manageStacking: authService.canManagePromocionStacking(),
     viewReports: authService.canViewPromocionReports()
   }))
+  
+  // ==========================================
+  // COMPUTED PROPERTIES - LOADING STATES
+  // ==========================================
+  
+  const isFetching = computed(() => crudOps.loadingStore.isOperationActive('fetch-promocion'))
+  const isCreating = computed(() => crudOps.loadingStore.isOperationActive('create-promocion'))
+  const isUpdating = computed(() => crudOps.loadingStore.isOperationActive('update-promocion'))
+  const isDeleting = computed(() => crudOps.loadingStore.isOperationActive('delete-promocion'))
 
   // Computed para validación del formulario
   const isFormValid = computed(() => {
@@ -160,10 +189,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
       console.log('[PromocionesStore] Fetching promociones...')
     }
     
-    try {
-      loading.value = true
-      tableLoading.value = true
-      
+    const result = await crudOps.fetch(async () => {
       const data = await promocionesApi.getAll()
       promociones.value = data || []
       
@@ -174,15 +200,16 @@ export const usePromocionesStore = defineStore('promociones', () => {
         console.log(`[PromocionesStore] Loaded ${promociones.value.length} promociones`)
       }
       
-    } catch (error) {
-      console.error('[PromocionesStore] Error fetching promociones:', error)
-      showAlert('error', error.message || MESSAGES.NETWORK_ERROR)
+      return data
+    })
+    
+    if (!result.success) {
+      showAlert('error', result.error || MESSAGES.NETWORK_ERROR)
       promociones.value = []
       filteredPromociones.value = []
-    } finally {
-      loading.value = false
-      tableLoading.value = false
     }
+    
+    return result
   }
 
   // ==========================================
@@ -193,24 +220,22 @@ export const usePromocionesStore = defineStore('promociones', () => {
    * Crear nueva promoción
    */
   const createPromocion = async (promocionData) => {
-    // Verificar permisos antes de proceder
-    if (!authService.canCreatePromociones()) {
-      showAlert('error', 'No tiene permisos para crear promociones')
-      return { success: false, error: 'Sin permisos para crear promociones' }
-    }
-
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PromocionesStore] Creating promocion:', promocionData)
     }
     
-    try {
-      loading.value = true
-      
+    // Verificar permisos antes de proceder
+    if (!authService.canCreatePromociones()) {
+      const error = 'No tiene permisos para crear promociones'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
+    const result = await crudOps.create(async () => {
       // Validar datos antes de enviar
       const validation = promocionesApi.validatePromocion(promocionData)
       if (!validation.isValid) {
-        showAlert('error', validation.errors.join('\n'))
-        return { success: false, errors: validation.errors }
+        throw new Error(validation.errors.join('\n'))
       }
       
       // Construir payload completo
@@ -218,45 +243,41 @@ export const usePromocionesStore = defineStore('promociones', () => {
       
       const response = await promocionesApi.create(payload)
       
-      showAlert('success', MESSAGES.PROMOCION_CREATED)
-      
       // Recargar promociones para obtener datos actualizados
       await fetchPromociones()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[PromocionesStore] Error creating promocion:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PROMOCION_CREATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
    * Actualizar promoción existente
    */
   const updatePromocion = async (id, promocionData) => {
-    // Verificar permisos antes de proceder
-    if (!authService.canEditPromociones()) {
-      showAlert('error', 'No tiene permisos para editar promociones')
-      return { success: false, error: 'Sin permisos para editar promociones' }
-    }
-
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PromocionesStore] Updating promocion:', id, promocionData)
     }
     
-    try {
-      loading.value = true
-      
+    // Verificar permisos antes de proceder
+    if (!authService.canEditPromociones()) {
+      const error = 'No tiene permisos para editar promociones'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
+    const result = await crudOps.update(async () => {
       // Validar datos antes de enviar
       const validation = promocionesApi.validatePromocion(promocionData)
       if (!validation.isValid) {
-        showAlert('error', validation.errors.join('\n'))
-        return { success: false, errors: validation.errors }
+        throw new Error(validation.errors.join('\n'))
       }
       
       // Construir payload completo
@@ -264,57 +285,52 @@ export const usePromocionesStore = defineStore('promociones', () => {
       
       const response = await promocionesApi.update(id, payload)
       
-      showAlert('success', MESSAGES.PROMOCION_UPDATED)
-      
       // Recargar promociones para obtener datos actualizados
       await fetchPromociones()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[PromocionesStore] Error updating promocion:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PROMOCION_UPDATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
    * Eliminar promoción
    */
   const deletePromocion = async (id) => {
-    // Verificar permisos antes de proceder
-    if (!authService.canDeletePromociones()) {
-      showAlert('error', 'No tiene permisos para eliminar promociones')
-      return { success: false, error: 'Sin permisos para eliminar promociones' }
-    }
-
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PromocionesStore] Deleting promocion:', id)
     }
     
-    try {
-      loading.value = true
-      
+    // Verificar permisos antes de proceder
+    if (!authService.canDeletePromociones()) {
+      const error = 'No tiene permisos para eliminar promociones'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
+    const result = await crudOps.remove(async () => {
       await promocionesApi.delete(id)
-      
-      showAlert('success', MESSAGES.PROMOCION_DELETED)
       
       // Recargar promociones para obtener datos actualizados
       await fetchPromociones()
       
-      return { success: true }
-      
-    } catch (error) {
-      console.error('[PromocionesStore] Error deleting promocion:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return true
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PROMOCION_DELETED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -836,6 +852,25 @@ export const usePromocionesStore = defineStore('promociones', () => {
     tiposPromocion,
     estadosPromocion,
     showTipoConfig,
+    
+    // Permisos
+    canViewPromociones,
+    canCreatePromociones,
+    canEditPromociones,
+    canDeletePromociones,
+    canApplyPromociones,
+    canViewPromocionFinancialImpact,
+    canManagePromocionStacking,
+    canViewPromocionReports,
+    userRoles,
+    isAdmin,
+    primaryRole,
+    
+    // Loading states
+    isFetching,
+    isCreating,
+    isUpdating,
+    isDeleting,
     
     // Actions - Carga de datos
     fetchPromociones,

@@ -18,16 +18,20 @@
           </p>
         </div>
         <div class="mt-4 sm:mt-0">
-          <button 
+          <LoadingButton
             v-if="componentesStore.canCreateComponentes"
             @click="openCreateModal" 
+            variant="primary"
+            size="md"
+            :loading="componentesStore.isFetching"
+            loading-text="Cargando..."
             class="btn-primary btn-md"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Nuevo Componente
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
@@ -57,15 +61,29 @@
         </div>
         
         <div class="flex items-end">
-          <button @click="applyFilters" class="btn-secondary btn-md w-full">
+          <LoadingButton
+            @click="applyFilters" 
+            variant="secondary"
+            size="md"
+            :loading="componentesStore.isFetching"
+            loading-text="Aplicando..."
+            class="btn-secondary btn-md w-full"
+          >
             Aplicar Filtros
-          </button>
+          </LoadingButton>
         </div>
         
         <div class="flex items-end">
-          <button @click="clearFilters" class="btn-outline btn-md w-full">
+          <LoadingButton
+            @click="clearFilters" 
+            variant="outline"
+            size="md"
+            :loading="componentesStore.isFetching"
+            loading-text="Limpiando..."
+            class="btn-outline btn-md w-full"
+          >
             Limpiar
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
@@ -79,12 +97,9 @@
       </div>
       
       <!-- Estado de carga -->
-      <div v-if="loading" class="p-8 text-center">
+      <div v-if="componentesStore.isFetching" class="p-8 text-center">
         <div class="inline-flex items-center px-4 py-2 text-sm text-gray-600">
-          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <LoadingSpinner size="sm" class="mr-3" />
           Cargando componentes...
         </div>
       </div>
@@ -97,16 +112,20 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">No hay componentes</h3>
         <p class="mt-1 text-sm text-gray-500">Comience creando un nuevo componente.</p>
         <div class="mt-6">
-          <button 
+          <LoadingButton
             v-if="componentesStore.canCreateComponentes"
             @click="openCreateModal" 
+            variant="primary"
+            size="md"
+            :loading="componentesStore.isFetching"
+            loading-text="Cargando..."
             class="btn-primary btn-md"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             Nuevo Componente
-          </button>
+          </LoadingButton>
         </div>
       </div>
       
@@ -153,29 +172,41 @@
               </td>
               <td class="table-cell">
                 <div class="flex space-x-2">
-                  <button 
+                  <LoadingButton
                     @click="openDetailModal(componente)"
+                    variant="ghost"
+                    size="xs"
+                    :loading="componentesStore.isFetching"
+                    loading-text="Cargando..."
                     class="text-blue-600 hover:text-blue-700 text-sm font-medium"
                     title="Ver detalles"
                   >
                     Ver
-                  </button>
-                  <button 
+                  </LoadingButton>
+                  <LoadingButton
                     v-if="componentesStore.canEditComponentes"
                     @click="openEditModal(componente)"
+                    variant="ghost"
+                    size="xs"
+                    :loading="componentesStore.isUpdating"
+                    loading-text="Actualizando..."
                     class="text-primary-600 hover:text-primary-700 text-sm font-medium"
                     title="Editar componente"
                   >
                     Editar
-                  </button>
-                  <button 
+                  </LoadingButton>
+                  <LoadingButton
                     v-if="componentesStore.canDeleteComponentes"
                     @click="handleDelete(componente)"
+                    variant="ghost"
+                    size="xs"
+                    :loading="componentesStore.isDeleting"
+                    loading-text="Eliminando..."
                     class="text-danger-600 hover:text-danger-700 text-sm font-medium"
                     title="Eliminar componente"
                   >
                     Eliminar
-                  </button>
+                  </LoadingButton>
                 </div>
               </td>
             </tr>
@@ -190,31 +221,42 @@
             Mostrando {{ startItem }} a {{ endItem }} de {{ totalItems }} resultados
           </div>
           <div class="flex space-x-2">
-            <button 
+            <LoadingButton
               :disabled="!canGoPrevious"
               @click="componentesStore.goToPreviousPage()"
+              variant="outline"
+              size="sm"
+              :loading="componentesStore.isFetching"
+              loading-text="Cargando..."
               class="btn-outline btn-sm"
               :class="{ 'opacity-50 cursor-not-allowed': !canGoPrevious }"
             >
               Anterior
-            </button>
-            <button 
+            </LoadingButton>
+            <LoadingButton
               v-for="page in visiblePages" 
               :key="page"
               @click="handlePageChange(page)"
-              :class="page === currentPage ? 'btn-primary' : 'btn-outline'"
+              :variant="page === currentPage ? 'primary' : 'outline'"
+              size="sm"
+              :loading="componentesStore.isFetching"
+              loading-text="..."
               class="btn-sm"
             >
               {{ page }}
-            </button>
-            <button 
+            </LoadingButton>
+            <LoadingButton
               :disabled="!canGoNext"
               @click="componentesStore.goToNextPage()"
+              variant="outline"
+              size="sm"
+              :loading="componentesStore.isFetching"
+              loading-text="Cargando..."
               class="btn-outline btn-sm"
               :class="{ 'opacity-50 cursor-not-allowed': !canGoNext }"
             >
               Siguiente
-            </button>
+            </LoadingButton>
           </div>
         </div>
       </div>
@@ -231,7 +273,7 @@
     <ComponenteDetailModal
       v-if="componentesStore.showDetailModal"
       :show="componentesStore.showDetailModal"
-      :loading="componentesStore.modalLoading"
+      :loading="componentesStore.isFetching"
       :componente="componentesStore.currentComponente"
       @close="componentesStore.closeDetailModal()"
     />
@@ -249,6 +291,10 @@ import { COMPONENT_TYPE_LABELS } from '@/utils/constants'
 import CreateComponenteModal from '@/components/componentes/CreateComponenteModal.vue'
 import ComponenteDetailModal from '@/components/componentes/ComponenteDetailModal.vue'
 
+// Loading components
+import LoadingButton from '@/components/ui/LoadingButton.vue'
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+
 // Composables y stores
 const componentesStore = useComponentesStore()
 const { formatCurrency, confirm } = useUtils()
@@ -256,7 +302,6 @@ const { formatCurrency, confirm } = useUtils()
 // Estado del store
 const {
   paginatedComponents,
-  loading,
   hasFilteredComponents,
   paginationInfo,
   canGoPrevious,

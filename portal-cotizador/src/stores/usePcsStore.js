@@ -4,6 +4,7 @@ import { pcsApi } from '@/services/pcsApi'
 import { componentesApi } from '@/services/componentesApi'
 import { useUtils } from '@/composables/useUtils'
 import { authService } from '@/services/authService'
+import { useCrudOperations, useAsyncOperation } from '@/composables/useAsyncOperation'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -17,6 +18,15 @@ import {
  */
 export const usePcsStore = defineStore('pcs', () => {
   const { showAlert, validateRequired, validatePrice, formatCurrency, confirm } = useUtils()
+  
+  // Sistema de loading centralizado para PCs
+  const crudOps = useCrudOperations('PC')
+  
+  // Para operaciones específicas de componentes usamos useAsyncOperation
+  const componentOps = useAsyncOperation({
+    showNotification: true,
+    type: 'component'
+  })
 
   // ==========================================
   // ESTADO REACTIVO (migración del constructor)
@@ -155,6 +165,17 @@ export const usePcsStore = defineStore('pcs', () => {
   const primaryRole = computed(() => authService.getPrimaryRole())
 
   // ==========================================
+  // COMPUTED PROPERTIES - LOADING STATES
+  // ==========================================
+  
+  const isFetching = computed(() => crudOps.loadingStore.isOperationActive('fetch-PC'))
+  const isCreating = computed(() => crudOps.loadingStore.isOperationActive('create-PC'))
+  const isUpdating = computed(() => crudOps.loadingStore.isOperationActive('update-PC'))
+  const isDeleting = computed(() => crudOps.loadingStore.isOperationActive('delete-PC'))
+  const isAddingComponent = computed(() => componentOps.loadingStore.isOperationActive('add-component'))
+  const isRemovingComponent = computed(() => componentOps.loadingStore.isOperationActive('remove-component'))
+
+  // ==========================================
   // ACTIONS - CRUD OPERATIONS
   // ==========================================
   
@@ -166,10 +187,7 @@ export const usePcsStore = defineStore('pcs', () => {
       console.log('[PcsStore] Fetching PCs...')
     }
     
-    try {
-      loading.value = true
-      tableLoading.value = true
-      
+    const result = await crudOps.fetch(async () => {
       const data = await pcsApi.getAll()
       pcs.value = data || []
       
@@ -180,15 +198,16 @@ export const usePcsStore = defineStore('pcs', () => {
         console.log(`[PcsStore] Loaded ${pcs.value.length} PCs`)
       }
       
-    } catch (error) {
-      console.error('[PcsStore] Error fetching PCs:', error)
-      showAlert('error', error.message || MESSAGES.NETWORK_ERROR)
+      return data
+    })
+    
+    if (!result.success) {
+      showAlert('error', result.error || MESSAGES.NETWORK_ERROR)
       pcs.value = []
       filteredPcs.value = []
-    } finally {
-      loading.value = false
-      tableLoading.value = false
     }
+    
+    return result
   }
 
   /**
@@ -206,33 +225,28 @@ export const usePcsStore = defineStore('pcs', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.create(async () => {
       // Validar datos antes de enviar
       const validationErrors = validatePcData(pcData)
       if (validationErrors.length > 0) {
-        showAlert('error', validationErrors.join('\n'))
-        return { success: false, errors: validationErrors }
+        throw new Error(validationErrors.join('\n'))
       }
       
       const response = await pcsApi.create(pcData)
       
-      showAlert('success', MESSAGES.PC_CREATED)
-      
       // Recargar PCs para obtener datos actualizados
       await fetchPcs()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[PcsStore] Error creating PC:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PC_CREATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -250,33 +264,28 @@ export const usePcsStore = defineStore('pcs', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.update(async () => {
       // Validar datos antes de enviar
       const validationErrors = validatePcData(pcData, true)
       if (validationErrors.length > 0) {
-        showAlert('error', validationErrors.join('\n'))
-        return { success: false, errors: validationErrors }
+        throw new Error(validationErrors.join('\n'))
       }
       
       const response = await pcsApi.update(id, pcData)
       
-      showAlert('success', MESSAGES.PC_UPDATED)
-      
       // Recargar PCs para obtener datos actualizados
       await fetchPcs()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[PcsStore] Error updating PC:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PC_UPDATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -294,26 +303,22 @@ export const usePcsStore = defineStore('pcs', () => {
       return { success: false, error }
     }
     
-    try {
-      loading.value = true
-      
+    const result = await crudOps.remove(async () => {
       await pcsApi.delete(id)
-      
-      showAlert('success', MESSAGES.PC_DELETED)
       
       // Recargar PCs para obtener datos actualizados
       await fetchPcs()
       
       return { success: true }
-      
-    } catch (error) {
-      console.error('[PcsStore] Error deleting PC:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PC_DELETED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   // ==========================================
@@ -425,33 +430,31 @@ export const usePcsStore = defineStore('pcs', () => {
       return { success: false }
     }
 
-    try {
-      modalLoading.value = true
-      
-      await pcsApi.addComponent(currentPc.value.id, {
-        id: componentId,
-        cantidad: quantity
-      })
-      
-      showAlert('success', MESSAGES.PC_COMPONENT_ADDED)
-      
-      // Recargar componentes de la PC
-      await loadPcComponents(currentPc.value.id)
-      
-      // Limpiar formulario
-      componentSelectValue.value = ''
-      componentQuantity.value = 1
-      
-      return { success: true }
-      
-    } catch (error) {
-      console.error('[PcsStore] Error adding component to PC:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      modalLoading.value = false
-    }
+    const result = await componentOps.execute(
+      async () => {
+        await pcsApi.addComponent(currentPc.value.id, {
+          id: componentId,
+          cantidad: quantity
+        })
+        
+        // Recargar componentes de la PC
+        await loadPcComponents(currentPc.value.id)
+        
+        // Limpiar formulario
+        componentSelectValue.value = ''
+        componentQuantity.value = 1
+        
+        return true
+      },
+      {
+        key: 'add-component',
+        message: 'Agregando componente...',
+        successMessage: MESSAGES.PC_COMPONENT_ADDED,
+        errorMessage: 'Error al agregar componente'
+      }
+    )
+    
+    return result
   }
 
   /**
@@ -479,26 +482,24 @@ export const usePcsStore = defineStore('pcs', () => {
       return { success: false }
     }
 
-    try {
-      modalLoading.value = true
-      
-      await pcsApi.removeComponent(currentPc.value.id, componentId)
-      
-      showAlert('success', MESSAGES.PC_COMPONENT_REMOVED)
-      
-      // Recargar componentes de la PC
-      await loadPcComponents(currentPc.value.id)
-      
-      return { success: true }
-      
-    } catch (error) {
-      console.error('[PcsStore] Error removing component from PC:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      modalLoading.value = false
-    }
+    const result = await componentOps.execute(
+      async () => {
+        await pcsApi.removeComponent(currentPc.value.id, componentId)
+        
+        // Recargar componentes de la PC
+        await loadPcComponents(currentPc.value.id)
+        
+        return true
+      },
+      {
+        key: 'remove-component',
+        message: 'Quitando componente...',
+        successMessage: MESSAGES.PC_COMPONENT_REMOVED,
+        errorMessage: 'Error al quitar componente'
+      }
+    )
+    
+    return result
   }
 
   // ==========================================
@@ -954,6 +955,14 @@ export const usePcsStore = defineStore('pcs', () => {
     userRoles,
     isAdmin,
     primaryRole,
+    
+    // Loading states
+    isFetching,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    isAddingComponent,
+    isRemovingComponent,
     
     // Actions - CRUD
     fetchPcs,

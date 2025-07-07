@@ -1,11 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authService } from '@/services/authService'
+import { useAsyncOperation } from '@/composables/useAsyncOperation'
 
 /**
  * Store de autenticación para manejar estado de usuario y sesión
  */
 export const useAuthStore = defineStore('auth', () => {
+  // Sistema de loading centralizado para auth
+  const asyncOp = useAsyncOperation({
+    showNotification: false, // Auth maneja sus propias notificaciones
+    type: 'auth'
+  })
+  
   // Estado reactivo
   const isAuthenticated = ref(false)
   const user = ref(null)
@@ -16,6 +23,10 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => isAuthenticated.value && !!user.value)
   const userName = computed(() => user.value?.usuario || '')
   const userRoles = computed(() => user.value?.roles || [])
+  
+  // Estados de loading específicos
+  const isLoggingIn = computed(() => asyncOp.loadingStore.isOperationActive('auth-login'))
+  const isLoggingOut = computed(() => asyncOp.loadingStore.isOperationActive('auth-logout'))
 
   // Actions
   const checkAuthentication = () => {
@@ -64,60 +75,69 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const login = async (usuario, password) => {
-    loading.value = true
-    
-    try {
-      const result = await authService.login(usuario, password)
-      
-      if (result.success) {
-        isAuthenticated.value = true
+    const result = await asyncOp.execute(
+      async () => {
+        const authResult = await authService.login(usuario, password)
         
-        // Extraer información del usuario del token
-        const accessToken = result.data.accessToken
-        const payload = JSON.parse(atob(accessToken.split('.')[1]))
-        
-        user.value = {
-          usuario: payload.sub,
-          roles: payload.roles || [],
-          userId: payload.user_id
+        if (authResult.success) {
+          isAuthenticated.value = true
+          
+          // Extraer información del usuario del token
+          const accessToken = authResult.data.accessToken
+          const payload = JSON.parse(atob(accessToken.split('.')[1]))
+          
+          user.value = {
+            usuario: payload.sub,
+            roles: payload.roles || [],
+            userId: payload.user_id
+          }
+          
+          // Emitir evento para iniciar el monitoreo de token
+          window.dispatchEvent(new CustomEvent('auth-login-success'))
+          
+          return authResult.data
+        } else {
+          throw new Error(authResult.error || 'Error de autenticación')
         }
-        
-        // Emitir evento para iniciar el monitoreo de token
-        window.dispatchEvent(new CustomEvent('auth-login-success'))
-        
-        return { success: true }
+      },
+      {
+        key: 'auth-login',
+        message: 'Iniciando sesión...',
+        blockUI: true, // Login bloquea la UI
+        timeout: 10000 // 10 segundos timeout
       }
-      
-      return result
-    } catch (error) {
-      console.error('Login error:', error)
-      return {
-        success: false,
-        error: 'Error de autenticación'
-      }
-    } finally {
-      loading.value = false
-    }
+    )
+    
+    // Sincronizar estado de loading local para compatibilidad con componentes existentes
+    loading.value = asyncOp.loadingStore.isOperationActive('auth-login')
+    
+    return result
   }
 
   const logout = async () => {
-    loading.value = true
+    const result = await asyncOp.execute(
+      async () => {
+        await authService.logout()
+        return true
+      },
+      {
+        key: 'auth-logout',
+        message: 'Cerrando sesión...',
+        blockUI: false, // Logout no necesita bloquear UI
+        timeout: 5000 // 5 segundos timeout
+      }
+    )
     
-    try {
-      await authService.logout()
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      isAuthenticated.value = false
-      user.value = null
-      loading.value = false
-      
-      // Limpiar cualquier estado pendiente
-      pendingAction.value = null
-      
-      // Emitir evento para detener el monitoreo de token
-      window.dispatchEvent(new CustomEvent('auth-logout'))
-    }
+    // Limpiar estado siempre, independiente del resultado
+    isAuthenticated.value = false
+    user.value = null
+    loading.value = false
+    pendingAction.value = null
+    
+    // Emitir evento para detener el monitoreo de token
+    window.dispatchEvent(new CustomEvent('auth-logout'))
+    
+    return result
   }
 
   const forceLogout = () => {
@@ -189,12 +209,16 @@ export const useAuthStore = defineStore('auth', () => {
     // Estado
     isAuthenticated,
     user,
-    loading,
+    loading, // Mantener para compatibilidad
     
     // Computed
     isLoggedIn,
     userName,
     userRoles,
+    
+    // Estados de loading específicos
+    isLoggingIn,
+    isLoggingOut,
     
     // Actions
     checkAuthentication,
@@ -205,6 +229,9 @@ export const useAuthStore = defineStore('auth', () => {
     requireAuth,
     hasRole,
     hasAnyRole,
-    initialize
+    initialize,
+    
+    // Acceso al sistema de loading
+    loadingStore: asyncOp.loadingStore
   }
 })

@@ -11,14 +11,17 @@
           </p>
         </div>
         <div class="mt-4 sm:mt-0">
-          <button
+          <LoadingButton
             v-if="userPermissions.create"
             @click="openCreateModal()"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            :loading="promocionesStore.isFetching"
+            loading-text="Cargando..."
+            :icon="PlusIcon"
+            variant="primary"
+            class="text-sm font-medium"
           >
-            <PlusIcon class="h-4 w-4 mr-2" />
             Nueva Promoción
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
@@ -68,21 +71,29 @@
 
         <!-- Acciones de filtro -->
         <div class="flex items-end space-x-2">
-          <button
+          <LoadingButton
             @click="clearFilters"
-            class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            :loading="promocionesStore.isFetching"
+            loading-text="Limpiando..."
+            variant="outline"
+            size="sm"
+            class="flex-1"
           >
             Limpiar
-          </button>
+          </LoadingButton>
         </div>
       </div>
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="bg-white rounded-lg shadow-sm p-8">
+    <div v-if="promocionesStore.isFetching" class="bg-white rounded-lg shadow-sm p-8">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Cargando promociones...</p>
+        <LoadingSpinner 
+          size="lg" 
+          color="primary" 
+          message="Cargando promociones..." 
+          centered
+        />
       </div>
     </div>
 
@@ -92,14 +103,16 @@
         <TagIcon class="h-12 w-12 mx-auto mb-4 text-gray-300" />
         <h3 class="text-lg font-medium text-gray-900 mb-2">No hay promociones</h3>
         <p class="text-gray-500 mb-4">Comienza creando tu primera promoción</p>
-        <button
+        <LoadingButton
           v-if="userPermissions.create"
           @click="openCreateModal()"
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          :loading="promocionesStore.isFetching"
+          loading-text="Cargando..."
+          :icon="PlusIcon"
+          variant="primary"
         >
-          <PlusIcon class="h-4 w-4 mr-2" />
           Crear Primera Promoción
-        </button>
+        </LoadingButton>
       </div>
     </div>
 
@@ -128,7 +141,16 @@
       </div>
 
       <!-- Desktop Table -->
-      <div class="hidden lg:block bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="hidden lg:block bg-white rounded-lg shadow-sm overflow-hidden relative">
+        <!-- Loading Overlay -->
+        <div v-if="promocionesStore.isFetching" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+          <LoadingSpinner 
+            size="md" 
+            color="primary" 
+            message="Actualizando promociones..." 
+          />
+        </div>
+        
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
@@ -186,30 +208,39 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <div class="flex space-x-2">
-                  <button
+                  <LoadingButton
                     v-if="userPermissions.view"
                     @click="openDetailModal(promocion.idPromocion)"
-                    class="text-blue-600 hover:text-blue-800 transition-colors"
+                    :loading="promocionesStore.isFetching"
+                    loading-text="..."
+                    :icon="EyeIcon"
+                    variant="ghost"
+                    size="sm"
+                    class="text-blue-600 hover:text-blue-800 p-1"
                     title="Ver detalles"
-                  >
-                    <EyeIcon class="h-4 w-4" />
-                  </button>
-                  <button
+                  />
+                  <LoadingButton
                     v-if="userPermissions.edit"
                     @click="openEditModal(promocion.idPromocion)"
-                    class="text-yellow-600 hover:text-yellow-800 transition-colors"
+                    :loading="promocionesStore.isFetching"
+                    loading-text="..."
+                    :icon="PencilIcon"
+                    variant="ghost"
+                    size="sm"
+                    class="text-yellow-600 hover:text-yellow-800 p-1"
                     title="Editar"
-                  >
-                    <PencilIcon class="h-4 w-4" />
-                  </button>
-                  <button
+                  />
+                  <LoadingButton
                     v-if="userPermissions.delete"
                     @click="confirmDeletePromocion(promocion.idPromocion)"
-                    class="text-red-600 hover:text-red-800 transition-colors"
+                    :loading="promocionesStore.isDeleting"
+                    loading-text="..."
+                    :icon="TrashIcon"
+                    variant="ghost"
+                    size="sm"
+                    class="text-red-600 hover:text-red-800 p-1"
                     title="Eliminar"
-                  >
-                    <TrashIcon class="h-4 w-4" />
-                  </button>
+                  />
                 </div>
               </td>
             </tr>
@@ -218,7 +249,16 @@
       </div>
 
       <!-- Mobile Cards -->
-      <div class="lg:hidden space-y-4">
+      <div class="lg:hidden space-y-4 relative">
+        <!-- Loading Overlay -->
+        <div v-if="promocionesStore.isFetching" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+          <LoadingSpinner 
+            size="md" 
+            color="primary" 
+            message="Actualizando promociones..." 
+          />
+        </div>
+        
         <div
           v-for="promocion in paginatedPromociones"
           :key="promocion.idPromocion"
@@ -236,30 +276,39 @@
                 </p>
               </div>
               <div class="flex space-x-2 ml-2">
-                <button
+                <LoadingButton
                   v-if="userPermissions.view"
                   @click="openDetailModal(promocion.idPromocion)"
-                  class="text-blue-600 hover:text-blue-800 transition-colors"
+                  :loading="promocionesStore.isFetching"
+                  loading-text="..."
+                  :icon="EyeIcon"
+                  variant="ghost"
+                  size="sm"
+                  class="text-blue-600 hover:text-blue-800 p-1"
                   title="Ver detalles"
-                >
-                  <EyeIcon class="h-4 w-4" />
-                </button>
-                <button
+                />
+                <LoadingButton
                   v-if="userPermissions.edit"
                   @click="openEditModal(promocion.idPromocion)"
-                  class="text-yellow-600 hover:text-yellow-800 transition-colors"
+                  :loading="promocionesStore.isFetching"
+                  loading-text="..."
+                  :icon="PencilIcon"
+                  variant="ghost"
+                  size="sm"
+                  class="text-yellow-600 hover:text-yellow-800 p-1"
                   title="Editar"
-                >
-                  <PencilIcon class="h-4 w-4" />
-                </button>
-                <button
+                />
+                <LoadingButton
                   v-if="userPermissions.delete"
                   @click="confirmDeletePromocion(promocion.idPromocion)"
-                  class="text-red-600 hover:text-red-800 transition-colors"
+                  :loading="promocionesStore.isDeleting"
+                  loading-text="..."
+                  :icon="TrashIcon"
+                  variant="ghost"
+                  size="sm"
+                  class="text-red-600 hover:text-red-800 p-1"
                   title="Eliminar"
-                >
-                  <TrashIcon class="h-4 w-4" />
-                </button>
+                />
               </div>
             </div>
 
@@ -302,77 +351,96 @@
       <!-- Desktop Pagination -->
       <div class="hidden lg:flex items-center justify-between bg-white rounded-lg shadow-sm px-6 py-4">
         <div class="flex items-center space-x-2">
-          <button
+          <LoadingButton
             @click="goToPage(1)"
             :disabled="!canGoPrevious"
-            class="p-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronDoubleLeftIcon class="h-4 w-4" />
-          </button>
-          <button
+            :loading="promocionesStore.isFetching"
+            loading-text="..."
+            :icon="ChevronDoubleLeftIcon"
+            variant="outline"
+            size="sm"
+            class="p-2"
+          />
+          <LoadingButton
             @click="goToPreviousPage()"
             :disabled="!canGoPrevious"
-            class="p-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeftIcon class="h-4 w-4" />
-          </button>
+            :loading="promocionesStore.isFetching"
+            loading-text="..."
+            :icon="ChevronLeftIcon"
+            variant="outline"
+            size="sm"
+            class="p-2"
+          />
         </div>
 
         <div class="flex items-center space-x-2">
-          <button
+          <LoadingButton
             v-for="page in visiblePages"
             :key="page"
             @click="goToPage(page)"
-            :class="[
-              'px-3 py-2 rounded-md text-sm font-medium',
-              page === pagination.currentPage
-                ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            ]"
+            :loading="promocionesStore.isFetching"
+            loading-text="..."
+            :variant="page === pagination.currentPage ? 'primary' : 'outline'"
+            size="sm"
+            class="px-3 py-2"
           >
             {{ page }}
-          </button>
+          </LoadingButton>
         </div>
 
         <div class="flex items-center space-x-2">
-          <button
+          <LoadingButton
             @click="goToNextPage()"
             :disabled="!canGoNext"
-            class="p-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronRightIcon class="h-4 w-4" />
-          </button>
-          <button
+            :loading="promocionesStore.isFetching"
+            loading-text="..."
+            :icon="ChevronRightIcon"
+            variant="outline"
+            size="sm"
+            class="p-2"
+          />
+          <LoadingButton
             @click="goToPage(pagination.totalPages)"
             :disabled="!canGoNext"
-            class="p-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronDoubleRightIcon class="h-4 w-4" />
-          </button>
+            :loading="promocionesStore.isFetching"
+            loading-text="..."
+            :icon="ChevronDoubleRightIcon"
+            variant="outline"
+            size="sm"
+            class="p-2"
+          />
         </div>
       </div>
 
       <!-- Mobile Pagination -->
       <div class="lg:hidden flex items-center justify-between bg-white rounded-lg shadow-sm px-4 py-3">
-        <button
+        <LoadingButton
           @click="goToPreviousPage()"
           :disabled="!canGoPrevious"
-          class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          :loading="promocionesStore.isFetching"
+          loading-text="..."
+          :icon="ChevronLeftIcon"
+          variant="outline"
+          size="sm"
+          class="flex items-center"
         >
-          <ChevronLeftIcon class="h-4 w-4 mr-1" />
           Anterior
-        </button>
+        </LoadingButton>
         <span class="text-sm text-gray-700">
           {{ pagination.currentPage }} de {{ pagination.totalPages }}
         </span>
-        <button
+        <LoadingButton
           @click="goToNextPage()"
           :disabled="!canGoNext"
-          class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          :loading="promocionesStore.isFetching"
+          loading-text="..."
+          variant="outline"
+          size="sm"
+          class="flex items-center"
         >
           Siguiente
           <ChevronRightIcon class="h-4 w-4 ml-1" />
-        </button>
+        </LoadingButton>
       </div>
     </div>
 
@@ -414,6 +482,10 @@ import {
   ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
 
+// UI Components
+import LoadingButton from '@/components/ui/LoadingButton.vue'
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
+
 // Dynamic imports for modals
 import CreatePromocionModal from './CreatePromocionModal.vue'
 import PromocionDetailModal from './PromocionDetailModal.vue'
@@ -428,8 +500,6 @@ const {
   promociones,
   filteredPromociones,
   currentPromocion,
-  loading,
-  tableLoading,
   modalLoading,
   isEditMode,
   showCreateModal,

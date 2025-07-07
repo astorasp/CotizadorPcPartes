@@ -44,30 +44,36 @@
 
         <!-- Botones de acción -->
         <div class="flex gap-2">
-          <button
+          <LoadingButton
             @click="clearLocalFilters"
-            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <XMarkIcon class="h-5 w-5 inline mr-2" />
-            Limpiar
-          </button>
-          <button
+            variant="ghost"
+            :icon="XMarkIcon"
+            text="Limpiar"
+            :loading="proveedoresStore.isFetching"
+            loading-text="Limpiando..."
+          />
+          <LoadingButton
             v-if="canCreateProveedores"
             @click="openCreateModal"
-            class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
-          >
-            <PlusIcon class="h-5 w-5 inline mr-2" />
-            Nuevo Proveedor
-          </button>
+            variant="primary"
+            :icon="PlusIcon"
+            text="Nuevo Proveedor"
+            :loading="proveedoresStore.isCreating"
+            loading-text="Creando..."
+          />
         </div>
       </div>
     </div>
 
     <!-- Estados de carga -->
-    <div v-if="tableLoading" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div v-if="proveedoresStore.isFetching" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-        <p class="text-gray-600">Cargando proveedores...</p>
+        <LoadingSpinner 
+          size="lg" 
+          color="primary" 
+          message="Cargando proveedores..."
+          centered
+        />
       </div>
     </div>
 
@@ -81,14 +87,15 @@
         <p class="text-gray-600 mb-6">
           {{ hasProveedores ? 'Intente con otros términos de búsqueda' : 'Comience creando su primer proveedor' }}
         </p>
-        <button
-          v-if="!hasProveedores"
+        <LoadingButton
+          v-if="!hasProveedores && canCreateProveedores"
           @click="openCreateModal"
-          class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
-        >
-          <PlusIcon class="h-5 w-5 inline mr-2" />
-          Crear Primer Proveedor
-        </button>
+          variant="primary"
+          :icon="PlusIcon"
+          text="Crear Primer Proveedor"
+          :loading="proveedoresStore.isCreating"
+          loading-text="Creando..."
+        />
       </div>
     </div>
 
@@ -143,30 +150,38 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  v-if="canViewProveedores"
-                  @click="openViewModal(proveedor.cve)"
-                  class="text-primary-600 hover:text-primary-900 mr-3"
-                  :disabled="loading"
-                >
-                  Ver
-                </button>
-                <button
-                  v-if="canEditProveedores"
-                  @click="openEditModal(proveedor.cve)"
-                  class="text-indigo-600 hover:text-indigo-900 mr-3"
-                  :disabled="loading"
-                >
-                  Editar
-                </button>
-                <button
-                  v-if="canDeleteProveedores"
-                  @click="confirmDeleteProveedor(proveedor.cve)"
-                  class="text-red-600 hover:text-red-900"
-                  :disabled="loading"
-                >
-                  Eliminar
-                </button>
+                <div class="flex gap-2 justify-end">
+                  <LoadingButton
+                    v-if="canViewProveedores"
+                    @click="openViewModal(proveedor.cve)"
+                    variant="ghost"
+                    size="sm"
+                    text="Ver"
+                    :loading="proveedoresStore.isFetching"
+                    loading-text="Cargando..."
+                    class="text-primary-600 hover:text-primary-900"
+                  />
+                  <LoadingButton
+                    v-if="canEditProveedores"
+                    @click="openEditModal(proveedor.cve)"
+                    variant="ghost"
+                    size="sm"
+                    text="Editar"
+                    :loading="proveedoresStore.isUpdating"
+                    loading-text="Editando..."
+                    class="text-indigo-600 hover:text-indigo-900"
+                  />
+                  <LoadingButton
+                    v-if="canDeleteProveedores"
+                    @click="confirmDeleteProveedor(proveedor.cve)"
+                    variant="ghost"
+                    size="sm"
+                    text="Eliminar"
+                    :loading="proveedoresStore.isDeleting"
+                    loading-text="Eliminando..."
+                    class="text-red-600 hover:text-red-900"
+                  />
+                </div>
               </td>
             </tr>
           </tbody>
@@ -201,27 +216,39 @@
             </div>
             
             <div class="flex space-x-2">
-              <button
+              <LoadingButton
+                v-if="canViewProveedores"
                 @click="openViewModal(proveedor.cve)"
-                class="flex-1 text-xs text-primary-600 bg-primary-50 px-3 py-2 rounded-md hover:bg-primary-100"
-                :disabled="loading"
-              >
-                Ver
-              </button>
-              <button
+                variant="ghost"
+                size="sm"
+                text="Ver"
+                :loading="proveedoresStore.isFetching"
+                loading-text="Cargando..."
+                full-width
+                class="flex-1 text-xs text-primary-600 bg-primary-50 hover:bg-primary-100"
+              />
+              <LoadingButton
+                v-if="canEditProveedores"
                 @click="openEditModal(proveedor.cve)"
-                class="flex-1 text-xs text-indigo-600 bg-indigo-50 px-3 py-2 rounded-md hover:bg-indigo-100"
-                :disabled="loading"
-              >
-                Editar
-              </button>
-              <button
+                variant="ghost"
+                size="sm"
+                text="Editar"
+                :loading="proveedoresStore.isUpdating"
+                loading-text="Editando..."
+                full-width
+                class="flex-1 text-xs text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+              />
+              <LoadingButton
+                v-if="canDeleteProveedores"
                 @click="confirmDeleteProveedor(proveedor.cve)"
-                class="flex-1 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-md hover:bg-red-100"
-                :disabled="loading"
-              >
-                Eliminar
-              </button>
+                variant="ghost"
+                size="sm"
+                text="Eliminar"
+                :loading="proveedoresStore.isDeleting"
+                loading-text="Eliminando..."
+                full-width
+                class="flex-1 text-xs text-red-600 bg-red-50 hover:bg-red-100"
+              />
             </div>
           </div>
         </div>
@@ -230,20 +257,25 @@
       <!-- Paginación -->
       <div v-if="paginatedProveedores.length > 0" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
         <div class="flex-1 flex justify-between sm:hidden">
-          <button
+          <LoadingButton
             @click="goToPreviousPage"
             :disabled="!canGoPrevious"
-            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <button
+            variant="outline"
+            size="sm"
+            text="Anterior"
+            :loading="proveedoresStore.isFetching"
+            loading-text="Cargando..."
+          />
+          <LoadingButton
             @click="goToNextPage"
             :disabled="!canGoNext"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Siguiente
-          </button>
+            variant="outline"
+            size="sm"
+            text="Siguiente"
+            :loading="proveedoresStore.isFetching"
+            loading-text="Cargando..."
+            class="ml-3"
+          />
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div class="flex items-center space-x-4">
@@ -263,19 +295,23 @@
           </div>
           <div>
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <button
+              <LoadingButton
                 @click="goToPreviousPage"
                 :disabled="!canGoPrevious"
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeftIcon class="h-5 w-5" aria-hidden="true" />
-              </button>
+                variant="outline"
+                size="sm"
+                :icon="ChevronLeftIcon"
+                :loading="proveedoresStore.isFetching"
+                loading-text=""
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              />
               <button
                 v-for="page in visiblePages"
                 :key="page"
                 @click="goToPage(page)"
+                :disabled="proveedoresStore.isFetching"
                 :class="[
-                  'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
+                  'relative inline-flex items-center px-4 py-2 border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed',
                   page === pagination.currentPage
                     ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
                     : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
@@ -283,13 +319,16 @@
               >
                 {{ page }}
               </button>
-              <button
+              <LoadingButton
                 @click="goToNextPage"
                 :disabled="!canGoNext"
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRightIcon class="h-5 w-5" aria-hidden="true" />
-              </button>
+                variant="outline"
+                size="sm"
+                :icon="ChevronRightIcon"
+                :loading="proveedoresStore.isFetching"
+                loading-text=""
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              />
             </nav>
           </div>
         </div>
@@ -299,7 +338,7 @@
     <!-- Modal de proveedor -->
     <ProveedorModal
       :show="showModal || false"
-      :loading="modalLoading"
+      :loading="modalLoading || proveedoresStore.isCreating || proveedoresStore.isUpdating"
       :is-edit-mode="isEditMode"
       :is-view-mode="isViewMode"
       :form-data="formData"
@@ -321,6 +360,8 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import { useUtils } from '@/composables/useUtils'
 import { authService } from '@/services/authService'
 import ProveedorModal from '@/components/proveedores/ProveedorModal.vue'
+import LoadingButton from '@/components/ui/LoadingButton.vue'
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import {
   MagnifyingGlassIcon,
   PlusIcon,
@@ -344,8 +385,6 @@ const {
   proveedores,
   filteredProveedores,
   currentProveedor,
-  loading,
-  tableLoading,
   modalLoading,
   isEditMode,
   isViewMode,
@@ -362,7 +401,13 @@ const {
   canGoPrevious,
   canGoNext,
   isFormValid,
-  modalTitle
+  modalTitle,
+  
+  // Loading states
+  isFetching,
+  isCreating,
+  isUpdating,
+  isDeleting
 } = storeToRefs(proveedoresStore)
 
 // Actions del store

@@ -142,7 +142,7 @@ router.beforeEach((to, from, next) => {
   
   // Actualizar título de la página
   if (to.meta.title) {
-    document.title = `${to.meta.title} - Portal Cotizador Vue`
+    document.title = `${to.meta.title} - Portal Cotizador`
   }
   
   // Verificar autenticación

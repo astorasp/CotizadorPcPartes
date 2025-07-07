@@ -2,7 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import { proveedoresApi } from '@/services/proveedoresApi'
 import { useUtils } from '@/composables/useUtils'
-import { useAuthStore } from '@/stores/useAuthStore'
+import { authService } from '@/services/authService'
+import { useCrudOperations } from '@/composables/useAsyncOperation'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -15,6 +16,9 @@ import {
  */
 export const useProveedoresStore = defineStore('proveedores', () => {
   const { showAlert, validateRequired, confirm } = useUtils()
+  
+  // Sistema de loading centralizado para proveedores
+  const crudOps = useCrudOperations('proveedor')
 
   // ==========================================
   // ESTADO REACTIVO (migración del constructor)
@@ -100,6 +104,27 @@ export const useProveedoresStore = defineStore('proveedores', () => {
   })
 
   // ==========================================
+  // COMPUTED PROPERTIES - PERMISOS
+  // ==========================================
+  
+  const canViewProveedores = computed(() => authService.canViewProveedores())
+  const canCreateProveedores = computed(() => authService.canCreateProveedores())
+  const canEditProveedores = computed(() => authService.canEditProveedores())
+  const canDeleteProveedores = computed(() => authService.canDeleteProveedores())
+  const userRoles = computed(() => authService.getUserRoles())
+  const isAdmin = computed(() => authService.isAdmin())
+  const primaryRole = computed(() => authService.getPrimaryRole())
+  
+  // ==========================================
+  // COMPUTED PROPERTIES - LOADING STATES
+  // ==========================================
+  
+  const isFetching = computed(() => crudOps.loadingStore.isOperationActive('fetch-proveedor'))
+  const isCreating = computed(() => crudOps.loadingStore.isOperationActive('create-proveedor'))
+  const isUpdating = computed(() => crudOps.loadingStore.isOperationActive('update-proveedor'))
+  const isDeleting = computed(() => crudOps.loadingStore.isOperationActive('delete-proveedor'))
+
+  // ==========================================
   // ACTIONS - CRUD OPERATIONS
   // ==========================================
   
@@ -111,10 +136,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       console.log('[ProveedoresStore] Fetching proveedores...')
     }
     
-    try {
-      loading.value = true
-      tableLoading.value = true
-      
+    const result = await crudOps.fetch(async () => {
       const data = await proveedoresApi.getAll()
       proveedores.value = data || []
       
@@ -125,15 +147,16 @@ export const useProveedoresStore = defineStore('proveedores', () => {
         console.log(`[ProveedoresStore] Loaded ${proveedores.value.length} proveedores`)
       }
       
-    } catch (error) {
-      console.error('[ProveedoresStore] Error fetching proveedores:', error)
-      showAlert('error', error.message || MESSAGES.NETWORK_ERROR)
+      return data
+    })
+    
+    if (!result.success) {
+      showAlert('error', result.error || MESSAGES.NETWORK_ERROR)
       proveedores.value = []
       filteredProveedores.value = []
-    } finally {
-      loading.value = false
-      tableLoading.value = false
     }
+    
+    return result
   }
 
   /**
@@ -144,14 +167,18 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       console.log('[ProveedoresStore] Creating proveedor:', proveedorData)
     }
     
-    try {
-      loading.value = true
-      
+    // Verificar permisos antes de proceder
+    if (!authService.canCreateProveedores()) {
+      const error = 'No tienes permisos para crear proveedores'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
+    const result = await crudOps.create(async () => {
       // Validar datos antes de enviar
       const validation = proveedoresApi.validateProveedor(proveedorData)
       if (!validation.isValid) {
-        showAlert('error', validation.errors.join('\n'))
-        return { success: false, errors: validation.errors }
+        throw new Error(validation.errors.join('\n'))
       }
       
       // Formatear datos
@@ -159,21 +186,19 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       
       const response = await proveedoresApi.create(formattedData)
       
-      showAlert('success', MESSAGES.PROVEEDOR_CREATED)
-      
       // Recargar proveedores para obtener datos actualizados
       await fetchProveedores()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[ProveedoresStore] Error creating proveedor:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PROVEEDOR_CREATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -184,14 +209,18 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       console.log('[ProveedoresStore] Updating proveedor:', cve, proveedorData)
     }
     
-    try {
-      loading.value = true
-      
+    // Verificar permisos antes de proceder
+    if (!authService.canEditProveedores()) {
+      const error = 'No tienes permisos para editar proveedores'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
+    const result = await crudOps.update(async () => {
       // Validar datos antes de enviar (sin validar clave en actualización)
       const validation = proveedoresApi.validateProveedor(proveedorData, true)
       if (!validation.isValid) {
-        showAlert('error', validation.errors.join('\n'))
-        return { success: false, errors: validation.errors }
+        throw new Error(validation.errors.join('\n'))
       }
       
       // Formatear datos (sin incluir clave en actualización)
@@ -202,21 +231,19 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       
       const response = await proveedoresApi.update(cve, updateData)
       
-      showAlert('success', MESSAGES.PROVEEDOR_UPDATED)
-      
       // Recargar proveedores para obtener datos actualizados
       await fetchProveedores()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[ProveedoresStore] Error updating proveedor:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PROVEEDOR_UPDATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -227,26 +254,29 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       console.log('[ProveedoresStore] Deleting proveedor:', cve)
     }
     
-    try {
-      loading.value = true
-      
+    // Verificar permisos antes de proceder
+    if (!authService.canDeleteProveedores()) {
+      const error = 'No tienes permisos para eliminar proveedores'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
+    const result = await crudOps.remove(async () => {
       await proveedoresApi.delete(cve)
-      
-      showAlert('success', MESSAGES.PROVEEDOR_DELETED)
       
       // Recargar proveedores para obtener datos actualizados
       await fetchProveedores()
       
-      return { success: true }
-      
-    } catch (error) {
-      console.error('[ProveedoresStore] Error deleting proveedor:', error)
-      const errorMessage = error.message || MESSAGES.OPERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return true
+    })
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PROVEEDOR_DELETED)
+    } else {
+      showAlert('error', result.error || MESSAGES.OPERATION_ERROR)
     }
+    
+    return result
   }
 
   // ==========================================
@@ -257,15 +287,12 @@ export const useProveedoresStore = defineStore('proveedores', () => {
    * Abrir modal para crear nuevo proveedor (migración de openCreateModal)
    */
   const openCreateModal = () => {
-    const authStore = useAuthStore()
-    
-    // Verificar autenticación directamente
-    if (!authStore.isLoggedIn) {
-      // El router guard ya se encargará de redirigir a login
+    // Verificar permisos antes de proceder
+    if (!authService.canCreateProveedores()) {
+      showAlert('error', 'No tienes permisos para crear proveedores')
       return
     }
     
-    // Si está autenticado, ejecutar directamente
     // Resetear estado
     isEditMode.value = false
     isViewMode.value = false
@@ -645,6 +672,21 @@ export const useProveedoresStore = defineStore('proveedores', () => {
     canGoNext,
     isFormValid,
     modalTitle,
+    
+    // Permisos
+    canViewProveedores,
+    canCreateProveedores,
+    canEditProveedores,
+    canDeleteProveedores,
+    userRoles,
+    isAdmin,
+    primaryRole,
+    
+    // Loading states
+    isFetching,
+    isCreating,
+    isUpdating,
+    isDeleting,
     
     // Actions - CRUD
     fetchProveedores,
