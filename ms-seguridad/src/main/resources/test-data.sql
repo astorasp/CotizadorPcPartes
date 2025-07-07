@@ -6,7 +6,11 @@
 INSERT INTO rol (nombre, activo) VALUES 
 ('ADMIN', TRUE),
 ('USER', TRUE),
-('GUEST', TRUE);
+('GUEST', TRUE),
+('GERENTE', TRUE),
+('VENDEDOR', TRUE),
+('INVENTARIO', TRUE),
+('CONSULTOR', TRUE);
 
 -- Insertar usuarios de prueba
 INSERT INTO usuario (usuario, password, activo) VALUES 

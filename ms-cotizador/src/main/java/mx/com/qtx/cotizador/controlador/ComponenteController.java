@@ -11,6 +11,7 @@ import mx.com.qtx.cotizador.servicio.componente.ComponenteServicio;
 import mx.com.qtx.cotizador.util.HttpStatusMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,14 +33,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/componentes")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class ComponenteController {
     
     private final ComponenteServicio componenteServicio;
     
     /**
      * Caso de uso 1.1: Agregar componente
+     * Solo ADMIN e INVENTARIO pueden crear componentes
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<ComponenteResponse>> crearComponente(
             @Valid @RequestBody ComponenteCreateRequest request) {
         
@@ -57,8 +61,10 @@ public class ComponenteController {
     
     /**
      * Caso de uso 1.2: Modificar componente
+     * ADMIN, GERENTE e INVENTARIO pueden editar componentes
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<ComponenteResponse>> modificarComponente(
             @PathVariable String id,
             @Valid @RequestBody ComponenteUpdateRequest request) {
@@ -77,8 +83,10 @@ public class ComponenteController {
     
     /**
      * Caso de uso 1.3: Eliminar componente
+     * Solo ADMIN puede eliminar componentes
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> eliminarComponente(@PathVariable String id) {
         
         log.info("Iniciando eliminación de componente con ID: {}", id);
@@ -95,6 +103,7 @@ public class ComponenteController {
     
     /**
      * Caso de uso 1.4: Consultar componentes - Obtener todos
+     * Todos los roles pueden consultar componentes
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<ComponenteResponse>>> obtenerTodosLosComponentes() {
@@ -113,6 +122,7 @@ public class ComponenteController {
     
     /**
      * Caso de uso 1.4: Consultar componentes - Obtener por ID
+     * Todos los roles pueden consultar componentes
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ComponenteResponse>> obtenerComponentePorId(@PathVariable String id) {
@@ -131,6 +141,7 @@ public class ComponenteController {
     
     /**
      * Caso de uso 1.4: Consultar componentes - Filtrar por tipo
+     * Todos los roles pueden consultar componentes
      */
     @GetMapping("/tipo/{tipo}")
     public ResponseEntity<ApiResponse<List<ComponenteResponse>>> obtenerComponentesPorTipo(@PathVariable String tipo) {
@@ -149,6 +160,7 @@ public class ComponenteController {
     
     /**
      * Caso de uso adicional: Verificar existencia de componente
+     * Todos los roles pueden verificar existencia
      */
     @GetMapping("/{id}/existe")
     public ResponseEntity<ApiResponse<Boolean>> verificarExistenciaComponente(@PathVariable String id) {

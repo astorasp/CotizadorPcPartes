@@ -4,13 +4,25 @@
     <div class="bg-white rounded-lg shadow p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Gestión de Cotizaciones</h1>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-2xl font-bold text-gray-900">Gestión de Cotizaciones</h1>
+            <span 
+              v-if="cotizacionesStore.primaryRole"
+              class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+            >
+              {{ getRoleDisplayName(cotizacionesStore.primaryRole) }}
+            </span>
+          </div>
           <p class="mt-1 text-sm text-gray-600">
             Crear y administrar cotizaciones de hardware
           </p>
         </div>
         <div class="mt-4 sm:mt-0">
-          <button @click="openCreateModal" class="btn-primary btn-md">
+          <button 
+            v-if="cotizacionesStore.canCreateCotizaciones"
+            @click="openCreateModal" 
+            class="btn-primary btn-md"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -83,7 +95,11 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">No hay cotizaciones</h3>
         <p class="mt-1 text-sm text-gray-500">Comience creando una nueva cotización.</p>
         <div class="mt-6">
-          <button @click="openCreateModal" class="btn-primary btn-md">
+          <button 
+            v-if="cotizacionesStore.canCreateCotizaciones"
+            @click="openCreateModal" 
+            class="btn-primary btn-md"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -100,6 +116,7 @@
               <th class="table-header">Folio</th>
               <th class="table-header">Fecha</th>
               <th class="table-header">Componentes</th>
+              <th v-if="cotizacionesStore.canViewCotizacionCosts" class="table-header">Costos</th>
               <th class="table-header">Totales</th>
               <th class="table-header">Acciones</th>
             </tr>
@@ -132,6 +149,14 @@
                   Impuestos aplicados
                 </div>
               </td>
+              <td v-if="cotizacionesStore.canViewCotizacionCosts" class="table-cell">
+                <div class="text-sm text-gray-900">
+                  <div>Costo: {{ formatCurrency(getCotizacionSummary(cotizacion).subtotal * 0.7) }}</div>
+                  <div v-if="cotizacionesStore.canViewCotizacionMargins" class="text-green-600">
+                    Margen: {{ formatCurrency(getCotizacionSummary(cotizacion).subtotal * 0.3) }}
+                  </div>
+                </div>
+              </td>
               <td class="table-cell">
                 <div class="text-sm font-medium text-gray-900">
                   <div>Subtotal: {{ formatCurrency(getCotizacionSummary(cotizacion).subtotal) }}</div>
@@ -140,8 +165,9 @@
                 </div>
               </td>
               <td class="table-cell">
-                <div class="flex space-x-2">
+                <div class="flex flex-wrap space-x-2">
                   <button 
+                    v-if="cotizacionesStore.canViewCotizacionDetails"
                     @click="handleOpenViewModal(getCotizacionSummary(cotizacion).id)"
                     class="text-primary-600 hover:text-primary-700 text-sm font-medium"
                     title="Ver detalles"
@@ -149,6 +175,31 @@
                     Ver detalles
                   </button>
                   <button 
+                    v-if="cotizacionesStore.canEditCotizaciones"
+                    @click="handleEdit(cotizacion)"
+                    class="text-green-600 hover:text-green-700 text-sm font-medium"
+                    title="Editar cotización"
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    v-if="cotizacionesStore.canConvertCotizacionToOrder"
+                    @click="handleConvertToOrder(cotizacion)"
+                    class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    title="Convertir a pedido"
+                  >
+                    A Pedido
+                  </button>
+                  <button 
+                    v-if="cotizacionesStore.canExportCotizaciones"
+                    @click="handleExport(cotizacion)"
+                    class="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                    title="Exportar"
+                  >
+                    Exportar
+                  </button>
+                  <button 
+                    v-if="cotizacionesStore.canDeleteCotizaciones"
                     @click="handleDelete(cotizacion)"
                     class="text-danger-600 hover:text-danger-700 text-sm font-medium"
                     title="Eliminar cotización"
@@ -299,6 +350,38 @@ const handleDelete = async (cotizacion) => {
   if (confirmed) {
     await cotizacionesStore.deleteCotizacion(summary.id)
   }
+}
+
+const handleEdit = (cotizacion) => {
+  // TODO: Implementar edición de cotización
+  const summary = getCotizacionSummary(cotizacion)
+  console.log('Editar cotización:', summary.id)
+  // Aquí se abriría el modal de edición
+}
+
+const handleConvertToOrder = (cotizacion) => {
+  // TODO: Implementar conversión a pedido
+  const summary = getCotizacionSummary(cotizacion)
+  console.log('Convertir a pedido:', summary.id)
+  // Aquí se realizaría la conversión a pedido
+}
+
+const handleExport = (cotizacion) => {
+  // TODO: Implementar exportación
+  const summary = getCotizacionSummary(cotizacion)
+  console.log('Exportar cotización:', summary.id)
+  // Aquí se implementaría la exportación
+}
+
+const getRoleDisplayName = (role) => {
+  const roleNames = {
+    'ADMIN': 'Administrador',
+    'GERENTE': 'Gerente',
+    'VENDEDOR': 'Vendedor',
+    'INVENTARIO': 'Inventario',
+    'CONSULTOR': 'Consultor'
+  }
+  return roleNames[role] || role
 }
 
 // Watchers para sincronizar filtros automáticamente

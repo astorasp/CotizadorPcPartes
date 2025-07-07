@@ -14,7 +14,11 @@ ALTER TABLE usuario AUTO_INCREMENT = 1;
 INSERT INTO rol (id, nombre, activo, fecha_creacion, fecha_modificacion) VALUES
 (1, 'ADMIN', true, NOW(), NOW()),
 (2, 'USER', true, NOW(), NOW()),
-(3, 'SUPERVISOR', true, NOW(), NOW());
+(3, 'SUPERVISOR', true, NOW(), NOW()),
+(4, 'GERENTE', true, NOW(), NOW()),
+(5, 'VENDEDOR', true, NOW(), NOW()),
+(6, 'INVENTARIO', true, NOW(), NOW()),
+(7, 'CONSULTOR', true, NOW(), NOW());
 
 -- Insertar usuario administrador
 -- Contraseña: admin123 (BCrypt strength 12)
@@ -35,13 +39,13 @@ INSERT INTO usuario (id, usuario, password, activo, fecha_creacion, fecha_modifi
 (4, 'noroles', '$2a$12$uZa4.ZO0zIMNm1tAY1bXahNvTi8N9I0N1M2O5P6Q7R8S9T0U1V2W3X', true, NOW(), NOW());
 
 -- Asignar rol ADMIN al usuario admin
-INSERT INTO rol_asignado (usuario_id, rol_id, activo, fecha_creacion, fecha_modificacion) VALUES
+INSERT INTO rol_asignado (id_usuario, id_rol, activo, fecha_creacion, fecha_modificacion) VALUES
 (1, 1, true, NOW(), NOW());
 
 -- Asignar rol USER al usuario testuser
-INSERT INTO rol_asignado (usuario_id, rol_id, activo, fecha_creacion, fecha_modificacion) VALUES
+INSERT INTO rol_asignado (id_usuario, id_rol, activo, fecha_creacion, fecha_modificacion) VALUES
 (2, 2, true, NOW(), NOW());
 
 -- Asignar rol ADMIN también al testuser para algunos tests
-INSERT INTO rol_asignado (usuario_id, rol_id, activo, fecha_creacion, fecha_modificacion) VALUES
+INSERT INTO rol_asignado (id_usuario, id_rol, activo, fecha_creacion, fecha_modificacion) VALUES
 (2, 1, true, NOW(), NOW());

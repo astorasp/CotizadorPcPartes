@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,10 +29,18 @@ import java.util.List;
  * - Servicios retornan ApiResponse<T>
  * - Mapeo automático de códigos de error a HTTP status
  * - Solo manejo de DTOs, nunca objetos de dominio
+ * 
+ * Implementa control de acceso basado en roles:
+ * - ADMIN: Acceso completo (todos los endpoints)
+ * - GERENTE: Gestión comercial (crear, ver, modificar, buscar - sin eliminar)
+ * - VENDEDOR: Solo lectura para proceso de ventas (ver, buscar)
+ * - INVENTARIO: Gestión de inventario (crear, ver, modificar, buscar - sin eliminar)
+ * - CONSULTOR: Solo lectura para consultoría (ver, buscar)
  */
 @RestController
 @RequestMapping("/proveedores")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class ProveedorController {
     
     private static final Logger logger = LoggerFactory.getLogger(ProveedorController.class);
@@ -44,11 +53,13 @@ public class ProveedorController {
     
     /**
      * Caso de uso 4.1: Agregar proveedor
+     * Permisos: ADMIN, GERENTE, INVENTARIO
      * 
      * @param request DTO con los datos del nuevo proveedor
      * @return ResponseEntity con ApiResponse<ProveedorResponse>
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<ProveedorResponse>> crearProveedor(
             @Valid @RequestBody ProveedorCreateRequest request) {
         
@@ -86,12 +97,14 @@ public class ProveedorController {
     
     /**
      * Caso de uso 4.2: Modificar proveedor
+     * Permisos: ADMIN, GERENTE, INVENTARIO
      * 
      * @param cve Clave del proveedor a modificar
      * @param request DTO con los datos actualizados
      * @return ResponseEntity con ApiResponse<ProveedorResponse>
      */
     @PutMapping("/{cve}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<ProveedorResponse>> actualizarProveedor(
             @PathVariable String cve,
             @Valid @RequestBody ProveedorUpdateRequest request) {
@@ -110,6 +123,7 @@ public class ProveedorController {
     
     /**
      * Caso de uso 4.3: Consultar proveedor específico por clave
+     * Permisos: Todos los roles (datos filtrados según el rol)
      * 
      * @param cve Clave del proveedor a consultar
      * @return ResponseEntity con ApiResponse<ProveedorResponse>
@@ -131,6 +145,7 @@ public class ProveedorController {
     
     /**
      * Caso de uso 4.3: Consultar todos los proveedores
+     * Permisos: Todos los roles (datos filtrados según el rol)
      * 
      * @return ResponseEntity con ApiResponse<List<ProveedorResponse>>
      */
@@ -151,11 +166,13 @@ public class ProveedorController {
     
     /**
      * Caso de uso 4.4: Eliminar proveedor
+     * Permisos: Solo ADMIN (operación crítica para integridad del sistema)
      * 
      * @param cve Clave del proveedor a eliminar
      * @return ResponseEntity con ApiResponse<Void>
      */
     @DeleteMapping("/{cve}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> eliminarProveedor(@PathVariable String cve) {
         
         logger.info("Iniciando eliminación de proveedor con clave: {}", cve);
@@ -174,6 +191,7 @@ public class ProveedorController {
     
     /**
      * Búsqueda de proveedores por nombre (búsqueda parcial)
+     * Permisos: Todos los roles (para consultas y reportes)
      * 
      * @param nombre Nombre o parte del nombre a buscar
      * @return ResponseEntity con ApiResponse<List<ProveedorResponse>>
@@ -196,6 +214,7 @@ public class ProveedorController {
     
     /**
      * Búsqueda de proveedores por razón social (búsqueda parcial)
+     * Permisos: Todos los roles (para consultas y reportes)
      * 
      * @param razonSocial Razón social o parte de la razón social a buscar
      * @return ResponseEntity con ApiResponse<List<ProveedorResponse>>

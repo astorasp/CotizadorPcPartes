@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import { componentesApi } from '@/services/componentesApi'
 import { useUtils } from '@/composables/useUtils'
+import { authService } from '@/services/authService'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -112,6 +113,18 @@ export const useComponentesStore = defineStore('componentes', () => {
   })
 
   // ==========================================
+  // COMPUTED PROPERTIES - PERMISOS
+  // ==========================================
+  
+  const canViewComponentes = computed(() => authService.canViewComponentes())
+  const canCreateComponentes = computed(() => authService.canCreateComponentes())
+  const canEditComponentes = computed(() => authService.canEditComponentes())
+  const canDeleteComponentes = computed(() => authService.canDeleteComponentes())
+  const userRoles = computed(() => authService.getUserRoles())
+  const isAdmin = computed(() => authService.isAdmin())
+  const primaryRole = computed(() => authService.getPrimaryRole())
+
+  // ==========================================
   // ACTIONS - CRUD OPERATIONS
   // ==========================================
   
@@ -156,6 +169,13 @@ export const useComponentesStore = defineStore('componentes', () => {
       console.log('[ComponentesStore] Creating componente:', componenteData)
     }
     
+    // Verificar permisos antes de proceder
+    if (!authService.canCreateComponentes()) {
+      const error = 'No tienes permisos para crear componentes'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
     try {
       loading.value = true
       
@@ -193,6 +213,13 @@ export const useComponentesStore = defineStore('componentes', () => {
       console.log('[ComponentesStore] Updating componente:', id, componenteData)
     }
     
+    // Verificar permisos antes de proceder
+    if (!authService.canEditComponentes()) {
+      const error = 'No tienes permisos para editar componentes'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
     try {
       loading.value = true
       
@@ -228,6 +255,13 @@ export const useComponentesStore = defineStore('componentes', () => {
   const deleteComponente = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[ComponentesStore] Deleting componente:', id)
+    }
+    
+    // Verificar permisos antes de proceder
+    if (!authService.canDeleteComponentes()) {
+      const error = 'No tienes permisos para eliminar componentes'
+      showAlert('error', error)
+      return { success: false, error }
     }
     
     try {
@@ -633,6 +667,15 @@ export const useComponentesStore = defineStore('componentes', () => {
     canGoNext,
     modalTitle,
     isFormValid,
+    
+    // Permisos
+    canViewComponentes,
+    canCreateComponentes,
+    canEditComponentes,
+    canDeleteComponentes,
+    userRoles,
+    isAdmin,
+    primaryRole,
     
     // Actions - CRUD
     fetchComponentes,

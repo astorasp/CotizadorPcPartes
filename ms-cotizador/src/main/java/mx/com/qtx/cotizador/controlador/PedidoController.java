@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
@@ -27,10 +28,18 @@ import java.util.List;
  * - Mapeo automático de códigos de error a HTTP status
  * - Solo manejo de DTOs, nunca objetos de dominio
  * - Logging completo para auditoría
+ * 
+ * Implementa control de acceso basado en roles:
+ * - ADMIN: Acceso completo (todos los endpoints)
+ * - GERENTE: Gestión y aprobación de pedidos
+ * - VENDEDOR: Generación y consulta de pedidos
+ * - INVENTARIO: Gestión de cumplimiento e inventario
+ * - CONSULTOR: Solo lectura para análisis y reportes
  */
 @RestController
 @RequestMapping("/pedidos")
 @CrossOrigin
+@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class PedidoController {
     
     private static final Logger logger = LoggerFactory.getLogger(PedidoController.class);
@@ -43,11 +52,13 @@ public class PedidoController {
     
     /**
      * Caso de uso 5.2: Generar pedido desde cotización
+     * Permisos: ADMIN, GERENTE, VENDEDOR, INVENTARIO
      * 
      * @param request DTO con los datos para generar el pedido
      * @return ResponseEntity con ApiResponse<PedidoResponse>
      */
     @PostMapping("/generar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<PedidoResponse>> generarPedidoDesdeCotizacion(
             @Valid @RequestBody GenerarPedidoRequest request) {
         
@@ -67,6 +78,7 @@ public class PedidoController {
     
     /**
      * Caso de uso 5.3: Consultar pedido específico por ID
+     * Permisos: Todos los roles (datos filtrados según el rol)
      * 
      * @param id ID del pedido a consultar
      * @return ResponseEntity con ApiResponse<PedidoResponse>
@@ -89,6 +101,7 @@ public class PedidoController {
     
     /**
      * Caso de uso 5.3: Consultar todos los pedidos
+     * Permisos: Todos los roles (datos filtrados según el rol)
      * 
      * @return ResponseEntity con ApiResponse<List<PedidoResponse>>
      */

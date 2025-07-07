@@ -4,13 +4,25 @@
     <div class="bg-white rounded-lg shadow p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Gestión de Componentes</h1>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-2xl font-bold text-gray-900">Gestión de Componentes</h1>
+            <span 
+              v-if="componentesStore.primaryRole"
+              class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+            >
+              {{ getRoleDisplayName(componentesStore.primaryRole) }}
+            </span>
+          </div>
           <p class="mt-1 text-sm text-gray-600">
             Administrar componentes de hardware para PCs
           </p>
         </div>
         <div class="mt-4 sm:mt-0">
-          <button @click="openCreateModal" class="btn-primary btn-md">
+          <button 
+            v-if="componentesStore.canCreateComponentes"
+            @click="openCreateModal" 
+            class="btn-primary btn-md"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -85,7 +97,11 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">No hay componentes</h3>
         <p class="mt-1 text-sm text-gray-500">Comience creando un nuevo componente.</p>
         <div class="mt-6">
-          <button @click="openCreateModal" class="btn-primary btn-md">
+          <button 
+            v-if="componentesStore.canCreateComponentes"
+            @click="openCreateModal" 
+            class="btn-primary btn-md"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -145,6 +161,7 @@
                     Ver
                   </button>
                   <button 
+                    v-if="componentesStore.canEditComponentes"
                     @click="openEditModal(componente)"
                     class="text-primary-600 hover:text-primary-700 text-sm font-medium"
                     title="Editar componente"
@@ -152,6 +169,7 @@
                     Editar
                   </button>
                   <button 
+                    v-if="componentesStore.canDeleteComponentes"
                     @click="handleDelete(componente)"
                     class="text-danger-600 hover:text-danger-700 text-sm font-medium"
                     title="Eliminar componente"
@@ -274,6 +292,17 @@ const visiblePages = computed(() => {
 // Métodos
 const getTypeLabel = (tipo) => {
   return COMPONENT_TYPE_LABELS[tipo] || tipo
+}
+
+const getRoleDisplayName = (role) => {
+  const roleNames = {
+    'ADMIN': 'Administrador',
+    'GERENTE': 'Gerente',
+    'VENDEDOR': 'Vendedor',
+    'INVENTARIO': 'Inventario',
+    'CONSULTOR': 'Consultor'
+  }
+  return roleNames[role] || role
 }
 
 const handleSearch = () => {

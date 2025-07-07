@@ -3,6 +3,7 @@ import { ref, computed, readonly } from 'vue'
 import { pcsApi } from '@/services/pcsApi'
 import { componentesApi } from '@/services/componentesApi'
 import { useUtils } from '@/composables/useUtils'
+import { authService } from '@/services/authService'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -138,6 +139,22 @@ export const usePcsStore = defineStore('pcs', () => {
   })
 
   // ==========================================
+  // COMPUTED PROPERTIES - PERMISOS
+  // ==========================================
+  
+  const canViewPcs = computed(() => authService.canViewPcs())
+  const canCreatePcs = computed(() => authService.canCreatePcs())
+  const canEditPcs = computed(() => authService.canEditPcs())
+  const canDeletePcs = computed(() => authService.canDeletePcs())
+  const canAddComponentToPc = computed(() => authService.canAddComponentToPc())
+  const canRemoveComponentFromPc = computed(() => authService.canRemoveComponentFromPc())
+  const canViewPcCost = computed(() => authService.canViewPcCost())
+  const canModifyPcPrice = computed(() => authService.canModifyPcPrice())
+  const userRoles = computed(() => authService.getUserRoles())
+  const isAdmin = computed(() => authService.isAdmin())
+  const primaryRole = computed(() => authService.getPrimaryRole())
+
+  // ==========================================
   // ACTIONS - CRUD OPERATIONS
   // ==========================================
   
@@ -182,6 +199,13 @@ export const usePcsStore = defineStore('pcs', () => {
       console.log('[PcsStore] Creating PC:', pcData)
     }
     
+    // Verificar permisos antes de proceder
+    if (!authService.canCreatePcs()) {
+      const error = 'No tienes permisos para crear configuraciones de PC'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
     try {
       loading.value = true
       
@@ -219,6 +243,13 @@ export const usePcsStore = defineStore('pcs', () => {
       console.log('[PcsStore] Updating PC:', id, pcData)
     }
     
+    // Verificar permisos antes de proceder
+    if (!authService.canEditPcs()) {
+      const error = 'No tienes permisos para editar configuraciones de PC'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
     try {
       loading.value = true
       
@@ -254,6 +285,13 @@ export const usePcsStore = defineStore('pcs', () => {
   const deletePc = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PcsStore] Deleting PC:', id)
+    }
+    
+    // Verificar permisos antes de proceder
+    if (!authService.canDeletePcs()) {
+      const error = 'No tienes permisos para eliminar configuraciones de PC'
+      showAlert('error', error)
+      return { success: false, error }
     }
     
     try {
@@ -370,6 +408,13 @@ export const usePcsStore = defineStore('pcs', () => {
    * Agregar componente a la PC (migración de handleAddComponent)
    */
   const addComponentToPc = async (componentId, quantity = 1) => {
+    // Verificar permisos antes de proceder
+    if (!authService.canAddComponentToPc()) {
+      const error = 'No tienes permisos para agregar componentes a PCs'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+
     if (!componentId) {
       showAlert('error', 'Seleccione un componente para agregar')
       return { success: false }
@@ -413,6 +458,13 @@ export const usePcsStore = defineStore('pcs', () => {
    * Quitar componente de la PC (migración de handleRemoveComponent)
    */
   const removeComponentFromPc = async (componentId) => {
+    // Verificar permisos antes de proceder
+    if (!authService.canRemoveComponentFromPc()) {
+      const error = 'No tienes permisos para quitar componentes de PCs'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+
     if (!currentPc.value) {
       showAlert('error', 'No hay PC seleccionada')
       return { success: false }
@@ -889,6 +941,19 @@ export const usePcsStore = defineStore('pcs', () => {
     availableComponentsForSelect,
     isFormValid,
     modalTitle,
+    
+    // Permisos
+    canViewPcs,
+    canCreatePcs,
+    canEditPcs,
+    canDeletePcs,
+    canAddComponentToPc,
+    canRemoveComponentFromPc,
+    canViewPcCost,
+    canModifyPcPrice,
+    userRoles,
+    isAdmin,
+    primaryRole,
     
     // Actions - CRUD
     fetchPcs,

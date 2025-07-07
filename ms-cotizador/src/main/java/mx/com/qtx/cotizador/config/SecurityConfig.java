@@ -45,6 +45,13 @@ import mx.com.qtx.cotizador.security.filter.JwtAuthenticationFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
     
+    // Role constants for Componentes module
+    public static final String ROLE_ADMIN = "ADMIN";
+    public static final String ROLE_GERENTE = "GERENTE";
+    public static final String ROLE_VENDEDOR = "VENDEDOR";
+    public static final String ROLE_INVENTARIO = "INVENTARIO";
+    public static final String ROLE_CONSULTOR = "CONSULTOR";
+    
     @Autowired(required = false)
     private JwtAuthenticationFilter jwtAuthenticationFilter;
     
@@ -145,7 +152,7 @@ public class SecurityConfig {
         UserDetails user = User.builder()
             .username(username)
             .password(passwordEncoder().encode(password))
-            .roles("ADMIN", "USER")
+            .roles(ROLE_ADMIN, ROLE_GERENTE, ROLE_VENDEDOR, ROLE_INVENTARIO, ROLE_CONSULTOR, "USER")
             .build();
         
         return new InMemoryUserDetailsManager(user);

@@ -13,6 +13,7 @@ import mx.com.qtx.cotizador.servicio.componente.ComponenteServicio;
 import mx.com.qtx.cotizador.util.HttpStatusMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,14 +32,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/pcs")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class PcController {
     
     private final ComponenteServicio componenteServicio;
     
     /**
      * Crear una PC completa con sus sub-componentes
+     * Permisos: ADMIN, GERENTE, INVENTARIO
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<PcResponse>> crearPc(
             @Valid @RequestBody PcCreateRequest request) {
         
@@ -56,8 +60,10 @@ public class PcController {
     
     /**
      * Actualizar una PC completa con sus sub-componentes
+     * Permisos: ADMIN, GERENTE, INVENTARIO
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<PcResponse>> actualizarPc(
             @PathVariable String id,
             @Valid @RequestBody PcUpdateRequest request) {
@@ -94,8 +100,10 @@ public class PcController {
     
     /**
      * Eliminar una PC completa
+     * Permisos: ADMIN, GERENTE (solo roles de mayor jerarquía)
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     public ResponseEntity<ApiResponse<Void>> eliminarPc(@PathVariable String id) {
         
         log.info("Iniciando eliminación de PC con ID: {}", id);
@@ -130,8 +138,10 @@ public class PcController {
     
     /**
      * Caso de uso 2.2: Agregar un componente individual a una PC existente
+     * Permisos: ADMIN, GERENTE, INVENTARIO
      */
     @PostMapping("/{pcId}/componentes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<ComponenteResponse>> agregarComponenteAPc(
             @PathVariable String pcId,
             @Valid @RequestBody AgregarComponenteRequest request) {
@@ -150,8 +160,10 @@ public class PcController {
     
     /**
      * Caso de uso 2.3: Quitar un componente específico de una PC
+     * Permisos: ADMIN, GERENTE, INVENTARIO
      */
     @DeleteMapping("/{pcId}/componentes/{componenteId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'INVENTARIO')")
     public ResponseEntity<ApiResponse<Void>> quitarComponenteDePc(
             @PathVariable String pcId,
             @PathVariable String componenteId) {

@@ -12,6 +12,7 @@
         </div>
         <div class="mt-4 sm:mt-0">
           <button
+            v-if="userPermissions.create"
             @click="openCreateModal()"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
           >
@@ -92,6 +93,7 @@
         <h3 class="text-lg font-medium text-gray-900 mb-2">No hay promociones</h3>
         <p class="text-gray-500 mb-4">Comienza creando tu primera promoción</p>
         <button
+          v-if="userPermissions.create"
           @click="openCreateModal()"
           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
         >
@@ -185,6 +187,7 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <div class="flex space-x-2">
                   <button
+                    v-if="userPermissions.view"
                     @click="openDetailModal(promocion.idPromocion)"
                     class="text-blue-600 hover:text-blue-800 transition-colors"
                     title="Ver detalles"
@@ -192,6 +195,7 @@
                     <EyeIcon class="h-4 w-4" />
                   </button>
                   <button
+                    v-if="userPermissions.edit"
                     @click="openEditModal(promocion.idPromocion)"
                     class="text-yellow-600 hover:text-yellow-800 transition-colors"
                     title="Editar"
@@ -199,6 +203,7 @@
                     <PencilIcon class="h-4 w-4" />
                   </button>
                   <button
+                    v-if="userPermissions.delete"
                     @click="confirmDeletePromocion(promocion.idPromocion)"
                     class="text-red-600 hover:text-red-800 transition-colors"
                     title="Eliminar"
@@ -232,6 +237,7 @@
               </div>
               <div class="flex space-x-2 ml-2">
                 <button
+                  v-if="userPermissions.view"
                   @click="openDetailModal(promocion.idPromocion)"
                   class="text-blue-600 hover:text-blue-800 transition-colors"
                   title="Ver detalles"
@@ -239,6 +245,7 @@
                   <EyeIcon class="h-4 w-4" />
                 </button>
                 <button
+                  v-if="userPermissions.edit"
                   @click="openEditModal(promocion.idPromocion)"
                   class="text-yellow-600 hover:text-yellow-800 transition-colors"
                   title="Editar"
@@ -246,6 +253,7 @@
                   <PencilIcon class="h-4 w-4" />
                 </button>
                 <button
+                  v-if="userPermissions.delete"
                   @click="confirmDeletePromocion(promocion.idPromocion)"
                   class="text-red-600 hover:text-red-800 transition-colors"
                   title="Eliminar"
@@ -439,6 +447,7 @@ const {
   paginationInfo,
   canGoPrevious,
   canGoNext,
+  userPermissions,
   isFormValid,
   modalTitle,
   tiposPromocion,

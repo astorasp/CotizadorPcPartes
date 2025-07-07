@@ -3,6 +3,7 @@ import { ref, computed, readonly } from 'vue'
 import { promocionesApi } from '@/services/promocionesApi'
 import { useUtils } from '@/composables/useUtils'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { authService } from '@/services/authService'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -95,6 +96,18 @@ export const usePromocionesStore = defineStore('promociones', () => {
   const canGoPrevious = computed(() => pagination.value.currentPage > 1)
   const canGoNext = computed(() => pagination.value.currentPage < pagination.value.totalPages)
 
+  // Computed para permisos de usuario
+  const userPermissions = computed(() => ({
+    view: authService.canViewPromociones(),
+    create: authService.canCreatePromociones(),
+    edit: authService.canEditPromociones(),
+    delete: authService.canDeletePromociones(),
+    apply: authService.canApplyPromociones(),
+    viewFinancialImpact: authService.canViewPromocionFinancialImpact(),
+    manageStacking: authService.canManagePromocionStacking(),
+    viewReports: authService.canViewPromocionReports()
+  }))
+
   // Computed para validación del formulario
   const isFormValid = computed(() => {
     const basicValid = formData.value.nombre &&
@@ -180,6 +193,12 @@ export const usePromocionesStore = defineStore('promociones', () => {
    * Crear nueva promoción
    */
   const createPromocion = async (promocionData) => {
+    // Verificar permisos antes de proceder
+    if (!authService.canCreatePromociones()) {
+      showAlert('error', 'No tiene permisos para crear promociones')
+      return { success: false, error: 'Sin permisos para crear promociones' }
+    }
+
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PromocionesStore] Creating promocion:', promocionData)
     }
@@ -220,6 +239,12 @@ export const usePromocionesStore = defineStore('promociones', () => {
    * Actualizar promoción existente
    */
   const updatePromocion = async (id, promocionData) => {
+    // Verificar permisos antes de proceder
+    if (!authService.canEditPromociones()) {
+      showAlert('error', 'No tiene permisos para editar promociones')
+      return { success: false, error: 'Sin permisos para editar promociones' }
+    }
+
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PromocionesStore] Updating promocion:', id, promocionData)
     }
@@ -260,6 +285,12 @@ export const usePromocionesStore = defineStore('promociones', () => {
    * Eliminar promoción
    */
   const deletePromocion = async (id) => {
+    // Verificar permisos antes de proceder
+    if (!authService.canDeletePromociones()) {
+      showAlert('error', 'No tiene permisos para eliminar promociones')
+      return { success: false, error: 'Sin permisos para eliminar promociones' }
+    }
+
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PromocionesStore] Deleting promocion:', id)
     }
@@ -327,8 +358,14 @@ export const usePromocionesStore = defineStore('promociones', () => {
       // El router guard ya se encargará de redirigir a login
       return
     }
+
+    // Verificar permisos para crear promociones
+    if (!authService.canCreatePromociones()) {
+      showAlert('error', 'No tiene permisos para crear promociones')
+      return
+    }
     
-    // Si está autenticado, ejecutar directamente
+    // Si está autenticado y tiene permisos, ejecutar directamente
     // Resetear estado
     isEditMode.value = false
     currentPromocion.value = null
@@ -347,6 +384,12 @@ export const usePromocionesStore = defineStore('promociones', () => {
    * Abrir modal para editar promoción existente
    */
   const openEditModal = async (id) => {
+    // Verificar permisos para editar promociones
+    if (!authService.canEditPromociones()) {
+      showAlert('error', 'No tiene permisos para editar promociones')
+      return
+    }
+
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[PromocionesStore] Opening edit modal for promocion:', id)
     }
@@ -787,6 +830,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     paginationInfo,
     canGoPrevious,
     canGoNext,
+    userPermissions,
     isFormValid,
     modalTitle,
     tiposPromocion,

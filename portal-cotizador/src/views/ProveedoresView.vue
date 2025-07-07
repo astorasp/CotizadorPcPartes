@@ -2,7 +2,15 @@
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Proveedores</h1>
+      <div class="flex items-center space-x-3 mb-2">
+        <h1 class="text-3xl font-bold text-gray-900">Proveedores</h1>
+        <span 
+          v-if="userPrimaryRole"
+          class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+        >
+          {{ getRoleDisplayName(userPrimaryRole) }}
+        </span>
+      </div>
       <p class="text-gray-600">Gestión y administración de proveedores del sistema</p>
     </div>
 
@@ -44,6 +52,7 @@
             Limpiar
           </button>
           <button
+            v-if="canCreateProveedores"
             @click="openCreateModal"
             class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg transition-colors"
           >
@@ -135,6 +144,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <button
+                  v-if="canViewProveedores"
                   @click="openViewModal(proveedor.cve)"
                   class="text-primary-600 hover:text-primary-900 mr-3"
                   :disabled="loading"
@@ -142,6 +152,7 @@
                   Ver
                 </button>
                 <button
+                  v-if="canEditProveedores"
                   @click="openEditModal(proveedor.cve)"
                   class="text-indigo-600 hover:text-indigo-900 mr-3"
                   :disabled="loading"
@@ -149,6 +160,7 @@
                   Editar
                 </button>
                 <button
+                  v-if="canDeleteProveedores"
                   @click="confirmDeleteProveedor(proveedor.cve)"
                   class="text-red-600 hover:text-red-900"
                   :disabled="loading"
@@ -307,6 +319,7 @@ import { storeToRefs } from 'pinia'
 import { useProveedoresStore } from '@/stores/useProveedoresStore'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useUtils } from '@/composables/useUtils'
+import { authService } from '@/services/authService'
 import ProveedorModal from '@/components/proveedores/ProveedorModal.vue'
 import {
   MagnifyingGlassIcon,
@@ -371,6 +384,16 @@ const {
   goToNextPage
 } = proveedoresStore
 
+// Computed properties para permisos de Proveedores
+const canViewProveedores = computed(() => authService.canViewProveedores())
+const canCreateProveedores = computed(() => authService.canCreateProveedores())
+const canEditProveedores = computed(() => authService.canEditProveedores())
+const canDeleteProveedores = computed(() => authService.canDeleteProveedores())
+const canSearchProveedores = computed(() => authService.canSearchProveedores())
+const canViewProveedorCommercialData = computed(() => authService.canViewProveedorCommercialData())
+const canManageProveedorRelations = computed(() => authService.canManageProveedorRelations())
+const userPrimaryRole = computed(() => authService.getPrimaryRole())
+
 // Páginas visibles para paginación
 const visiblePages = computed(() => {
   const maxVisiblePages = 5
@@ -417,6 +440,18 @@ watch(() => filters.searchTerm, (newTerm) => {
 watch(() => filters.searchType, (newType) => {
   searchType.value = newType
 })
+
+// Función para mostrar nombres de roles en español
+const getRoleDisplayName = (role) => {
+  const roleNames = {
+    'ADMIN': 'Administrador',
+    'GERENTE': 'Gerente',
+    'VENDEDOR': 'Vendedor',
+    'INVENTARIO': 'Inventario',
+    'CONSULTOR': 'Consultor'
+  }
+  return roleNames[role] || role
+}
 
 // Lifecycle
 onMounted(async () => {

@@ -51,11 +51,11 @@ const routes = [
     }
   },
   
-  // Rutas futuras para otras secciones
+  // Módulos del sistema
   {
     path: '/componentes',
     name: 'Componentes',
-    redirect: '/dashboard', // Temporalmente redirige al dashboard
+    component: () => import('@/views/ComponentesView.vue'),
     meta: { 
       requiresAuth: true,
       title: 'Componentes'
@@ -65,7 +65,7 @@ const routes = [
   {
     path: '/pcs',
     name: 'PCs',
-    redirect: '/dashboard',
+    component: () => import('@/views/PcsView.vue'),
     meta: { 
       requiresAuth: true,
       title: 'Armado PCs'
@@ -75,7 +75,7 @@ const routes = [
   {
     path: '/cotizaciones',
     name: 'Cotizaciones',
-    redirect: '/dashboard',
+    component: () => import('@/views/CotizacionesView.vue'),
     meta: { 
       requiresAuth: true,
       title: 'Cotizaciones'
@@ -85,7 +85,7 @@ const routes = [
   {
     path: '/proveedores',
     name: 'Proveedores',
-    redirect: '/dashboard',
+    component: () => import('@/views/ProveedoresView.vue'),
     meta: { 
       requiresAuth: true,
       title: 'Proveedores'
@@ -95,7 +95,7 @@ const routes = [
   {
     path: '/pedidos',
     name: 'Pedidos',
-    redirect: '/dashboard',
+    component: () => import('@/views/PedidosView.vue'),
     meta: { 
       requiresAuth: true,
       title: 'Pedidos'
@@ -105,7 +105,7 @@ const routes = [
   {
     path: '/promociones',
     name: 'Promociones',
-    redirect: '/dashboard',
+    component: () => import('@/views/PromocionesView.vue'),
     meta: { 
       requiresAuth: true,
       title: 'Promociones'

@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,9 +37,18 @@ import mx.com.qtx.cotizador.util.HttpStatusMapper;
  * - Mapea códigos de ApiResponse a HTTP status con HttpStatusMapper
  * - Validación automática con @Valid
  * - Logging de todas las operaciones
+ * 
+ * Implementa control de acceso basado en roles con alto nivel de restricción
+ * debido al impacto financiero directo de las promociones:
+ * - ADMIN: Acceso completo (todos los endpoints)
+ * - GERENTE: Gestión estratégica (crear, modificar, eliminar, consultar)
+ * - VENDEDOR: Solo lectura para aplicar promociones en ventas
+ * - INVENTARIO: Solo lectura para consultar impacto en inventario
+ * - CONSULTOR: Solo lectura para análisis de efectividad
  */
 @RestController
 @RequestMapping("/promociones")
+@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class PromocionControlador {
     
     private static final Logger logger = LoggerFactory.getLogger(PromocionControlador.class);
@@ -51,6 +61,7 @@ public class PromocionControlador {
     
     /**
      * Caso 6.1: Agregar promoción
+     * Permisos: Solo ADMIN y GERENTE (alto impacto financiero)
      * 
      * POST /api/promociones
      * Content-Type: application/json
@@ -61,6 +72,7 @@ public class PromocionControlador {
      * @return ResponseEntity con la promoción creada
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     public ResponseEntity<ApiResponse<PromocionResponse>> crearPromocion(
             @Valid @RequestBody PromocionCreateRequest request) {
         
@@ -76,6 +88,7 @@ public class PromocionControlador {
     
     /**
      * Caso 6.2: Modificar promoción
+     * Permisos: Solo ADMIN y GERENTE (alto impacto financiero)
      * 
      * PUT /api/promociones/{id}
      * Content-Type: application/json
@@ -87,6 +100,7 @@ public class PromocionControlador {
      * @return ResponseEntity con la promoción actualizada
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     public ResponseEntity<ApiResponse<PromocionResponse>> actualizarPromocion(
             @PathVariable Integer id,
             @Valid @RequestBody PromocionUpdateRequest request) {
@@ -102,6 +116,7 @@ public class PromocionControlador {
     
     /**
      * Caso 6.3: Consultar promoción específica
+     * Permisos: Todos los roles (lectura necesaria para aplicar promociones)
      * 
      * GET /api/promociones/{id}
      * 
@@ -147,6 +162,7 @@ public class PromocionControlador {
     
     /**
      * Caso 6.4: Eliminar promoción
+     * Permisos: Solo ADMIN y GERENTE (alto impacto financiero)
      * 
      * DELETE /api/promociones/{id}
      * 
@@ -157,6 +173,7 @@ public class PromocionControlador {
      * @return ResponseEntity confirmando eliminación
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     public ResponseEntity<ApiResponse<Void>> eliminarPromocion(@PathVariable Integer id) {
         
         logger.info("DELETE /api/promociones/{} - Eliminando promoción", id);

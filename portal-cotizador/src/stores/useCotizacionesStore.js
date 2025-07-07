@@ -3,6 +3,7 @@ import { ref, computed, readonly } from 'vue'
 import { cotizacionesApi } from '@/services/cotizacionesApi'
 import { componentesApi } from '@/services/componentesApi'
 import { useUtils } from '@/composables/useUtils'
+import { authService } from '@/services/authService'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -113,6 +114,28 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
   })
 
   // ==========================================
+  // COMPUTED PROPERTIES - PERMISOS
+  // ==========================================
+  
+  const canViewCotizaciones = computed(() => authService.canViewCotizaciones())
+  const canViewCotizacionDetails = computed(() => authService.canViewCotizacionDetails())
+  const canViewCotizacionCosts = computed(() => authService.canViewCotizacionCosts())
+  const canCreateCotizaciones = computed(() => authService.canCreateCotizaciones())
+  const canEditCotizaciones = computed(() => authService.canEditCotizaciones())
+  const canDeleteCotizaciones = computed(() => authService.canDeleteCotizaciones())
+  const canApproveCotizaciones = computed(() => authService.canApproveCotizaciones())
+  const canModifyCotizacionPricing = computed(() => authService.canModifyCotizacionPricing())
+  const canModifyCotizacionTaxes = computed(() => authService.canModifyCotizacionTaxes())
+  const canViewCotizacionMargins = computed(() => authService.canViewCotizacionMargins())
+  const canConvertCotizacionToOrder = computed(() => authService.canConvertCotizacionToOrder())
+  const canExportCotizaciones = computed(() => authService.canExportCotizaciones())
+  const canViewCotizacionReports = computed(() => authService.canViewCotizacionReports())
+  const canViewCotizacionFinancialReports = computed(() => authService.canViewCotizacionFinancialReports())
+  const userRoles = computed(() => authService.getUserRoles())
+  const isAdmin = computed(() => authService.isAdmin())
+  const primaryRole = computed(() => authService.getPrimaryRole())
+
+  // ==========================================
   // ACTIONS - CRUD OPERATIONS
   // ==========================================
   
@@ -160,6 +183,13 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       console.log('[CotizacionesStore] Creating cotización:', cotizacionData)
     }
     
+    // Verificar permisos antes de proceder
+    if (!authService.canCreateCotizaciones()) {
+      const error = 'No tienes permisos para crear cotizaciones'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
     try {
       loading.value = true
       
@@ -197,6 +227,13 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       console.log('[CotizacionesStore] Updating cotización:', id, cotizacionData)
     }
     
+    // Verificar permisos antes de proceder
+    if (!authService.canEditCotizaciones()) {
+      const error = 'No tienes permisos para editar cotizaciones'
+      showAlert('error', error)
+      return { success: false, error }
+    }
+    
     try {
       loading.value = true
       
@@ -231,6 +268,13 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
   const deleteCotizacion = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[CotizacionesStore] Deleting cotización:', id)
+    }
+    
+    // Verificar permisos antes de proceder
+    if (!authService.canDeleteCotizaciones()) {
+      const error = 'No tienes permisos para eliminar cotizaciones'
+      showAlert('error', error)
+      return { success: false, error }
     }
     
     try {
@@ -483,6 +527,12 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    * Agregar nuevo impuesto
    */
   const addImpuesto = () => {
+    // Verificar permisos para modificar impuestos
+    if (!authService.canModifyCotizacionTaxes()) {
+      showAlert('error', 'No tienes permisos para modificar impuestos')
+      return { success: false, error: 'Sin permisos para modificar impuestos' }
+    }
+
     currentImpuestos.value.push({
       tipo: '',
       pais: '',
@@ -492,12 +542,20 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     if (DEBUG_CONFIG.ENABLED) {
       console.log('[CotizacionesStore] Added new tax item')
     }
+    
+    return { success: true }
   }
 
   /**
    * Quitar impuesto
    */
   const removeImpuesto = async (index) => {
+    // Verificar permisos para modificar impuestos
+    if (!authService.canModifyCotizacionTaxes()) {
+      showAlert('error', 'No tienes permisos para modificar impuestos')
+      return { success: false, error: 'Sin permisos para modificar impuestos' }
+    }
+
     const confirmed = await confirm(
       'Quitar Impuesto',
       '¿Está seguro de que desea quitar este impuesto?'
@@ -521,9 +579,18 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    * Actualizar impuesto
    */
   const updateImpuesto = (index, impuestoData) => {
+    // Verificar permisos para modificar impuestos
+    if (!authService.canModifyCotizacionTaxes()) {
+      showAlert('error', 'No tienes permisos para modificar impuestos')
+      return { success: false, error: 'Sin permisos para modificar impuestos' }
+    }
+
     if (index >= 0 && index < currentImpuestos.value.length) {
       currentImpuestos.value[index] = { ...impuestoData }
+      return { success: true }
     }
+    
+    return { success: false, error: 'Índice de impuesto inválido' }
   }
 
   // ==========================================
@@ -780,6 +847,25 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     currentCotizacionTotals,
     availableComponentsForSelect,
     isFormValid,
+    
+    // Permisos
+    canViewCotizaciones,
+    canViewCotizacionDetails,
+    canViewCotizacionCosts,
+    canCreateCotizaciones,
+    canEditCotizaciones,
+    canDeleteCotizaciones,
+    canApproveCotizaciones,
+    canModifyCotizacionPricing,
+    canModifyCotizacionTaxes,
+    canViewCotizacionMargins,
+    canConvertCotizacionToOrder,
+    canExportCotizaciones,
+    canViewCotizacionReports,
+    canViewCotizacionFinancialReports,
+    userRoles,
+    isAdmin,
+    primaryRole,
     
     // Actions - CRUD
     fetchCotizaciones,

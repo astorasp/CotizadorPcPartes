@@ -4,7 +4,15 @@
     <div class="bg-white rounded-lg shadow p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Gestión de PCs</h1>
+          <div class="flex items-center space-x-3">
+            <h1 class="text-2xl font-bold text-gray-900">Gestión de PCs</h1>
+            <span 
+              v-if="pcsStore.primaryRole"
+              class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800"
+            >
+              {{ getRoleDisplayName(pcsStore.primaryRole) }}
+            </span>
+          </div>
           <p class="mt-1 text-sm text-gray-600">
             Administrar PCs y armado de componentes
           </p>
@@ -15,11 +23,15 @@
             class="btn-outline btn-md"
           >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0716.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             Ver Componentes
           </button>
-          <button @click="openCreateModal" class="btn-primary btn-md">
+          <button 
+            v-if="pcsStore.canCreatePcs"
+            @click="openCreateModal" 
+            class="btn-primary btn-md"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -94,7 +106,11 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">No hay PCs</h3>
         <p class="mt-1 text-sm text-gray-500">Comience creando una nueva PC.</p>
         <div class="mt-6">
-          <button @click="openCreateModal" class="btn-primary btn-md">
+          <button 
+            v-if="pcsStore.canCreatePcs"
+            @click="openCreateModal" 
+            class="btn-primary btn-md"
+          >
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -138,13 +154,21 @@
               </td>
               <td class="table-cell">
                 <div class="text-sm text-gray-900">
-                  <div>Costo: {{ formatCurrency(pc.costo) }}</div>
+                  <div v-if="pcsStore.canViewPcCost">Costo: {{ formatCurrency(pc.costo) }}</div>
                   <div>Precio: {{ formatCurrency(pc.precioBase) }}</div>
                 </div>
               </td>
               <td class="table-cell">
                 <div class="flex space-x-2">
                   <button 
+                    @click="pcsStore.openViewModal(pc.id)"
+                    class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    title="Ver detalles"
+                  >
+                    Ver
+                  </button>
+                  <button 
+                    v-if="pcsStore.canEditPcs || pcsStore.canAddComponentToPc"
                     @click="handleOpenManageModal(pc.id)"
                     class="text-primary-600 hover:text-primary-700 text-sm font-medium"
                     title="Gestionar armado"
@@ -152,6 +176,15 @@
                     Gestionar Armado
                   </button>
                   <button 
+                    v-if="pcsStore.canEditPcs"
+                    @click="pcsStore.openEditModal(pc.id)"
+                    class="text-green-600 hover:text-green-700 text-sm font-medium"
+                    title="Editar PC"
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    v-if="pcsStore.canDeletePcs"
                     @click="handleDelete(pc)"
                     class="text-danger-600 hover:text-danger-700 text-sm font-medium"
                     title="Eliminar PC"
@@ -325,6 +358,17 @@ const handleDelete = async (pc) => {
 
 const navigateToComponents = () => {
   router.push('/componentes')
+}
+
+const getRoleDisplayName = (role) => {
+  const roleNames = {
+    'ADMIN': 'Administrador',
+    'GERENTE': 'Gerente',
+    'VENDEDOR': 'Vendedor',
+    'INVENTARIO': 'Inventario',
+    'CONSULTOR': 'Consultor'
+  }
+  return roleNames[role] || role
 }
 
 // Watchers para sincronizar filtros automáticamente

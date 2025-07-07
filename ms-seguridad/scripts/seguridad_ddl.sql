@@ -111,7 +111,11 @@ ALTER TABLE rol_asignado
 INSERT INTO rol (nombre, activo) VALUES 
 ('ADMIN', TRUE),
 ('USER', TRUE),
-('GUEST', TRUE);
+('GUEST', TRUE),
+('GERENTE', TRUE),
+('VENDEDOR', TRUE),
+('INVENTARIO', TRUE),
+('CONSULTOR', TRUE);
 
 -- Insertar usuario administrador por defecto
 INSERT INTO usuario (usuario, password, activo) VALUES 

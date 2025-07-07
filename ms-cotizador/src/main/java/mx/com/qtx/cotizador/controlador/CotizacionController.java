@@ -3,6 +3,7 @@ package mx.com.qtx.cotizador.controlador;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -17,10 +18,18 @@ import java.util.List;
 /**
  * Controlador REST para operaciones de cotización.
  * Maneja las peticiones HTTP y delega la lógica de negocio al servicio.
+ * 
+ * Implementa control de acceso basado en roles:
+ * - ADMIN: Acceso completo (todos los endpoints)
+ * - GERENTE: Acceso de gestión (crear, ver, buscar - sin eliminar)
+ * - VENDEDOR: Acceso de ventas (crear, ver cotizaciones propias)
+ * - INVENTARIO: Solo lectura para planificación
+ * - CONSULTOR: Solo lectura para consultoría
  */
 @RestController
 @RequestMapping("/cotizaciones")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class CotizacionController {
     
     private static final Logger logger = LoggerFactory.getLogger(CotizacionController.class);
@@ -33,11 +42,13 @@ public class CotizacionController {
     
     /**
      * Crea una nueva cotización usando la lógica de dominio.
+     * Permisos: ADMIN, GERENTE, VENDEDOR
      * 
      * @param request DTO con los datos para crear la cotización
      * @return ResponseEntity con la cotización creada o error correspondiente
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR')")
     public ResponseEntity<ApiResponse<CotizacionResponse>> crearCotizacion(
             @Valid @RequestBody CotizacionCreateRequest request) {
         
@@ -55,6 +66,7 @@ public class CotizacionController {
     
     /**
      * Obtiene una cotización por su ID.
+     * Permisos: Todos los roles (datos filtrados según el rol)
      * 
      * @param id ID de la cotización a buscar
      * @return ResponseEntity con la cotización encontrada o error correspondiente
@@ -77,6 +89,7 @@ public class CotizacionController {
     
     /**
      * Lista todas las cotizaciones.
+     * Permisos: Todos los roles (datos filtrados según el rol)
      * 
      * @return ResponseEntity con la lista de cotizaciones o error correspondiente
      */
@@ -97,6 +110,7 @@ public class CotizacionController {
     
     /**
      * Busca cotizaciones por fecha.
+     * Permisos: Todos los roles (para reportes y consultas)
      * 
      * @param fecha Fecha de búsqueda (formato YYYY-MM-DD)
      * @return ResponseEntity con las cotizaciones encontradas o error correspondiente

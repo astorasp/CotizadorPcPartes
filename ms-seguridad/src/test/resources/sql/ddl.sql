@@ -47,7 +47,11 @@ CREATE INDEX idx_rol_asignado_rol ON rol_asignado(id_rol);
 INSERT INTO rol (id, nombre, activo, fecha_creacion, fecha_modificacion) VALUES
 (1, 'ADMIN', true, NOW(), NOW()),
 (2, 'USER', true, NOW(), NOW()),
-(3, 'SUPERVISOR', true, NOW(), NOW());
+(3, 'SUPERVISOR', true, NOW(), NOW()),
+(4, 'GERENTE', true, NOW(), NOW()),
+(5, 'VENDEDOR', true, NOW(), NOW()),
+(6, 'INVENTARIO', true, NOW(), NOW()),
+(7, 'CONSULTOR', true, NOW(), NOW());
 
 -- Insertar usuario administrador
 -- Contraseña: admin123 (BCrypt strength 12)
