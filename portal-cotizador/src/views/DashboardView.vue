@@ -35,7 +35,7 @@
 
       <!-- Dashboard Cards -->
       <div class="px-4 sm:px-0">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8 pr-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8 pr-8">
           <!-- Componentes Card -->
           <div class="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow cursor-pointer" @click="navigateTo('/componentes')">
             <div class="p-4">
@@ -125,6 +125,25 @@
               </div>
             </div>
           </div>
+
+          <!-- Usuarios Card - NUEVA SECCIÓN -->
+          <div 
+            v-if="authStore.hasRole('ADMIN')"
+            class="bg-white overflow-hidden shadow-sm rounded-lg hover:shadow-md transition-shadow cursor-pointer" 
+            @click="navigateTo('/usuarios')"
+          >
+            <div class="p-4">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <UsersIcon class="h-8 w-8 text-teal-600" />
+                </div>
+                <div class="ml-3 min-w-0 flex-1">
+                  <h3 class="text-base font-medium text-gray-900 truncate">Usuarios</h3>
+                  <p class="text-xs text-gray-500 truncate">Gestión de usuarios</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Quick Actions -->
@@ -133,7 +152,7 @@
             <h3 class="text-lg font-medium text-gray-900">Acciones Rápidas</h3>
           </div>
           <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <button
                 @click="navigateTo('/proveedores')"
                 class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -157,6 +176,16 @@
                 <PlusIcon class="h-5 w-5 text-purple-600 mr-3" />
                 <span class="text-sm font-medium text-gray-900">Nueva Promoción</span>
               </button>
+
+              <!-- Nueva acción para usuarios - Solo visible para ADMIN -->
+              <button
+                v-if="authStore.hasRole('ADMIN')"
+                @click="navigateTo('/usuarios')"
+                class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <PlusIcon class="h-5 w-5 text-teal-600 mr-3" />
+                <span class="text-sm font-medium text-gray-900">Nuevo Usuario</span>
+              </button>
             </div>
           </div>
         </div>
@@ -175,6 +204,9 @@
                 <p>
                   Sistema integral para la gestión de cotizaciones de componentes de PC. 
                   Utilice el menú de navegación o las tarjetas de acceso rápido para comenzar.
+                </p>
+                <p v-if="authStore.hasRole('ADMIN')" class="mt-2 font-medium">
+                  Como administrador, tienes acceso completo a la gestión de usuarios y configuración del sistema.
                 </p>
               </div>
             </div>
@@ -196,7 +228,8 @@ import {
   PlusIcon,
   InformationCircleIcon,
   CpuChipIcon,
-  ComputerDesktopIcon
+  ComputerDesktopIcon,
+  UsersIcon
 } from '@heroicons/vue/24/outline'
 
 // Router and stores
