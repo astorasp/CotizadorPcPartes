@@ -4,7 +4,8 @@ import { pedidosApi } from '@/services/pedidosApi'
 import { cotizacionesApi } from '@/services/cotizacionesApi'
 import { proveedoresApi } from '@/services/proveedoresApi'
 import { useUtils } from '@/composables/useUtils'
-import { useAuthStore } from '@/stores/useAuthStore'
+import { authService } from '@/services/authService'
+import { useCrudOperations, useAsyncOperation } from '@/composables/useAsyncOperation'
 import { 
   UI_CONFIG, 
   MESSAGES, 
@@ -17,6 +18,15 @@ import {
  */
 export const usePedidosStore = defineStore('pedidos', () => {
   const { showAlert, validateRequired, confirm } = useUtils()
+  
+  // Sistema de loading centralizado para pedidos
+  const crudOps = useCrudOperations('pedido')
+  
+  // Para operaciones específicas como generación de pedidos
+  const asyncOp = useAsyncOperation({
+    showNotification: true,
+    type: 'order'
+  })
 
   // ==========================================
   // ESTADO REACTIVO (migración del constructor)
@@ -120,6 +130,34 @@ export const usePedidosStore = defineStore('pedidos', () => {
   })
 
   // ==========================================
+  // COMPUTED PROPERTIES - PERMISOS
+  // ==========================================
+  
+  const canViewPedidos = computed(() => authService.canViewPedidos())
+  const canCreatePedidos = computed(() => authService.canCreatePedidos())
+  const canEditPedidos = computed(() => authService.canEditPedidos())
+  const canDeletePedidos = computed(() => authService.canDeletePedidos())
+  const canApprovePedidos = computed(() => authService.canApprovePedidos())
+  const canChangePedidoStatus = computed(() => authService.canChangePedidoStatus())
+  const canViewPedidoFulfillment = computed(() => authService.canViewPedidoFulfillment())
+  const canManagePedidoFulfillment = computed(() => authService.canManagePedidoFulfillment())
+  const canViewPedidoFinancialData = computed(() => authService.canViewPedidoFinancialData())
+  const canGeneratePedidoReports = computed(() => authService.canGeneratePedidoReports())
+  const userRoles = computed(() => authService.getUserRoles())
+  const isAdmin = computed(() => authService.isAdmin())
+  const primaryRole = computed(() => authService.getPrimaryRole())
+  
+  // ==========================================
+  // COMPUTED PROPERTIES - LOADING STATES
+  // ==========================================
+  
+  const isFetching = computed(() => crudOps.loadingStore.isOperationActive('fetch-pedido'))
+  const isFetchingCotizaciones = computed(() => crudOps.loadingStore.isOperationActive('fetch-cotizaciones-for-pedidos'))
+  const isFetchingProveedores = computed(() => crudOps.loadingStore.isOperationActive('fetch-proveedores-for-pedidos'))
+  const isGeneratingPedido = computed(() => asyncOp.loadingStore.isOperationActive('generate-pedido'))
+  const isLoadingDetails = computed(() => asyncOp.loadingStore.isOperationActive('get-pedido-details'))
+
+  // ==========================================
   // ACTIONS - OPERACIONES DE CARGA
   // ==========================================
   
@@ -131,28 +169,22 @@ export const usePedidosStore = defineStore('pedidos', () => {
       console.log('[PedidosStore] Fetching pedidos...')
     }
     
-    try {
-      loading.value = true
-      tableLoading.value = true
-      
+    const result = await crudOps.fetch(async () => {
       const data = await pedidosApi.getAll()
       pedidos.value = data || []
       
       // Aplicar filtros existentes
-      await applyFilters()
+      applyFilters()
       
       if (DEBUG_CONFIG.ENABLED) {
         console.log(`[PedidosStore] Loaded ${pedidos.value.length} pedidos`)
       }
-      
-    } catch (error) {
-      console.error('[PedidosStore] Error fetching pedidos:', error)
-      showAlert('error', error.message || MESSAGES.NETWORK_ERROR)
+    })
+    
+    if (!result.success) {
       pedidos.value = []
       filteredPedidos.value = []
-    } finally {
-      loading.value = false
-      tableLoading.value = false
+      showAlert('error', result.error || MESSAGES.NETWORK_ERROR)
     }
   }
 
@@ -160,17 +192,18 @@ export const usePedidosStore = defineStore('pedidos', () => {
    * Cargar cotizaciones para el formulario
    */
   const fetchCotizaciones = async () => {
-    try {
+    const result = await crudOps.fetch(async () => {
       const data = await cotizacionesApi.getAll()
       cotizaciones.value = data || []
       
       if (DEBUG_CONFIG.ENABLED) {
         console.log(`[PedidosStore] Loaded ${cotizaciones.value.length} cotizaciones`)
       }
-      
-    } catch (error) {
-      console.error('[PedidosStore] Error fetching cotizaciones:', error)
+    }, 'fetch-cotizaciones-for-pedidos')
+    
+    if (!result.success) {
       cotizaciones.value = []
+      console.error('[PedidosStore] Error fetching cotizaciones:', result.error)
     }
   }
 
@@ -178,17 +211,18 @@ export const usePedidosStore = defineStore('pedidos', () => {
    * Cargar proveedores para el formulario
    */
   const fetchProveedores = async () => {
-    try {
+    const result = await crudOps.fetch(async () => {
       const data = await proveedoresApi.getAll()
       proveedores.value = data || []
       
       if (DEBUG_CONFIG.ENABLED) {
         console.log(`[PedidosStore] Loaded ${proveedores.value.length} proveedores`)
       }
-      
-    } catch (error) {
-      console.error('[PedidosStore] Error fetching proveedores:', error)
+    }, 'fetch-proveedores-for-pedidos')
+    
+    if (!result.success) {
       proveedores.value = []
+      console.error('[PedidosStore] Error fetching proveedores:', result.error)
     }
   }
 
@@ -216,14 +250,11 @@ export const usePedidosStore = defineStore('pedidos', () => {
       console.log('[PedidosStore] Generating pedido:', pedidoData)
     }
     
-    try {
-      loading.value = true
-      
+    const result = await asyncOp.execute(async () => {
       // Validar datos antes de enviar
       const validation = pedidosApi.validatePedido(pedidoData)
       if (!validation.isValid) {
-        showAlert('error', validation.errors.join('\n'))
-        return { success: false, errors: validation.errors }
+        throw new Error(validation.errors.join('\n'))
       }
       
       // Formatear datos
@@ -231,21 +262,19 @@ export const usePedidosStore = defineStore('pedidos', () => {
       
       const response = await pedidosApi.generate(formattedData)
       
-      showAlert('success', MESSAGES.PEDIDO_GENERATED)
-      
       // Recargar pedidos para obtener datos actualizados
       await fetchPedidos()
       
-      return { success: true, data: response }
-      
-    } catch (error) {
-      console.error('[PedidosStore] Error generating pedido:', error)
-      const errorMessage = error.message || MESSAGES.PEDIDO_GENERATION_ERROR
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      loading.value = false
+      return response
+    }, 'generate-pedido')
+    
+    if (result.success) {
+      showAlert('success', MESSAGES.PEDIDO_GENERATED)
+    } else {
+      showAlert('error', result.error || MESSAGES.PEDIDO_GENERATION_ERROR)
     }
+    
+    return result
   }
 
   /**
@@ -256,22 +285,17 @@ export const usePedidosStore = defineStore('pedidos', () => {
       console.log('[PedidosStore] Getting pedido details:', numPedido)
     }
     
-    try {
-      modalLoading.value = true
-      
+    const result = await asyncOp.execute(async () => {
       const pedido = await pedidosApi.getById(numPedido)
       currentPedido.value = pedido
-      
-      return { success: true, data: pedido }
-      
-    } catch (error) {
-      console.error('[PedidosStore] Error getting pedido details:', error)
-      const errorMessage = error.message || MESSAGES.PEDIDO_NOT_FOUND
-      showAlert('error', errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      modalLoading.value = false
+      return pedido
+    }, 'get-pedido-details')
+    
+    if (!result.success) {
+      showAlert('error', result.error || MESSAGES.PEDIDO_NOT_FOUND)
     }
+    
+    return result
   }
 
   // ==========================================
@@ -282,15 +306,12 @@ export const usePedidosStore = defineStore('pedidos', () => {
    * Abrir modal para crear nuevo pedido (migración de openCreateModal)
    */
   const openCreateModal = () => {
-    const authStore = useAuthStore()
-    
-    // Verificar autenticación directamente
-    if (!authStore.isLoggedIn) {
-      // El router guard ya se encargará de redirigir a login
+    // Verificar permisos
+    if (!canCreatePedidos.value) {
+      showAlert('error', MESSAGES.FORBIDDEN)
       return
     }
     
-    // Si está autenticado, ejecutar directamente
     // Resetear estado
     currentPedido.value = null
     selectedCotizacion.value = null
@@ -438,23 +459,13 @@ export const usePedidosStore = defineStore('pedidos', () => {
       return { success: false }
     }
 
-    try {
-      modalLoading.value = true
-      
-      const result = await generatePedido(formData.value)
-      
-      if (result.success) {
-        closeCreateModal()
-      }
-      
-      return result
-      
-    } catch (error) {
-      console.error('[PedidosStore] Error submitting pedido:', error)
-      return { success: false, error: error.message }
-    } finally {
-      modalLoading.value = false
+    const result = await generatePedido(formData.value)
+    
+    if (result.success) {
+      closeCreateModal()
     }
+    
+    return result
   }
 
   // ==========================================
@@ -613,9 +624,6 @@ export const usePedidosStore = defineStore('pedidos', () => {
     cotizaciones: readonly(cotizaciones),
     proveedores: readonly(proveedores),
     currentPedido: readonly(currentPedido),
-    loading: readonly(loading),
-    tableLoading: readonly(tableLoading),
-    modalLoading: readonly(modalLoading),
     showCreateModal,
     showDetailModal,
     formData,
@@ -635,6 +643,28 @@ export const usePedidosStore = defineStore('pedidos', () => {
     isFormValid,
     availableCotizaciones,
     availableProveedores,
+    
+    // Permisos
+    canViewPedidos,
+    canCreatePedidos,
+    canEditPedidos,
+    canDeletePedidos,
+    canApprovePedidos,
+    canChangePedidoStatus,
+    canViewPedidoFulfillment,
+    canManagePedidoFulfillment,
+    canViewPedidoFinancialData,
+    canGeneratePedidoReports,
+    userRoles,
+    isAdmin,
+    primaryRole,
+    
+    // Loading states
+    isFetching,
+    isFetchingCotizaciones,
+    isFetchingProveedores,
+    isGeneratingPedido,
+    isLoadingDetails,
     
     // Actions - Carga de datos
     fetchPedidos,
