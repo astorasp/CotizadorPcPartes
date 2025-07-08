@@ -1,6 +1,21 @@
-# API Gateway con Nginx
+# 🌐 API Gateway con Nginx
 
-## Arquitectura de Red Segura
+> **Gateway de red seguro** para el sistema CotizadorPcPartes, proporcionando un punto único de acceso con microservicios en red privada.
+
+[![Nginx](https://img.shields.io/badge/Nginx-1.25-green.svg)](https://nginx.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+
+## 📌 Navegación del Proyecto
+
+- **📖 [README Principal](../README.md)** - Documentación completa del sistema
+- **🚀 [Portal Web](../portal-cotizador/README.md)** - Frontend Vue.js 3
+- **🖥️ [Backend API](../ms-cotizador/README.md)** - Microservicio Spring Boot
+- **🔒 [Seguridad](../ms-seguridad/)** - Microservicio de autenticación
+- **📚 [Documentación](../documentacion/)** - Diagramas y arquitectura
+
+---
+
+## 🎯 Arquitectura de Red Segura
 
 Este directorio contiene la configuración de **nginx como API Gateway** para el sistema CotizadorPcPartes, proporcionando un punto único de acceso que mantiene los microservicios en una red privada.
 
@@ -68,15 +83,24 @@ docker-compose -f docker-compose.gateway.yml ps
 
 ## 🛣️ Rutas Disponibles
 
-### Frontend
-- `GET /` → Aplicación Vue.js
-- `GET /dashboard` → Dashboard (Vue Router)
-- `GET /login` → Página de login
+### Frontend (Vue.js 3 SPA)
+- `GET /` → Portal de cotización Vue.js 3
+- `GET /login` → Página de autenticación
+- `GET /componentes` → Gestión de componentes (Vue Router)
+- `GET /cotizaciones` → Sistema de cotizaciones (Vue Router)
+- `GET /pcs` → Armado de PCs (Vue Router)
+- `GET /proveedores` → Gestión de proveedores (Vue Router)
+- `GET /pedidos` → Gestión de pedidos (Vue Router)
+- `GET /promociones` → Sistema de promociones (Vue Router)
 
 ### APIs (Proxy automático)
 - `POST /api/seguridad/auth/login` → Login JWT
-- `GET /api/cotizador/componentes` → Lista componentes
-- `GET /api/cotizador/cotizaciones` → Lista cotizaciones
+- `GET /api/cotizador/componentes` → CRUD componentes
+- `GET /api/cotizador/cotizaciones` → CRUD cotizaciones
+- `GET /api/cotizador/pcs` → CRUD PCs y armado
+- `GET /api/cotizador/proveedores` → CRUD proveedores
+- `GET /api/cotizador/pedidos` → CRUD pedidos
+- `GET /api/cotizador/promociones` → CRUD promociones
 - *Todas las rutas de los microservicios están disponibles*
 
 ### Monitoreo
@@ -210,3 +234,43 @@ docker exec cotizador-gateway nginx -t
 # Ver configuración activa
 docker exec cotizador-gateway nginx -T
 ```
+
+---
+
+## 📞 Soporte
+
+### 🔗 **Enlaces Útiles**
+
+- **📖 [Documentación Principal](../README.md)** - Guía completa del sistema
+- **🚀 [Portal Web](../portal-cotizador/README.md)** - Frontend Vue.js 3
+- **🖥️ [Backend API](../ms-cotizador/README.md)** - Microservicio Spring Boot
+- **🔒 [Seguridad](../ms-seguridad/)** - Microservicio de autenticación
+- **📚 [Nginx Docs](https://nginx.org/en/docs/)** - Documentación oficial
+
+### 🆘 **Soporte Técnico**
+
+- **Issues**: Crear issue en GitHub
+- **Health Check**: http://localhost/health
+- **Gateway Status**: http://localhost/gateway/status
+- **Logs**: `docker logs cotizador-gateway`
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](../LICENSE) para más detalles.
+
+---
+
+<div align="center">
+
+**🌐 API Gateway con Nginx**
+
+*Gateway de red seguro para microservicios*
+
+[![Nginx](https://img.shields.io/badge/Nginx-1.25-green.svg)](https://nginx.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+
+**[⬆️ Volver al README Principal](../README.md)**
+
+</div>

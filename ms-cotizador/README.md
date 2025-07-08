@@ -1,358 +1,675 @@
-# 🖥️ Sistema Cotizador de PC Partes
+# 🖥️ Microservicio Cotizador (Backend API)
 
-Sistema empresarial para la cotización de componentes de hardware, generación de pedidos y gestión de inventario con arquitectura modular basada en patrones de diseño.
+> **API REST empresarial** para cotización de componentes de hardware con arquitectura Domain-Driven Design, desarrollado con Spring Boot 3.5.0 y Java 21.
 
-## 📋 Funcionalidades del Proyecto
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![MySQL](https://img.shields.io/badge/MySQL-8.4.4-blue.svg)](https://www.mysql.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-### Funcionalidades Principales
+## 📌 Navegación del Proyecto
 
-- **Gestión de Componentes**: Administración completa de componentes de hardware (monitores, discos duros, tarjetas de video y PCs ensambladas)
-- **Sistema de Cotizaciones**: Generación de cotizaciones detalladas con cálculo automático de totales e impuestos
-- **Promociones Flexibles**: Aplicación de descuentos planos, por cantidad, ofertas N×M y promociones acumulables
-- **Cálculo de Impuestos Multi-país**: Soporte para esquemas impositivos de México, USA y Canadá
-- **Generación de Pedidos**: Conversión automática de cotizaciones a pedidos con asignación a proveedores
-- **Persistencia Completa**: Almacenamiento en base de datos de todos los componentes, cotizaciones y pedidos
+- **📖 [README Principal](../README.md)** - Documentación completa del sistema
+- **🚀 [Portal Web](../portal-cotizador/README.md)** - Frontend Vue.js 3
+- **🔒 [Seguridad](../ms-seguridad/)** - Microservicio de autenticación
+- **🌐 [API Gateway](../nginx-gateway/README.md)** - Gateway Nginx
+- **📚 [Documentación](../documentacion/)** - Diagramas y arquitectura
 
-### Características Adicionales
+---
 
-- Generación de reportes detallados de cotizaciones
-- Validación de reglas de negocio (ej: máximo 2 discos por PC)
-- Manejo de excepciones personalizadas
-- Arquitectura extensible para nuevos tipos de componentes
+## 🎯 Descripción del Microservicio
 
-## ⚙️ Funcionamiento
+Sistema empresarial para la **cotización de componentes de hardware**, **generación de pedidos** y **gestión de inventario** con arquitectura Domain-Driven Design (DDD) y patrones de diseño avanzados.
 
-### Descripción General del Sistema
+### 🏗️ **Arquitectura Domain-Driven Design**
 
-El sistema funciona como un flujo integrado donde cada componente cumple un rol específico para lograr el objetivo principal: **generar cotizaciones precisas de componentes de PC y convertirlas en pedidos ejecutables**.
+El microservicio implementa DDD con separación clara de responsabilidades:
 
-### Flujo de Trabajo del Sistema
-
-```mermaid
-graph LR
-    A[Componentes] --> B[Cotizador]
-    B --> C[Cotización]
-    C --> D[Adapter]
-    D --> E[Presupuesto]
-    E --> F[Gestor Pedidos]
-    F --> G[Pedido]
-    
-    H[Promociones] --> B
-    I[Impuestos] --> C
-    J[Proveedores] --> F
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Domain Layer                            │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │   Core      │ │  Pedidos    │ │ Promociones │           │
+│  │(Componentes)│ │             │ │             │           │
+│  │ Cotización  │ │ Proveedor   │ │ Impuestos   │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘           │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                  Application Layer                          │
+│         ┌─────────────┐ ┌─────────────┐                    │
+│         │  Servicios  │ │    DTOs     │                    │
+│         │ (Casos Uso) │ │  Mappers    │                    │
+│         └─────────────┘ └─────────────┘                    │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                Infrastructure Layer                         │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │Controllers  │ │Repositories │ │Configuration│           │
+│  │  (API)      │ │   (JPA)     │ │  (Spring)   │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Interrelación de Componentes
+---
 
-1. **Catálogo de Componentes**
-   - Los componentes (monitores, discos, tarjetas) se almacenan en la base de datos
-   - Cada componente tiene precio base y puede tener promociones asociadas
-   - Las PCs son componentes compuestos que agrupan otros componentes
+## 🚀 Inicio Rápido
 
-2. **Proceso de Cotización**
-   - El **Cotizador** actúa como agregador de componentes
-   - Se seleccionan componentes y cantidades específicas
-   - Las **Promociones** se aplican automáticamente durante el cálculo
-   - El sistema calcula subtotales por línea
+### ⚡ **Con Docker (Recomendado)**
 
-3. **Generación de Cotización**
-   - La **Cotización** consolida todos los componentes seleccionados
-   - Los **Impuestos** se calculan según el país configurado (Bridge Pattern)
-   - Se genera un documento con desglose detallado y totales
+```bash
+# Desde la raíz del proyecto
+docker-compose up -d
 
-4. **Conversión a Pedido**
-   - El **Adapter** transforma la Cotización en un Presupuesto estándar
-   - El **Gestor de Pedidos** procesa el presupuesto
-   - Se asigna un **Proveedor** específico al pedido
-   - Se establecen fechas de emisión y entrega
-
-5. **Persistencia**
-   - Todos los datos se almacenan usando **JPA/Hibernate**
-   - Los **Servicios** encapsulan la lógica de negocio
-   - Los **Repositorios** gestionan el acceso a datos
-
-### Ejemplo de Flujo Completo
-
-```java
-// 1. SELECCIÓN: Usuario selecciona componentes
-Componente monitor = buscarComponente("M001");
-Componente disco = buscarComponente("D001");
-
-// 2. COTIZACIÓN: Agregar al cotizador con cantidades
-ICotizador cotizador = new Cotizador();
-cotizador.agregarComponente(2, monitor);  // 2 monitores
-cotizador.agregarComponente(5, disco);    // 5 discos
-
-// 3. IMPUESTOS: Configurar esquema impositivo
-List<CalculadorImpuesto> impuestos = configurarImpuestosMexico();
-
-// 4. GENERACIÓN: Crear cotización con cálculos automáticos
-Cotizacion cotizacion = cotizador.generarCotizacion(impuestos);
-// - Aplica promociones si existen
-// - Calcula subtotales
-// - Aplica impuestos
-// - Genera totales
-
-// 5. PERSISTENCIA: Guardar en base de datos
-cotizacion.guardarCotizacion();
-
-// 6. CONVERSIÓN: Transformar a pedido
-ManejadorCreacionPedidos manejador = new ManejadorCreacionPedidos();
-manejador.crearPedidoDesdeCotizacion(
-    cotizacion, 
-    "PROV001",     // Proveedor
-    1,             // Número pedido
-    1,             // Nivel surtido
-    LocalDate.now(), 
-    LocalDate.now().plusDays(3)
-);
-
-// 7. RESULTADO: Pedido generado y almacenado
+# Verificar que el servicio esté funcionando
+curl http://localhost:8080/actuator/health
 ```
 
-### Puntos Clave de la Arquitectura
+### 🛠️ **Desarrollo Local**
 
-- **Desacoplamiento**: Cada módulo tiene responsabilidades claras y definidas
-- **Flexibilidad**: Los patrones de diseño permiten agregar nuevas funcionalidades sin modificar código existente
-- **Escalabilidad**: La arquitectura en capas facilita el crecimiento del sistema
-- **Mantenibilidad**: La separación de conceptos hace el código más fácil de mantener
+#### **Prerrequisitos**
+- Java 21+ (OpenJDK recomendado)
+- Maven 3.8+
+- MySQL 8.0+
 
-## 🔧 Requisitos para Ejecutar
+#### **Setup**
+```bash
+cd ms-cotizador
 
-### Software Requerido
-
-- **Java Development Kit (JDK)**: 21 o superior
-- **MySQL**: 8.0 o superior
-- **Maven**: 3.6+ (opcional si se usa el wrapper incluido)
-- **Git**: Para clonar el repositorio
-
-### Configuración de Base de Datos
-
-1. Crear una base de datos MySQL llamada `cotizador`:
-```sql
+# 1. Configurar base de datos MySQL
+mysql -u root -p
 CREATE DATABASE cotizador CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'cotizador_user'@'localhost' IDENTIFIED BY 'cotizador_pass';
+GRANT ALL PRIVILEGES ON cotizador.* TO 'cotizador_user'@'localhost';
+
+# 2. Ejecutar scripts de base de datos
+mysql -u cotizador_user -p cotizador < sql/ddl.sql
+mysql -u cotizador_user -p cotizador < sql/dml.sql
+
+# 3. Compilar y ejecutar
+mvn spring-boot:run
 ```
 
-2. Crear un usuario con los permisos necesarios:
-```sql
-CREATE USER 'usuario'@'localhost' IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON cotizador.* TO 'usuario'@'localhost';
-FLUSH PRIVILEGES;
+### 🌐 **Acceso a los Servicios**
+
+| Servicio | URL | Credenciales |
+|----------|-----|--------------|
+| **API REST** | http://localhost:8080/cotizador/v1/api | admin / admin123 |
+| **Swagger UI** | http://localhost:8080/swagger-ui.html | admin / admin123 |
+| **Health Check** | http://localhost:8080/actuator/health | - |
+| **Base de Datos** | localhost:3306/cotizador | cotizador_user / cotizador_pass |
+
+---
+
+## 📋 Funcionalidades del Microservicio
+
+### 🎯 **Funcionalidades Principales**
+
+#### **🔧 Gestión de Componentes**
+- **CRUD completo** de componentes de hardware
+- **Tipos soportados**: Monitores, Discos Duros, Tarjetas de Video, PCs ensambladas
+- **Validaciones de negocio** automáticas
+- **Integración con proveedores**
+
+#### **🖥️ Sistema de Armado de PCs**  
+- **Construcción de PCs** con patrón Builder
+- **Validación de compatibilidad** de componentes
+- **Reglas de negocio**: máximo 2 monitores, 1-2 tarjetas gráficas, 1-3 discos duros
+- **Cálculo automático** de precios totales
+
+#### **📋 Sistema de Cotizaciones**
+- **Generación de cotizaciones** detalladas con múltiples estrategias
+- **Cálculo automático** de totales e impuestos
+- **Aplicación de promociones** flexible y acumulable
+- **Soporte multi-país** para esquemas impositivos
+
+#### **🎁 Sistema de Promociones**
+- **Tipos flexibles**: Descuentos planos, por cantidad, ofertas N×M
+- **Promociones acumulables** con patrón Decorator
+- **Aplicación automática** según reglas de negocio
+- **Cálculos financieros** en tiempo real
+
+#### **📦 Gestión de Pedidos**
+- **Conversión automática** de cotizaciones a pedidos
+- **Asignación a proveedores** específicos
+- **Gestión de fechas** de emisión y entrega
+- **Seguimiento de estados** del pedido
+
+#### **🏢 Gestión de Proveedores**
+- **CRUD completo** de proveedores
+- **Asignación de componentes** por proveedor
+- **Gestión de precios** diferenciados
+- **Estados activo/inactivo**
+
+### 🔄 **Características Técnicas**
+
+- **Persistencia completa** con JPA/Hibernate
+- **Validación robusta** de reglas de negocio
+- **Manejo de excepciones** personalizado
+- **Arquitectura extensible** para nuevos tipos de componentes
+- **Logs estructurados** para monitoreo
+- **Health checks** integrados
+
+---
+
+## 🏗️ Arquitectura Técnica
+
+### 📦 **Estructura de Paquetes**
+
+```
+mx.com.qtx.cotizador/
+├── 📁 dominio/                     # Domain Layer (DDD)
+│   ├── 📁 core/                    # Core Business Logic
+│   │   ├── Cotizacion.java         # Aggregate Root - Cotizaciones
+│   │   ├── DetalleCotizacion.java  # Value Object - Detalle
+│   │   ├── ICotizador.java         # Domain Service Interface
+│   │   └── 📁 componentes/         # Component Domain
+│   │       ├── Componente.java     # Base Component Entity
+│   │       ├── Monitor.java        # Specific Components
+│   │       ├── DiscoDuro.java
+│   │       ├── TarjetaVideo.java
+│   │       ├── Pc.java             # Composite Component
+│   │       └── PcBuilder.java      # Builder Pattern
+│   ├── 📁 cotizadorA/              # Strategy A Implementation
+│   ├── 📁 cotizadorB/              # Strategy B Implementation  
+│   ├── 📁 promos/                  # Promotion Domain
+│   │   ├── Promocion.java          # Base Promotion
+│   │   ├── PromDsctoPlano.java     # Flat Discount
+│   │   ├── PromDsctoXcantidad.java # Quantity Discount
+│   │   └── PromocionBuilder.java   # Builder Pattern
+│   ├── 📁 pedidos/                 # Order Domain
+│   │   ├── Pedido.java             # Order Aggregate
+│   │   ├── GestorPedidos.java      # Domain Service
+│   │   └── Proveedor.java          # Supplier Entity
+│   └── 📁 impuestos/               # Tax Domain
+│       ├── CalculadorImpuesto.java # Tax Calculator
+│       ├── CalculadorImpuestoMexico.java
+│       ├── CalculadorImpuestosUsa.java
+│       └── CalculadorImpuestosCanada.java
+├── 📁 aplicacion/                  # Application Layer
+│   ├── 📁 servicio/                # Application Services
+│   │   ├── componente/
+│   │   ├── cotizacion/
+│   │   ├── pedido/
+│   │   └── promocion/
+│   └── 📁 dto/                     # Data Transfer Objects
+│       ├── 📁 request/             # Request DTOs
+│       ├── 📁 response/            # Response DTOs
+│       └── 📁 mapper/              # Entity-DTO Mappers
+├── 📁 infraestructura/             # Infrastructure Layer
+│   ├── 📁 controlador/             # REST Controllers
+│   │   ├── ComponenteController.java
+│   │   ├── CotizacionController.java
+│   │   ├── PcController.java
+│   │   ├── PedidoController.java
+│   │   ├── ProveedorController.java
+│   │   └── PromocionControlador.java
+│   ├── 📁 repositorio/             # JPA Repositories
+│   │   ├── ComponenteRepositorio.java
+│   │   ├── CotizacionRepositorio.java
+│   │   ├── PedidoRepositorio.java
+│   │   ├── ProveedorRepositorio.java
+│   │   └── PromocionRepositorio.java
+│   └── 📁 configuracion/           # Spring Configuration
+│       ├── JpaConfig.java
+│       └── SecurityConfig.java
+├── 📁 entidad/                     # JPA Entities
+├── 📁 excepcion/                   # Exception Handling
+└── 📁 util/                        # Utilities
 ```
 
-3. Ejecutar los scripts SQL incluidos en el proyecto:
+### 🔧 **Patrones de Diseño Implementados**
+
+#### **Domain Patterns**
+1. **Domain-Driven Design**: Separación clara de capas de dominio, aplicación e infraestructura
+2. **Aggregate Pattern**: `Cotizacion` como Aggregate Root con `DetalleCotizacion`
+3. **Value Objects**: `DetalleCotizacion` para encapsular datos sin identidad
+4. **Domain Services**: `ICotizador`, `GestorPedidos` para lógica de dominio compleja
+
+#### **Creational Patterns**
+1. **Builder Pattern**: `PcBuilder` para construcción fluida de PCs con validaciones
+2. **Factory Method**: Métodos estáticos en `Componente` para crear tipos específicos
+
+#### **Structural Patterns**
+1. **Adapter Pattern**: `CotizacionPresupuestoAdapter` para convertir Cotización → IPresupuesto
+2. **Bridge Pattern**: Sistema de impuestos separando abstracción de implementación
+3. **Composite Pattern**: `Pc` como componente compuesto conteniendo otros componentes
+
+#### **Behavioral Patterns**
+1. **Strategy Pattern**: `ICotizador` con implementaciones `CotizadorA` y `CotizadorB`
+2. **Decorator Pattern**: Sistema de promociones acumulables `PromAcumulable`
+3. **Repository Pattern**: Interfaces de repositorio para cada aggregate
+
+---
+
+## 📚 API REST Endpoints
+
+### 🔗 **Componentes**
+
+```http
+GET    /cotizador/v1/api/componentes           # Listar componentes
+POST   /cotizador/v1/api/componentes           # Crear componente  
+GET    /cotizador/v1/api/componentes/{id}      # Obtener por ID
+PUT    /cotizador/v1/api/componentes/{id}      # Actualizar componente
+DELETE /cotizador/v1/api/componentes/{id}      # Eliminar componente
+GET    /cotizador/v1/api/componentes/tipos     # Listar tipos disponibles
+```
+
+### 🖥️ **PCs**
+
+```http
+GET    /cotizador/v1/api/pcs                   # Listar PCs
+POST   /cotizador/v1/api/pcs                   # Crear PC
+GET    /cotizador/v1/api/pcs/{id}              # Obtener PC por ID
+PUT    /cotizador/v1/api/pcs/{id}              # Actualizar PC
+DELETE /cotizador/v1/api/pcs/{id}              # Eliminar PC
+POST   /cotizador/v1/api/pcs/{id}/componentes  # Agregar componente a PC
+DELETE /cotizador/v1/api/pcs/{id}/componentes/{componenteId} # Remover componente
+GET    /cotizador/v1/api/pcs/{id}/componentes  # Listar componentes de PC
+```
+
+### 📋 **Cotizaciones**
+
+```http
+GET    /cotizador/v1/api/cotizaciones          # Listar cotizaciones
+POST   /cotizador/v1/api/cotizaciones          # Crear cotización
+GET    /cotizador/v1/api/cotizaciones/{id}     # Obtener cotización
+PUT    /cotizador/v1/api/cotizaciones/{id}     # Actualizar cotización
+DELETE /cotizador/v1/api/cotizaciones/{id}     # Eliminar cotización
+```
+
+### 📦 **Pedidos**
+
+```http
+GET    /cotizador/v1/api/pedidos               # Listar pedidos
+POST   /cotizador/v1/api/pedidos/generar       # Generar pedido desde cotización
+GET    /cotizador/v1/api/pedidos/{id}          # Obtener pedido por ID
+PUT    /cotizador/v1/api/pedidos/{id}          # Actualizar pedido
+```
+
+### 🏢 **Proveedores**
+
+```http
+GET    /cotizador/v1/api/proveedores           # Listar proveedores
+POST   /cotizador/v1/api/proveedores           # Crear proveedor
+GET    /cotizador/v1/api/proveedores/{id}      # Obtener proveedor
+PUT    /cotizador/v1/api/proveedores/{id}      # Actualizar proveedor
+DELETE /cotizador/v1/api/proveedores/{id}      # Eliminar proveedor
+```
+
+### 🎁 **Promociones**
+
+```http
+GET    /cotizador/v1/api/promociones           # Listar promociones
+POST   /cotizador/v1/api/promociones           # Crear promoción
+GET    /cotizador/v1/api/promociones/{id}      # Obtener promoción
+PUT    /cotizador/v1/api/promociones/{id}      # Actualizar promoción
+DELETE /cotizador/v1/api/promociones/{id}      # Eliminar promoción
+```
+
+### 📖 **Documentación API**
+
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
+- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
+- **Health Check**: http://localhost:8080/actuator/health
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+### ☕ **Core Technologies**
+- **Java 21** - Lenguaje de programación con características modernas
+- **Spring Boot 3.5.0** - Framework principal con auto-configuración
+- **Maven 3.8+** - Gestión de dependencias y construcción
+
+### 🗃️ **Persistencia y Base de Datos**
+- **Spring Data JPA** - Capa de acceso a datos
+- **Hibernate 6.6.14** - ORM para mapeo objeto-relacional
+- **MySQL 8.4.4** - Base de datos principal
+- **HikariCP** - Connection pooling optimizado
+
+### 🌐 **Web y API**
+- **Spring Web MVC** - Framework web para API REST
+- **Spring Security** - Autenticación y autorización (Basic Auth)
+- **Jackson** - Serialización/deserialización JSON
+- **Swagger/OpenAPI 3** - Documentación automática de API
+
+### 🔧 **Infraestructura y Monitoreo**
+- **Spring Boot Actuator** - Monitoreo y métricas de salud
+- **Logback** - Sistema de logging estructurado
+- **Docker** - Containerización
+- **Spring Boot DevTools** - Hot reload en desarrollo
+
+### 🧪 **Testing**
+- **JUnit 5** - Framework de testing principal
+- **TestContainers** - Tests de integración con MySQL real
+- **REST Assured** - Testing de APIs REST
+- **Mockito** - Mocking para unit tests
+
+---
+
+## ⚙️ Configuración
+
+### 🗂️ **Perfiles de Configuración**
+
+| Perfil | Archivo | Uso |
+|--------|---------|-----|
+| `default` | `application.yml` | Desarrollo local |
+| `docker` | `application-docker.yml` | Contenedores Docker |
+| `test` | `application-test.properties` | Tests de integración |
+
+### 🔧 **Variables de Entorno**
+
 ```bash
-mysql -u usuario -p cotizador < sql/ddl.sql
-mysql -u usuario -p cotizador < sql/dml.sql
+# Base de datos
+DB_HOST=localhost                   # Host de MySQL
+DB_USERNAME=cotizador_user          # Usuario de base de datos
+DB_PASSWORD=cotizador_pass          # Contraseña de base de datos
+
+# Seguridad
+SECURITY_USERNAME=admin             # Usuario API básica
+SECURITY_PASSWORD=admin123          # Contraseña API básica
+
+# Aplicación
+SERVER_PORT=8080                    # Puerto del servidor
+LOGGING_LEVEL=INFO                  # Nivel de logging
 ```
 
-## 🏗️ Características Técnicas
+### 📊 **Configuración de Base de Datos**
 
-### Arquitectura del Sistema
-
-El proyecto implementa una arquitectura en capas con separación clara de responsabilidades:
-
-```
-┌─────────────────────────────────────────────────────┐
-│                  Casos de Uso                       │
-│         (CotizadorTest, AdapterBridgeTest)         │
-├─────────────────────────────────────────────────────┤
-│                   Servicios                         │
-│    (ComponenteServicio, CotizacionServicio, etc)   │
-├─────────────────────────────────────────────────────┤
-│                 Core/Dominio                        │
-│  (Componentes, Cotizaciones, Pedidos, Impuestos)   │
-├─────────────────────────────────────────────────────┤
-│                 Persistencia                        │
-│      (Repositorios JPA, Entidades, Config)         │
-└─────────────────────────────────────────────────────┘
-```
-
-### Tecnologías Utilizadas
-
-- **Java 21**: Lenguaje de programación principal
-- **Spring Framework 6.2.6**: 
-  - Spring Context para IoC/DI
-  - Spring Data JPA para persistencia
-  - Spring TX para manejo de transacciones
-- **Hibernate 6.6.14**: ORM para mapeo objeto-relacional
-- **MySQL Connector 8.4.0**: Driver JDBC para MySQL
-- **Maven**: Gestión de dependencias y construcción
-
-### Patrones de Diseño Implementados
-
-1. **Builder Pattern**: 
-   - `PcBuilder`: Construcción fluida de PCs con validaciones
-   - `PromocionBuilder`: Creación de promociones complejas
-
-2. **Adapter Pattern**:
-   - `CotizacionPresupuestoAdapter`: Convierte Cotizacion → IPresupuesto
-
-3. **Bridge Pattern**:
-   - Sistema de impuestos con separación abstracción/implementación
-   - Permite combinar tipos de impuesto (local/federal) con países
-
-4. **Composite Pattern**:
-   - `Pc` como componente compuesto que contiene otros componentes
-
-5. **Decorator Pattern**:
-   - Sistema de promociones acumulables (`PromAcumulable`)
-
-6. **Repository Pattern**:
-   - Interfaces de repositorio para cada entidad principal
-
-7. **Factory Method**:
-   - Métodos estáticos en `Componente` para crear tipos específicos
-
-### Estructura de Paquetes
-
-```
-mx.com.qtx.cotizadorv1ds/
-├── casosDeUso/          # Clases principales de prueba
-├── config/              # Configuración Spring y sistema
-├── core/                # Clases del dominio principal
-│   └── componentes/     # Tipos de componentes
-├── cotizadorA/          # Implementación estándar del cotizador
-├── cotizadorB/          # Implementación alternativa con Map
-├── impuestos/           # Sistema de cálculo de impuestos
-├── pedidos/             # Gestión de pedidos y proveedores
-├── persistencia/        # Capa de acceso a datos
-│   ├── config/          # Configuración JPA
-│   ├── entidades/       # Entidades JPA
-│   └── repositorios/    # Interfaces Repository
-├── promos/              # Sistema de promociones
-└── servicios/           # Servicios de negocio
-    └── wrapper/         # Conversores entidad-dominio
+```yaml
+# application.yml
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/cotizador
+    username: ${DB_USERNAME:cotizador_user}
+    password: ${DB_PASSWORD:cotizador_pass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
 ```
 
-## 🚀 Ejecución Local
+---
 
-### 1. Clonar el Repositorio
+## 🧪 Testing
+
+### 🔬 **Suite de Tests Completa**
 
 ```bash
-git clone https://github.com/usuario/CotizadorPcPartes.git
-cd CotizadorPcPartes
-```
-
-### 2. Configurar la Base de Datos
-
-Editar el archivo `src/main/resources/application.properties`:
-
-```properties
-# Ajustar según tu configuración local
-db.url=jdbc:mysql://localhost:3306/cotizador?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
-db.username=usuario
-db.password=password
-```
-
-### 3. Compilar el Proyecto
-
-```bash
-mvn clean compile
-```
-
-### 4. Ejecutar la Aplicación
-
-Opción 1 - Ejecutar el caso de prueba principal:
-```bash
-mvn exec:java -Dexec.mainClass="mx.com.qtx.cotizadorv1ds.casosDeUso.CotizadorTest"
-```
-
-Opción 2 - Ejecutar el test de integración Adapter-Bridge:
-```bash
-mvn exec:java -Dexec.mainClass="mx.com.qtx.cotizadorv1ds.casosDeUso.CotizacionAdapterBridgeTest"
-```
-
-Opción 3 - Generar JAR ejecutable:
-```bash
-mvn clean package
-java -jar target/m02ejm01_CotizadorV1ds-2.0.0.jar
-```
-
-## 🧪 Ejecución de Pruebas
-
-### Pruebas Unitarias de Repositorios
-
-```bash
-# Ejecutar todas las pruebas
+# Ejecutar todos los tests
 mvn test
 
-# Ejecutar una prueba específica
-mvn test -Dtest=ComponenteRepositoryTest
-mvn test -Dtest=CotizacionRepositoryTest
-mvn test -Dtest=PedidoRepositoryTest
+# Ejecutar solo tests de integración
+mvn test -Dtest="*IntegrationTest"
+
+# Ejecutar tests con reporte de cobertura
+mvn test jacoco:report
+
+# Ejecutar un test específico
+mvn test -Dtest=ComponenteIntegrationTest
 ```
 
-### Casos de Prueba Principales
+### 🐳 **Tests de Integración con TestContainers**
 
-1. **CotizadorTest**: Prueba completa del flujo de cotización
-   - Creación de componentes
-   - Construcción de PCs
-   - Generación de cotizaciones con impuestos
-   - Persistencia en base de datos
+Los tests utilizan **TestContainers** para crear un entorno real de MySQL:
 
-2. **CotizacionAdapterBridgeTest**: Prueba de integración de patrones
-   - Conversión cotización → presupuesto (Adapter)
-   - Aplicación de impuestos multi-país (Bridge)
-   - Generación de pedidos múltiples
+| Test Suite | Cobertura | Estado |
+|------------|-----------|--------|
+| `ComponenteIntegrationTest` | CRUD Componentes + Validaciones | ✅ |
+| `ProveedorIntegrationTest` | CRUD Proveedores + Búsquedas | ✅ |
+| `PromocionIntegrationTest` | CRUD Promociones + Cálculos | ✅ |
+| `PcIntegrationTest` | Armado PCs + Validaciones | ✅ |
+| `CotizacionIntegrationTest` | Cotizaciones + Impuestos | ✅ |
+| `PedidoIntegrationTest` | Gestión Pedidos + Conversión | ✅ |
 
-3. **PromocionTest**: Prueba del sistema de promociones
-   - Descuentos simples y acumulables
-   - Validación de cálculos
+### 📋 **Configuración de Tests**
 
-### Verificar Resultados
-
-Los resultados de las pruebas se mostrarán en la consola con formato detallado:
-
+```properties
+# application-test.properties
+spring.datasource.url=jdbc:tc:mysql:8.4.4:///cotizador
+spring.jpa.hibernate.ddl-auto=create-drop
+logging.level.org.testcontainers=INFO
+logging.level.com.github.dockerjava=WARN
 ```
-================== Cotizacion número:1 del 2024-12-07 ==================
-  3 Categoría:MONITOR             Monitor 17 pulgadas  con precio base de $ 2000.00 cuesta(n)  6000.00
-  4 Categoría:TARJETA DE VIDEO    Tarjeta THOR         con precio base de $  300.00 cuesta(n)  1200.00
-                                                                   Subtotal:$ 7200.00
-                                                                  Impuestos:$ 1152.00
-                                                                      Total:$ 8352.00
-```
+
+---
 
 ## 📊 Ejemplo de Uso
 
+### 🔧 **Crear Componente**
+
 ```java
-// Crear componentes
-Componente monitor = Componente.crearMonitor("M001", "Monitor 27 pulgadas", 
-    "LG", "27UL550", new BigDecimal(3000), new BigDecimal(5000));
-monitor.guardarComponente();
-
-// Crear cotizador y agregar componentes
-ICotizador cotizador = new Cotizador();
-cotizador.agregarComponente(2, monitor);
-
-// Generar cotización con impuestos de México
-List<CalculadorImpuesto> impuestos = List.of(
-    new CalculadorImpuestoFederal(new CalculadorImpuestoMexico())
-);
-Cotizacion cotizacion = cotizador.generarCotizacion(impuestos);
-
-// Guardar y mostrar
-cotizacion.guardarCotizacion();
-cotizacion.emitirComoReporte();
+// POST /cotizador/v1/api/componentes
+{
+  "id": "M001",
+  "descripcion": "Monitor 27 pulgadas 4K",
+  "marca": "LG",
+  "modelo": "27UL550",
+  "costo": 3000.00,
+  "precioBase": 5000.00,
+  "tipoComponente": "MONITOR"
+}
 ```
 
-## 📝 Notas Adicionales
+### 🖥️ **Armar PC**
 
-- El sistema valida automáticamente las reglas de negocio (ej: máximo 2 discos por PC)
-- Los IDs de componentes deben ser únicos en el sistema
-- Las promociones se pueden encadenar para crear descuentos complejos
-- La configuración de impuestos es flexible y extensible a nuevos países
+```java
+// POST /cotizador/v1/api/pcs
+{
+  "nombre": "PC Gaming Pro",
+  "descripcion": "PC para gaming de alta gama",
+  "componentes": [
+    {
+      "componenteId": "M001", 
+      "cantidad": 2
+    },
+    {
+      "componenteId": "D001", 
+      "cantidad": 1
+    }
+  ]
+}
+```
 
-## 🤝 Contribuciones
+### 📋 **Generar Cotización**
 
-Para contribuir al proyecto:
+```java
+// POST /cotizador/v1/api/cotizaciones
+{
+  "cliente": "Juan Pérez",
+  "detalles": [
+    {
+      "componenteId": "PC001",
+      "cantidad": 1,
+      "precio": 15000.00
+    }
+  ],
+  "pais": "MEXICO"
+}
+```
 
-1. Fork el repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+### 📦 **Generar Pedido**
+
+```java
+// POST /cotizador/v1/api/pedidos/generar
+{
+  "cotizacionId": 1,
+  "proveedorId": "PROV001",
+  "fechaEntrega": "2024-12-15",
+  "nivelSurtido": 1
+}
+```
+
+---
+
+## 🐳 Docker y Deployment
+
+### 🏗️ **Construcción de Imagen**
+
+```dockerfile
+# Dockerfile
+FROM openjdk:21-jdk-slim
+COPY target/ms-cotizador-*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+```
+
+### 🚀 **Comandos Docker**
+
+```bash
+# Construir imagen
+docker build -t ms-cotizador .
+
+# Ejecutar contenedor
+docker run -p 8080:8080 \
+  -e DB_HOST=mysql \
+  -e DB_USERNAME=cotizador_user \
+  -e DB_PASSWORD=cotizador_pass \
+  ms-cotizador
+
+# Con Docker Compose (recomendado)
+docker-compose up -d
+```
+
+### 📊 **Health Checks**
+
+```bash
+# Verificar salud del servicio
+curl http://localhost:8080/actuator/health
+
+# Información detallada
+curl http://localhost:8080/actuator/info
+
+# Métricas
+curl http://localhost:8080/actuator/metrics
+```
+
+---
+
+## 🔧 Scripts Disponibles
+
+```bash
+# Compilación
+mvn clean compile              # Compilar código fuente
+mvn clean package              # Generar JAR
+mvn clean install              # Instalar en repositorio local
+
+# Ejecución
+mvn spring-boot:run            # Ejecutar en modo desarrollo
+java -jar target/ms-cotizador-*.jar  # Ejecutar JAR
+
+# Testing
+mvn test                       # Ejecutar tests
+mvn integration-test           # Tests de integración
+mvn verify                     # Verificar calidad
+
+# Análisis
+mvn jacoco:report              # Reporte de cobertura
+mvn dependency:tree            # Árbol de dependencias
+```
+
+---
+
+## 🆘 Troubleshooting
+
+### ❌ **Problemas Comunes**
+
+| Problema | Causa | Solución |
+|----------|-------|----------|
+| **Puerto 8080 en uso** | Otro proceso usando el puerto | `lsof -i :8080` y matar proceso |
+| **Error de conexión DB** | MySQL no disponible | Verificar `docker-compose ps` |
+| **Tests fallan** | TestContainers no puede iniciar | Verificar Docker funcionando |
+| **Error 401 en API** | Credenciales incorrectas | Verificar Basic Auth (admin/admin123) |
+
+### 🔧 **Comandos de Diagnóstico**
+
+```bash
+# Verificar estado del servicio
+curl http://localhost:8080/actuator/health
+
+# Ver logs del contenedor
+docker logs ms-cotizador
+
+# Verificar conexión a base de datos
+mysql -h localhost -u cotizador_user -p cotizador
+
+# Verificar endpoints disponibles
+curl -u admin:admin123 http://localhost:8080/cotizador/v1/api/componentes
+```
+
+---
+
+## 🤝 Contribución
+
+### 📝 **Convenciones de Código**
+
+#### **Java**
+- **Clases**: PascalCase (`ComponenteController`)
+- **Métodos**: camelCase (`crearComponente`)
+- **Constantes**: UPPER_SNAKE_CASE (`MAX_COMPONENTES_PC`)
+- **Packages**: lowercase (`mx.com.qtx.cotizador.dominio`)
+
+#### **Tests**
+- **Naming**: Descriptivo con patrón Given-When-Then
+- **Organization**: Un test class por clase de producción
+- **Data**: Usar builders o factories para datos de test
+
+### 🔄 **Git Workflow**
+
+```bash
+# Feature branch desde develop
+git checkout -b feature/nueva-funcionalidad
+
+# Commits descriptivos
+git commit -m "feat(componentes): agregar validación de stock"
+
+# Pull request con tests
+# Incluir documentación de API si es necesario
+```
+
+---
+
+## 📞 Soporte
+
+### 🔗 **Enlaces Útiles**
+
+- **📖 [Documentación Principal](../README.md)** - Guía completa del sistema
+- **🚀 [Portal Web](../portal-cotizador/README.md)** - Frontend Vue.js 3
+- **🌐 [API Gateway](../nginx-gateway/README.md)** - Configuración del gateway
+- **📚 [Spring Boot Docs](https://spring.io/projects/spring-boot)** - Documentación oficial
+- **🐳 [Docker Docs](https://docs.docker.com/)** - Guías de Docker
+
+### 🆘 **Soporte Técnico**
+
+- **Issues**: Crear issue en GitHub
+- **API Docs**: http://localhost:8080/swagger-ui.html
+- **Health Check**: http://localhost:8080/actuator/health
+- **Logs**: `docker logs ms-cotizador`
+
+---
 
 ## 📄 Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](../LICENSE) para más detalles.
+
+---
+
+<div align="center">
+
+**🖥️ Microservicio Cotizador**
+
+*API REST empresarial con Domain-Driven Design*
+
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![MySQL](https://img.shields.io/badge/MySQL-8.4.4-blue.svg)](https://www.mysql.com/)
+
+**[⬆️ Volver al README Principal](../README.md)**
+
+</div>

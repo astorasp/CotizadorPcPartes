@@ -2,49 +2,32 @@
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.0-brightgreen.svg)](https://vuejs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4.4-blue.svg)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://docs.docker.com/compose/)
 
-> **Sistema integral para cotización y gestión de componentes de hardware de PC**, desarrollado con arquitectura de microservicios usando Spring Boot, MySQL y frontend web moderno.
+> **Sistema integral para cotización y gestión de componentes de hardware de PC**, desarrollado con arquitectura moderna usando Spring Boot, Vue.js 3, MySQL y sistema de loading centralizado.
 
 ## 📋 Tabla de Contenidos
 
-- [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
 - [🚀 Inicio Rápido](#-inicio-rápido)
+- [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
+- [💡 Sistema de Loading Centralizado](#-sistema-de-loading-centralizado)
 - [📁 Estructura del Proyecto](#-estructura-del-proyecto)
 - [🔧 Configuración y Desarrollo](#-configuración-y-desarrollo)
 - [🧪 Testing](#-testing)
 - [📚 API Documentation](#-api-documentation)
+- [🌐 Portal Web](#-portal-web)
 - [🐳 Docker](#-docker)
 - [🛠️ Tecnologías](#️-tecnologías)
 - [📖 Casos de Uso](#-casos-de-uso)
-- [🌐 Guía del Portal Web](#-guía-del-portal-web)
-
----
-
-## 🏗️ Arquitectura del Sistema
-
-El sistema está compuesto por **3 componentes principales** que trabajan en conjunto:
-
-### 🎯 **Componentes del Sistema**
-
-| Componente | Tecnología | Puerto | Descripción |
-|------------|------------|--------|-------------|
-| **Frontend** | HTML5 + CSS3 + JavaScript | 80 | Portal web para gestión de cotizaciones |
-| **Backend** | Spring Boot 3.5.0 + Java 21 | 8080 | API REST con lógica de negocio |
-| **Base de Datos** | MySQL 8.4.4 | 3306 | Almacenamiento persistente |
-
-### 🔄 **Flujo de Datos**
-
-```
-Frontend (Puerto 80) → Backend API (Puerto 8080) → MySQL (Puerto 3306)
-```
+- [🚀 Próximos Pasos](#-próximos-pasos)
 
 ---
 
 ## 🚀 Inicio Rápido
 
-### ⚡ **Opción 1: Docker Compose (Recomendado)**
+### ⚡ **Despliegue con Docker (Recomendado)**
 
 ```bash
 # 1. Clonar el repositorio
@@ -58,24 +41,113 @@ docker-compose up -d
 docker-compose ps
 ```
 
-### ⚡ **Opción 2: Script Automatizado**
-
-```bash
-# Usar el script de gestión Docker
-./docker-scripts.sh start
-```
-
 ### 🌐 **Acceso a los Servicios**
-
-Una vez levantado el sistema:
 
 | Servicio | URL | Credenciales |
 |----------|-----|--------------|
-| **Portal Web** | http://localhost | - |
+| **Portal Web** | http://localhost | admin / admin123 |
 | **API REST** | http://localhost:8080 | admin / admin123 |
 | **Swagger UI** | http://localhost:8080/swagger-ui.html | admin / admin123 |
 | **Health Check** | http://localhost:8080/actuator/health | admin / admin123 |
-| **MySQL** | localhost:3306 | cotizador_user / cotizador_pass |
+
+---
+
+## 🏗️ Arquitectura del Sistema
+
+### 🎯 **Componentes Principales**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Sistema Cotizador PC                          │
+└─────────────────────────────────────────────────────────────────┘
+                                 │
+                ┌────────────────┼────────────────┐
+                │                │                │
+      ┌─────────▼─────────┐ ┌───▼────┐ ┌────────▼────────┐
+      │   Frontend Web    │ │Backend │ │   Base de       │
+      │   (Vue.js 3)      │ │API REST│ │   Datos MySQL   │
+      │   Puerto 80       │ │Puerto  │ │   Puerto 3306   │
+      │                   │ │8080    │ │                 │
+      └─────────────────────┘ └────────┘ └─────────────────┘
+```
+
+### 🔄 **Flujo de Datos**
+
+```
+Portal Web (Vue.js 3) → Backend API (Spring Boot) → MySQL Database
+      ↓                        ↓                         ↓
+- Sistema de Loading    - Domain-Driven Design    - Connection Pooling
+- Composables Vue       - CRUD Operations         - Transacciones ACID
+- Pinia State Mgmt      - Business Logic          - Índices optimizados
+- TailwindCSS          - Security (Basic Auth)    - Esquema normalizado
+```
+
+---
+
+## 💡 Sistema de Loading Centralizado
+
+### 🎯 **Características del Sistema**
+
+El sistema cuenta con un **sistema de loading centralizado** que proporciona:
+
+- ✅ **Estados de loading unificados** para todas las operaciones
+- ✅ **Feedback visual inmediato** en todas las interacciones
+- ✅ **Prevención de doble-click** automática
+- ✅ **Componentes reutilizables** (LoadingButton, LoadingSpinner, LoadingOverlay)
+- ✅ **Gestión global** de operaciones en progreso
+- ✅ **Integración con sistema de permisos**
+
+### 🛠️ **Arquitectura del Loading System**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   Loading System Architecture                │
+└─────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+  ┌─────▼─────┐        ┌─────▼─────┐        ┌─────▼─────┐
+  │   Core    │        │    UI     │        │  Store    │
+  │ Loading   │        │Components │        │Integration│
+  │  System   │        │           │        │           │
+  └───────────┘        └───────────┘        └───────────┘
+        │                     │                     │
+┌───────▼───────┐    ┌───────▼───────┐    ┌───────▼───────┐
+│useLoadingStore│    │LoadingButton  │    │useCrudOperations│
+│useAsyncOp     │    │LoadingSpinner │    │All Stores     │
+│               │    │LoadingOverlay │    │Migrated       │
+└───────────────┘    └───────────────┘    └───────────────┘
+```
+
+### 🔧 **Componentes del Loading System**
+
+#### **Core Loading System**
+- **`useLoadingStore.js`**: Store centralizado para gestión de estados
+- **`useAsyncOperation.js`**: Composable para operaciones asíncronas
+- **`useCrudOperations`**: Helper especializado para operaciones CRUD
+
+#### **UI Components**
+- **`LoadingButton.vue`**: Botón con estado de loading integrado
+- **`LoadingSpinner.vue`**: Spinner configurable con mensajes
+- **`LoadingOverlay.vue`**: Overlay de pantalla completa
+- **`GlobalLoadingManager.vue`**: Gestor global de loading
+
+#### **Store Integration**
+- **7 Stores migrados** con loading centralizado
+- **Estados reactivos** (isFetching, isCreating, isUpdating, isDeleting)
+- **Operaciones especializadas** (isAddingComponent, isRemovingComponent)
+
+### 📊 **Estados de Loading por Módulo**
+
+| Módulo | Estados de Loading | Operaciones Especiales |
+|--------|-------------------|------------------------|
+| **Auth** | isLoggingIn, isLoggingOut | Login con UI bloqueante |
+| **Componentes** | isFetching, isCreating, isUpdating, isDeleting | Validación de componentes |
+| **Cotizaciones** | isFetching, isCreating, isUpdating, isDeleting | Cálculos de precios |
+| **PCs** | isFetching, isCreating, isUpdating, isDeleting | isAddingComponent, isRemovingComponent |
+| **Proveedores** | isFetching, isCreating, isUpdating, isDeleting | Búsquedas avanzadas |
+| **Pedidos** | isFetching, isGeneratingPedido, isLoadingDetails | Generación desde cotizaciones |
+| **Promociones** | isFetching, isCreating, isUpdating, isDeleting | Cálculos de stacking |
 
 ---
 
@@ -85,34 +157,79 @@ Una vez levantado el sistema:
 CotizadorPcPartes/
 ├── 📁 Cotizador/                    # Backend Spring Boot
 │   ├── 📁 src/main/java/mx/com/qtx/cotizador/
-│   │   ├── 📁 controlador/          # REST Controllers
-│   │   ├── 📁 servicio/             # Business Logic Services
-│   │   ├── 📁 repositorio/          # Data Access Layer
-│   │   ├── 📁 entidad/              # JPA Entities
-│   │   ├── 📁 dto/                  # Data Transfer Objects
-│   │   ├── 📁 configuracion/        # Spring Configuration
-│   │   ├── 📁 excepcion/            # Exception Handling
-│   │   └── 📁 util/                 # Utilities & Helpers
-│   ├── 📁 src/main/resources/
-│   │   ├── application.yml          # Spring Boot Configuration
-│   │   └── application-docker.yml   # Docker Profile
-│   ├── 📁 src/test/                 # Tests (Unit + Integration)
+│   │   ├── 📁 dominio/              # Domain Layer (DDD)
+│   │   │   ├── 📁 core/             # Core Business Logic
+│   │   │   │   ├── 📁 componentes/  # Component Domain
+│   │   │   │   ├── Cotizacion.java  # Quotation Aggregate
+│   │   │   │   └── DetalleCotizacion.java
+│   │   │   ├── 📁 cotizadorA/       # Strategy Pattern
+│   │   │   ├── 📁 cotizadorB/       # Alternative Strategy
+│   │   │   ├── 📁 promos/           # Promotion Domain
+│   │   │   ├── 📁 pedidos/          # Order Domain
+│   │   │   └── 📁 impuestos/        # Tax Domain
+│   │   ├── 📁 aplicacion/           # Application Layer
+│   │   │   ├── 📁 servicio/         # Application Services
+│   │   │   └── 📁 dto/              # Data Transfer Objects
+│   │   ├── 📁 infraestructura/      # Infrastructure Layer
+│   │   │   ├── 📁 repositorio/      # Repository Implementations
+│   │   │   ├── 📁 controlador/      # REST Controllers
+│   │   │   └── 📁 configuracion/    # Spring Configuration
+│   │   └── 📁 excepcion/            # Exception Handling
 │   ├── 📁 sql/                      # Database Scripts
 │   │   ├── ddl.sql                  # Schema Definition
 │   │   └── dml.sql                  # Sample Data
-│   ├── Dockerfile                   # Backend Container
-│   └── pom.xml                      # Maven Dependencies
+│   └── 📁 src/test/                 # Tests (Unit + Integration)
 │
-├── 📁 portal-cotizador/             # Frontend Web Portal
+├── 📁 portal-cotizador/             # Frontend Vue.js 3
 │   ├── index.html                   # Main Application
-│   ├── styles.css                   # Styling
-│   ├── 📁 js/                       # JavaScript Modules
-│   ├── Dockerfile                   # Frontend Container
-│   └── Documentacion-Endpoints.md   # API Integration Guide
+│   ├── 📁 src/
+│   │   ├── 📁 components/           # Vue Components
+│   │   │   ├── 📁 ui/               # UI Components
+│   │   │   │   ├── LoadingButton.vue
+│   │   │   │   ├── LoadingSpinner.vue
+│   │   │   │   ├── LoadingOverlay.vue
+│   │   │   │   └── GlobalLoadingManager.vue
+│   │   │   ├── 📁 componentes/      # Business Components
+│   │   │   ├── 📁 cotizaciones/     # Quotation Components
+│   │   │   ├── 📁 pcs/              # PC Components
+│   │   │   ├── 📁 proveedores/      # Supplier Components
+│   │   │   ├── 📁 pedidos/          # Order Components
+│   │   │   └── 📁 promociones/      # Promotion Components
+│   │   ├── 📁 composables/          # Vue Composables
+│   │   │   ├── useAsyncOperation.js # Async Operations
+│   │   │   └── usePermissions.js    # Permission Management
+│   │   ├── 📁 stores/               # Pinia Stores
+│   │   │   ├── useLoadingStore.js   # Central Loading
+│   │   │   ├── useAuthStore.js      # Authentication
+│   │   │   ├── useComponentesStore.js
+│   │   │   ├── useCotizacionesStore.js
+│   │   │   ├── usePcsStore.js
+│   │   │   ├── useProveedoresStore.js
+│   │   │   ├── usePedidosStore.js
+│   │   │   └── usePromocionesStore.js
+│   │   ├── 📁 views/                # Page Views
+│   │   │   ├── LoginView.vue
+│   │   │   ├── ComponentesView.vue
+│   │   │   ├── CotizacionesView.vue
+│   │   │   ├── PcsView.vue
+│   │   │   ├── ProveedoresView.vue
+│   │   │   ├── PedidosView.vue
+│   │   │   └── PromocionesView.vue
+│   │   └── 📁 services/             # API Services
+│   │       ├── authService.js
+│   │       ├── componentesApi.js
+│   │       ├── cotizacionesApi.js
+│   │       ├── pcsApi.js
+│   │       ├── proveedoresApi.js
+│   │       ├── pedidosApi.js
+│   │       └── promocionesApi.js
+│   ├── 📁 public/                   # Static Assets
+│   ├── package.json                 # Dependencies
+│   └── tailwind.config.js           # TailwindCSS Config
 │
 ├── docker-compose.yml               # Multi-container Setup
 ├── docker-scripts.sh                # Docker Management Script
-├── README-Docker.md                 # Docker Documentation
+├── CLAUDE.md                        # AI Assistant Instructions
 └── README.md                        # This file
 ```
 
@@ -126,7 +243,7 @@ CotizadorPcPartes/
 - Java 21+ (OpenJDK recomendado)
 - Maven 3.8+
 - MySQL 8.0+
-- Node.js 18+ (opcional, para desarrollo frontend)
+- Node.js 18+ (para desarrollo frontend)
 
 #### **Backend Setup**
 
@@ -143,7 +260,7 @@ GRANT ALL PRIVILEGES ON cotizador.* TO 'cotizador_user'@'localhost';
 mysql -u cotizador_user -p cotizador < sql/ddl.sql
 mysql -u cotizador_user -p cotizador < sql/dml.sql
 
-# 3. Configurar variables de entorno (opcional)
+# 3. Configurar variables de entorno
 export DB_HOST=localhost
 export DB_USERNAME=cotizador_user
 export DB_PASSWORD=cotizador_pass
@@ -160,13 +277,14 @@ mvn spring-boot:run
 ```bash
 cd portal-cotizador
 
-# Servir archivos estáticos (opción 1: Python)
-python3 -m http.server 8000
+# 1. Instalar dependencias
+npm install
 
-# Servir archivos estáticos (opción 2: Node.js)
-npx http-server -p 8000
+# 2. Ejecutar en modo desarrollo
+npm run dev
 
-# Acceder en: http://localhost:8000
+# 3. Construir para producción
+npm run build
 ```
 
 ### ⚙️ **Configuración de Perfiles**
@@ -175,15 +293,13 @@ npx http-server -p 8000
 |--------|---------|-----|
 | `default` | `application.yml` | Desarrollo local |
 | `docker` | `application-docker.yml` | Contenedores Docker |
-| `test` | `application-test.yml` | Tests de integración |
+| `test` | `application-test.properties` | Tests de integración |
 
 ---
 
 ## 🧪 Testing
 
 ### 🔬 **Suite de Tests Completa**
-
-El proyecto incluye **tests unitarios** y **tests de integración** con cobertura completa:
 
 ```bash
 cd Cotizador
@@ -198,9 +314,7 @@ mvn test -Dtest="*IntegrationTest"
 mvn test jacoco:report
 ```
 
-### 🧪 **Tests de Integración**
-
-Los tests de integración usan **TestContainers** con MySQL real:
+### 🧪 **Tests de Integración con TestContainers**
 
 | Test Suite | Cobertura | Estado |
 |------------|-----------|--------|
@@ -227,139 +341,117 @@ Los tests de integración usan **TestContainers** con MySQL real:
 
 #### **Componentes**
 ```http
-GET    /componentes              # Listar componentes
-POST   /componentes              # Crear componente
-GET    /componentes/{id}         # Obtener componente
-PUT    /componentes/{id}         # Actualizar componente
-DELETE /componentes/{id}         # Eliminar componente
+GET    /cotizador/v1/api/componentes         # Listar componentes
+POST   /cotizador/v1/api/componentes         # Crear componente
+GET    /cotizador/v1/api/componentes/{id}    # Obtener componente
+PUT    /cotizador/v1/api/componentes/{id}    # Actualizar componente
+DELETE /cotizador/v1/api/componentes/{id}    # Eliminar componente
 ```
 
 #### **PCs**
 ```http
-GET    /pcs                      # Listar PCs
-POST   /pcs                      # Crear PC
-GET    /pcs/{id}                 # Obtener PC
-PUT    /pcs/{id}                 # Actualizar PC
-DELETE /pcs/{id}                 # Eliminar PC
+GET    /cotizador/v1/api/pcs                 # Listar PCs
+POST   /cotizador/v1/api/pcs                 # Crear PC
+GET    /cotizador/v1/api/pcs/{id}            # Obtener PC
+PUT    /cotizador/v1/api/pcs/{id}            # Actualizar PC
+DELETE /cotizador/v1/api/pcs/{id}            # Eliminar PC
+POST   /cotizador/v1/api/pcs/{id}/componentes # Agregar componente a PC
 ```
 
 #### **Cotizaciones**
 ```http
-GET    /cotizaciones             # Listar cotizaciones
-POST   /cotizaciones             # Crear cotización
-GET    /cotizaciones/{id}        # Obtener cotización
-PUT    /cotizaciones/{id}        # Actualizar cotización
-DELETE /cotizaciones/{id}        # Eliminar cotización
+GET    /cotizador/v1/api/cotizaciones        # Listar cotizaciones
+POST   /cotizador/v1/api/cotizaciones        # Crear cotización
+GET    /cotizador/v1/api/cotizaciones/{id}   # Obtener cotización
+PUT    /cotizador/v1/api/cotizaciones/{id}   # Actualizar cotización
+DELETE /cotizador/v1/api/cotizaciones/{id}   # Eliminar cotización
 ```
 
 #### **Pedidos**
 ```http
-GET    /pedidos                  # Listar pedidos
-POST   /pedidos/generar          # Generar pedido desde cotización
-GET    /pedidos/{id}             # Obtener pedido
+GET    /cotizador/v1/api/pedidos             # Listar pedidos
+POST   /cotizador/v1/api/pedidos/generar     # Generar pedido desde cotización
+GET    /cotizador/v1/api/pedidos/{id}        # Obtener pedido
 ```
 
 #### **Proveedores**
 ```http
-GET    /proveedores              # Listar proveedores
-POST   /proveedores              # Crear proveedor
-GET    /proveedores/{id}         # Obtener proveedor
-PUT    /proveedores/{id}         # Actualizar proveedor
-DELETE /proveedores/{id}         # Eliminar proveedor
+GET    /cotizador/v1/api/proveedores         # Listar proveedores
+POST   /cotizador/v1/api/proveedores         # Crear proveedor
+GET    /cotizador/v1/api/proveedores/{id}    # Obtener proveedor
+PUT    /cotizador/v1/api/proveedores/{id}    # Actualizar proveedor
+DELETE /cotizador/v1/api/proveedores/{id}    # Eliminar proveedor
 ```
 
 #### **Promociones**
 ```http
-GET    /promociones              # Listar promociones
-POST   /promociones              # Crear promoción
-GET    /promociones/{id}         # Obtener promoción
-PUT    /promociones/{id}         # Actualizar promoción
-DELETE /promociones/{id}         # Eliminar promoción
+GET    /cotizador/v1/api/promociones         # Listar promociones
+POST   /cotizador/v1/api/promociones         # Crear promoción
+GET    /cotizador/v1/api/promociones/{id}    # Obtener promoción
+PUT    /cotizador/v1/api/promociones/{id}    # Actualizar promoción
+DELETE /cotizador/v1/api/promociones/{id}    # Eliminar promoción
 ```
 
 ### 📖 **Documentación Interactiva**
 
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **OpenAPI JSON**: http://localhost:8080/v3/api-docs
-- **Documentación Detallada**: `portal-cotizador/Documentacion-Endpoints.md`
+- **Health Check**: http://localhost:8080/actuator/health
 
 ---
 
-## 🔐 Configuración de Variables de Entorno
+## 🌐 Portal Web
 
-### 🛡️ **Seguridad y Variables Sensibles**
+### 🎯 **Características Principales**
 
-Para proteger datos sensibles (contraseñas, secrets, etc.), el proyecto usa archivos `.env` que **nunca deben commitearse** al repositorio.
+El **Portal Web** es una aplicación SPA (Single Page Application) desarrollada con **Vue.js 3** que ofrece:
 
-#### **🚀 Configuración Automática (Recomendado)**
+- ✅ **Autenticación integrada** con el backend
+- ✅ **Sistema de permisos** basado en roles
+- ✅ **Loading states** centralizados en toda la aplicación
+- ✅ **Diseño responsivo** con TailwindCSS
+- ✅ **Interfaz moderna** con componentes reutilizables
 
-**Para Linux/macOS:**
-```bash
-# Ejecutar script de inicialización
-./init-env.sh
+### 🧭 **Módulos del Portal**
 
-# El script:
-# ✅ Crea .env desde .env.example
-# ✅ Genera contraseñas seguras automáticamente
-# ✅ Verifica herramientas necesarias (Docker)
-# ✅ Muestra URLs de servicios
-```
+| Módulo | Descripción | Funcionalidades |
+|--------|-------------|-----------------|
+| **🔐 Autenticación** | Login/logout | Gestión de sesiones, roles |
+| **🔧 Componentes** | Gestión de hardware | CRUD, filtros, búsqueda, validación |
+| **🖥️ Armado PCs** | Configuración de PCs | Crear PCs, gestionar componentes |
+| **📋 Cotizaciones** | Gestión de cotizaciones | CRUD, aplicar promociones, exportar |
+| **🏢 Proveedores** | Gestión de proveedores | CRUD, asignación componentes |
+| **📦 Pedidos** | Gestión de pedidos | Generar desde cotizaciones, seguimiento |
+| **🎁 Promociones** | Gestión de promociones | CRUD, aplicar a componentes, stacking |
 
-**Para Windows (PowerShell):**
-```powershell
-# Ejecutar script de PowerShell
-.\init-env.ps1
+### 🎨 **Características UX/UI**
 
-# Con parámetros opcionales:
-.\init-env.ps1 -AutoGeneratePasswords -Force
-```
+#### **Sistema de Loading Centralizado**
+- **LoadingButton**: Botones con estado de loading integrado
+- **LoadingSpinner**: Indicadores de carga configurables
+- **LoadingOverlay**: Overlays de pantalla completa
+- **GlobalLoadingManager**: Gestor global de operaciones
 
-#### **⚙️ Configuración Manual**
+#### **Diseño Responsivo**
+- **Mobile-first design** con TailwindCSS
+- **Navegación adaptativa** según dispositivo
+- **Tablas responsivas** con scroll horizontal
+- **Formularios optimizados** para touch
 
-Si prefieres configurar manualmente:
+#### **Elementos Visuales**
+- **Alertas contextuales**: Éxito, error, advertencia
+- **Estados vacíos** con call-to-action
+- **Confirmaciones** para acciones destructivas
+- **Validación en tiempo real** en formularios
 
-```bash
-# 1. Copiar archivo de ejemplo
-cp .env.example .env
+### 🔧 **Tecnologías Frontend**
 
-# 2. Editar variables sensibles
-nano .env  # o tu editor preferido
-
-# 3. Cambiar al menos estas variables:
-# - MYSQL_ROOT_PASSWORD
-# - MYSQL_COTIZADOR_PASSWORD  
-# - MYSQL_SEGURIDAD_PASSWORD
-# - SECURITY_PASSWORD
-```
-
-#### **📋 Variables Importantes**
-
-| Variable | Descripción | Valor por Defecto |
-|----------|-------------|-------------------|
-| `MYSQL_ROOT_PASSWORD` | Contraseña root MySQL | `root_password_change_me` |
-| `MYSQL_COTIZADOR_PASSWORD` | Contraseña BD cotizador | `cotizador_pass_change_me` |
-| `MYSQL_SEGURIDAD_PASSWORD` | Contraseña BD seguridad | `seguridad_pass_change_me` |
-| `SECURITY_PASSWORD` | Contraseña admin sistema | `admin123_change_me` |
-| `JWT_ACCESS_TOKEN_DURATION` | Duración token JWT (ms) | `600000` (10 min) |
-| `COTIZADOR_PORT` | Puerto ms-cotizador | `8080` |
-| `SEGURIDAD_PORT` | Puerto ms-seguridad | `8081` |
-
-#### **🔒 Mejores Prácticas de Seguridad**
-
-```bash
-# ❌ NUNCA hagas esto:
-git add .env
-git commit -m "Adding environment config"
-
-# ✅ El archivo .env está en .gitignore automáticamente
-
-# ✅ Para producción, usa secrets manager:
-# - Docker Secrets
-# - Kubernetes Secrets  
-# - HashiCorp Vault
-# - AWS Secrets Manager
-# - Azure Key Vault
-```
+- **Vue.js 3** - Framework principal
+- **Composition API** - Lógica de componentes
+- **Pinia** - Gestión de estado
+- **Vue Router** - Navegación SPA
+- **TailwindCSS** - Framework CSS
+- **Vite** - Build tool y dev server
 
 ---
 
@@ -400,11 +492,10 @@ docker-compose down -v --remove-orphans
 ./docker-scripts.sh logs       # Ver logs
 ./docker-scripts.sh status     # Ver estado
 ./docker-scripts.sh clean      # Limpiar sistema
+./docker-scripts.sh health     # Check health endpoints
 ```
 
 ### 🔍 **Health Checks**
-
-Todos los servicios incluyen health checks automáticos:
 
 ```bash
 # Verificar salud de servicios
@@ -421,23 +512,24 @@ docker-compose ps
 - **Java 21** - Lenguaje de programación
 - **Spring Boot 3.5.0** - Framework principal
 - **Spring Data JPA** - Acceso a datos
-- **Spring Security** - Autenticación y autorización
+- **Spring Security** - Autenticación (Basic Auth)
 - **Spring Boot Actuator** - Monitoreo y métricas
 - **Hibernate** - ORM
-- **MapStruct** - Mapeo de objetos
-- **Lombok** - Reducción de boilerplate
+- **HikariCP** - Connection pooling
 - **Maven** - Gestión de dependencias
+
+### 🌐 **Frontend**
+- **Vue.js 3** - Framework principal
+- **Composition API** - Lógica de componentes reactiva
+- **Pinia** - Gestión de estado moderna
+- **Vue Router** - Navegación SPA
+- **TailwindCSS** - Framework CSS utility-first
+- **Vite** - Build tool y dev server rápido
 
 ### 🗄️ **Base de Datos**
 - **MySQL 8.4.4** - Base de datos principal
 - **HikariCP** - Connection pooling
-- **Flyway** - Migraciones (futuro)
-
-### 🌐 **Frontend**
-- **HTML5** - Estructura
-- **CSS3** - Estilos y diseño responsivo
-- **JavaScript ES6+** - Lógica del cliente
-- **Fetch API** - Comunicación con backend
+- **JPA/Hibernate** - ORM
 
 ### 🐳 **DevOps & Testing**
 - **Docker & Docker Compose** - Containerización
@@ -447,362 +539,99 @@ docker-compose ps
 - **REST Assured** - Testing de APIs
 - **Swagger/OpenAPI 3** - Documentación de API
 
-### 🔧 **Herramientas de Desarrollo**
-- **Spring Boot DevTools** - Hot reload
-- **Spring Boot Configuration Processor** - Autocompletado
-- **Maven Surefire** - Ejecución de tests
-- **Jacoco** - Cobertura de código
-
 ---
 
 ## 📖 Casos de Uso
 
 ### 🎯 **Flujo Principal del Sistema**
 
-1. **Gestión de Componentes**
-   - Registrar componentes de hardware (CPU, GPU, RAM, etc.)
-   - Asignar promociones y precios
-   - Gestionar inventario por proveedor
+#### **1. Gestión de Componentes**
+- Registrar componentes de hardware (CPU, GPU, RAM, etc.)
+- Configurar precios y promociones
+- Gestionar inventario por proveedor
+- Aplicar validaciones de negocio
 
-2. **Armado de PCs**
-   - Crear configuraciones de PC personalizadas
-   - Validar compatibilidad de componentes
-   - Calcular precios totales
+#### **2. Armado de PCs**
+- Crear configuraciones de PC personalizadas
+- Validar compatibilidad de componentes
+- Calcular precios totales automáticamente
+- Gestionar cantidades y variaciones
 
-3. **Cotizaciones**
-   - Generar cotizaciones para clientes
-   - Aplicar promociones y descuentos
-   - Gestionar múltiples proveedores
+#### **3. Cotizaciones**
+- Generar cotizaciones para clientes
+- Aplicar promociones y descuentos
+- Gestionar múltiples proveedores
+- Exportar cotizaciones (futuro)
 
-4. **Gestión de Pedidos**
-   - Convertir cotizaciones en pedidos
-   - Asignar proveedores específicos
-   - Seguimiento de entregas
+#### **4. Gestión de Pedidos**
+- Convertir cotizaciones en pedidos
+- Asignar proveedores específicos
+- Configurar fechas de entrega
+- Seguimiento de entregas
 
-5. **Administración**
-   - Gestionar proveedores y sus catálogos
-   - Configurar promociones por temporada
-   - Reportes y análisis
+#### **5. Administración**
+- Gestionar proveedores y catálogos
+- Configurar promociones por temporada
+- Sistema de permisos basado en roles
+- Reportes y análisis
 
 ### 🔄 **Patrones de Diseño Implementados**
 
-- **MVC (Model-View-Controller)** - Separación de responsabilidades
-- **Repository Pattern** - Abstracción de acceso a datos
-- **Service Layer** - Lógica de negocio centralizada
-- **DTO Pattern** - Transferencia de datos
-- **Builder Pattern** - Construcción de objetos complejos
-- **Strategy Pattern** - Cálculo de promociones
-- **Factory Pattern** - Creación de entidades
-
----
-
-## 🌐 Guía del Portal Web
-
-El **Portal Web Cotizador** es la interfaz principal para usuarios finales que consume todos los servicios del backend. Está desarrollado con **HTML5, CSS3 (TailwindCSS) y JavaScript ES6+** y ofrece una experiencia moderna y responsiva.
-
-### 🎯 **Acceso al Portal**
-
-Una vez que el sistema esté ejecutándose:
-
-```bash
-# Acceder al portal web
-http://localhost
-```
-
-**No requiere autenticación** - El portal maneja automáticamente la autenticación con el backend.
-
-### 🧭 **Navegación Principal**
-
-El portal cuenta con **6 secciones principales** accesibles desde la barra de navegación superior:
-
-| Sección | Descripción | Funcionalidades |
-|---------|-------------|-----------------|
-| **🔧 Componentes** | Gestión de hardware | CRUD completo, filtros, búsqueda |
-| **🖥️ Armado PCs** | Configuración de PCs | Crear PCs, gestionar componentes |
-| **📋 Cotizaciones** | Gestión de cotizaciones | Crear, editar, aplicar promociones |
-| **🏢 Proveedores** | Gestión de proveedores | CRUD, asignación de componentes |
-| **📦 Pedidos** | Gestión de pedidos | Generar desde cotizaciones, seguimiento |
-| **🎁 Promociones** | Gestión de promociones | CRUD, aplicar a componentes |
-
-### 📱 **Diseño Responsivo**
-
-- **Desktop**: Navegación completa en barra superior
-- **Mobile**: Menú hamburguesa colapsible
-- **Tablet**: Adaptación automática de layouts
-
----
-
-### 🔧 **Sección: Gestión de Componentes**
-
-**Funcionalidades principales:**
-
-#### **📋 Listado de Componentes**
-- **Vista de tabla** con información completa
-- **Paginación** configurable (10, 20, 30 por página)
-- **Estados visuales**: Loading, empty state, error handling
-
-#### **🔍 Filtros y Búsqueda**
-- **Búsqueda por texto**: ID, descripción, marca, modelo
-- **Filtro por tipo**: Monitor, Disco Duro, Tarjeta de Video, PC
-- **Botones**: Aplicar filtros, Limpiar filtros
-
-#### **➕ Crear Componente**
-```
-Botón "Nuevo Componente" → Modal/Formulario
-├── Información básica (ID, descripción, marca, modelo)
-├── Precios (costo, precio base)
-├── Tipo de componente (dropdown)
-├── Campos específicos (capacidad, memoria según tipo)
-└── Validación en tiempo real
-```
-
-#### **✏️ Editar Componente**
-- **Botón "Editar"** en cada fila de la tabla
-- **Formulario pre-poblado** con datos existentes
-- **Validación** antes de guardar
-
-#### **🗑️ Eliminar Componente**
-- **Botón "Eliminar"** con confirmación
-- **Validación** de dependencias (si está en uso)
-
----
-
-### 🖥️ **Sección: Armado de PCs**
-
-**Funcionalidades principales:**
-
-#### **📋 Gestión de PCs Completas**
-- **Listado** de PCs configuradas
-- **Filtros por rango de precio**: $0-1K, $1K-2K, $2K-5K, $5K+
-- **Búsqueda** por nombre o descripción
-
-#### **🔧 Crear PC Personalizada**
-```
-Proceso de Armado:
-├── 1. Información básica de la PC
-├── 2. Selección de componentes
-│   ├── Monitores disponibles
-│   ├── Discos duros disponibles
-│   ├── Tarjetas de video disponibles
-│   └── Otros componentes
-├── 3. Configuración de cantidades
-├── 4. Cálculo automático de precios
-└── 5. Validación y guardado
-```
-
-#### **💰 Cálculo de Precios**
-- **Precio total automático** basado en componentes
-- **Aplicación de promociones** si aplican
-- **Desglose detallado** de costos
-
----
-
-### 📋 **Sección: Cotizaciones**
-
-**Funcionalidades principales:**
-
-#### **📝 Crear Cotización**
-```
-Flujo de Cotización:
-├── 1. Información del cliente
-├── 2. Selección de PCs/Componentes
-├── 3. Aplicación de promociones
-├── 4. Configuración de descuentos
-├── 5. Generación de cotización final
-└── 6. Exportar/Imprimir (futuro)
-```
-
-#### **📊 Gestión de Cotizaciones**
-- **Listado** con estados (Pendiente, Aprobada, Rechazada)
-- **Filtros por fecha** y estado
-- **Búsqueda** por cliente o número de cotización
-
-#### **🔄 Conversión a Pedido**
-- **Botón "Generar Pedido"** desde cotización aprobada
-- **Selección de proveedor** para el pedido
-- **Configuración de fechas** de entrega
-
----
-
-### 🏢 **Sección: Proveedores**
-
-**Funcionalidades principales:**
-
-#### **📋 Gestión de Proveedores**
-- **CRUD completo** de proveedores
-- **Información de contacto** y términos comerciales
-- **Estado activo/inactivo**
-
-#### **🔗 Asignación de Componentes**
-- **Vincular componentes** a proveedores específicos
-- **Gestión de precios** por proveedor
-- **Tiempos de entrega** configurables
-
----
-
-### 📦 **Sección: Pedidos**
-
-**Funcionalidades principales:**
-
-#### **📋 Gestión de Pedidos**
-- **Listado** de pedidos con estados
-- **Filtros por proveedor** y fecha
-- **Seguimiento** de entregas
-
-#### **➕ Generar Pedido**
-```
-Proceso de Pedido:
-├── 1. Seleccionar cotización aprobada
-├── 2. Elegir proveedor
-├── 3. Configurar fechas (emisión, entrega)
-├── 4. Establecer nivel de surtido (%)
-├── 5. Generar pedido automáticamente
-└── 6. Notificación al proveedor (futuro)
-```
-
----
-
-### 🎁 **Sección: Promociones**
-
-**Funcionalidades principales:**
-
-#### **📋 Gestión de Promociones**
-- **CRUD completo** de promociones
-- **Configuración de vigencia** (fechas desde/hasta)
-- **Tipos de promoción**: Sin descuento, Porcentaje, Monto fijo
-
-#### **🔗 Aplicación a Componentes**
-- **Asignación automática** por categoría
-- **Aplicación manual** a componentes específicos
-- **Cálculo automático** en cotizaciones
-
----
-
-### 🎨 **Características de UX/UI**
-
-#### **🎯 Elementos Visuales**
-- **Alertas contextuales**: Éxito (verde), Error (rojo), Advertencia (amarillo)
-- **Loading spinners** durante operaciones
-- **Estados vacíos** con call-to-action
-- **Confirmaciones** para acciones destructivas
-
-#### **⚡ Interactividad**
-- **Validación en tiempo real** en formularios
-- **Auto-guardado** en borradores (futuro)
-- **Shortcuts de teclado** para acciones comunes
-- **Tooltips informativos** en campos complejos
-
-#### **📱 Responsividad**
-- **Mobile-first design** con TailwindCSS
-- **Navegación adaptativa** según dispositivo
-- **Tablas responsivas** con scroll horizontal
-- **Formularios optimizados** para touch
-
----
-
-### 🔧 **Configuración del Portal**
-
-#### **🌐 Configuración de API**
-El portal se conecta automáticamente al backend, pero puedes verificar la configuración en:
-
-```javascript
-// portal-cotizador/js/config.js
-const API_CONFIG = {
-    BASE_URL: 'http://localhost:8080',
-    ENDPOINTS: {
-        COMPONENTES: '/componentes',
-        PCS: '/pcs',
-        COTIZACIONES: '/cotizaciones',
-        // ... otros endpoints
-    }
-};
-```
-
-#### **🔐 Autenticación**
-El portal maneja automáticamente la autenticación Basic Auth con el backend:
-- **Usuario**: admin
-- **Contraseña**: admin123
-
-#### **🎨 Personalización**
-- **TailwindCSS**: Framework CSS para estilos
-- **Colores personalizados** definidos en configuración
-- **Componentes reutilizables** en JavaScript
-
----
-
-### 🚀 **Flujo de Trabajo Típico**
-
-#### **📋 Escenario: Crear Cotización Completa**
-
-```
-1. 🔧 Gestionar Componentes
-   ├── Agregar monitores, discos, tarjetas de video
-   └── Configurar precios y promociones
-
-2. 🖥️ Armar PC
-   ├── Crear configuración de PC personalizada
-   ├── Seleccionar componentes necesarios
-   └── Validar compatibilidad y precios
-
-3. 🎁 Configurar Promociones
-   ├── Crear promociones por temporada
-   └── Aplicar a componentes específicos
-
-4. 📋 Generar Cotización
-   ├── Seleccionar PC armada
-   ├── Aplicar promociones disponibles
-   ├── Configurar descuentos adicionales
-   └── Generar cotización final
-
-5. 📦 Convertir a Pedido
-   ├── Aprobar cotización
-   ├── Seleccionar proveedor
-   ├── Configurar fechas de entrega
-   └── Generar pedido automáticamente
-```
-
----
-
-### 🔍 **Solución de Problemas**
-
-#### **❌ Errores Comunes**
-
-| Problema | Causa | Solución |
-|----------|-------|----------|
-| **Portal no carga** | Backend no disponible | Verificar `docker-compose ps` |
-| **Error 401** | Problema de autenticación | Reiniciar contenedores |
-| **Datos no aparecen** | Base de datos vacía | Verificar scripts DDL/DML |
-| **Formularios no funcionan** | JavaScript deshabilitado | Habilitar JS en navegador |
-
-#### **🔧 Verificación de Estado**
-
-```bash
-# Verificar servicios
-curl http://localhost:8080/actuator/health
-curl http://localhost/
-
-# Ver logs del portal
-docker-compose logs frontend
-
-# Ver logs del backend
-docker-compose logs backend
-```
+#### **Backend (Domain-Driven Design)**
+- **Domain Layer**: Entidades de negocio con lógica rica
+- **Application Layer**: Servicios de aplicación y casos de uso
+- **Infrastructure Layer**: Repositorios y adaptadores
+- **Strategy Pattern**: Diferentes algoritmos de cotización
+- **Builder Pattern**: Construcción de PCs complejas
+- **Decorator Pattern**: Aplicación de promociones
+
+#### **Frontend (Modern Vue.js)**
+- **Composition API**: Lógica reactiva reutilizable
+- **Composables**: Funcionalidades compartidas
+- **Store Pattern**: Gestión de estado con Pinia
+- **Observer Pattern**: Reactividad de Vue
+- **Factory Pattern**: Creación de componentes
 
 ---
 
 ## 🚀 Próximos Pasos
 
-### 📋 **Roadmap**
+### 📋 **Roadmap de Desarrollo**
 
-- [ ] **Frontend Completo** - Completar todas las vistas del portal
+#### **🔧 Mejoras Técnicas**
 - [ ] **Autenticación JWT** - Reemplazar Basic Auth
-- [ ] **Microservicios** - Separar en servicios independientes
-- [ ] **Cache Redis** - Mejorar performance
-- [ ] **Monitoring** - Prometheus + Grafana
-- [ ] **CI/CD Pipeline** - GitHub Actions
-- [ ] **API Versioning** - Versionado de endpoints
-- [ ] **Rate Limiting** - Control de tráfico
+- [ ] **Microservicios** - Separar dominio en servicios
+- [ ] **Cache Redis** - Mejorar performance de consultas
+- [ ] **WebSockets** - Actualizaciones en tiempo real
+- [ ] **GraphQL** - API más eficiente para frontend
+
+#### **🌟 Nuevas Funcionalidades**
+- [ ] **Exportación PDF** - Cotizaciones y pedidos
+- [ ] **Sistema de Notificaciones** - Email y push notifications
+- [ ] **Dashboard Analytics** - Reportes y métricas
+- [ ] **Inventario Avanzado** - Stock y reposición
+- [ ] **API Mobile** - Aplicación móvil
+
+#### **🔒 Seguridad y Monitoreo**
 - [ ] **Audit Logging** - Trazabilidad completa
+- [ ] **Rate Limiting** - Control de tráfico
+- [ ] **Monitoring** - Prometheus + Grafana
+- [ ] **Security Headers** - Protección adicional
+- [ ] **API Versioning** - Versionado de endpoints
+
+#### **⚡ Performance y Escalabilidad**
+- [ ] **Database Optimization** - Índices y queries
+- [ ] **CDN Integration** - Assets estáticos
+- [ ] **Load Balancing** - Múltiples instancias
+- [ ] **Caching Strategy** - Multi-nivel
+- [ ] **Async Processing** - Operaciones pesadas
+
+#### **🧪 Testing y Calidad**
+- [ ] **E2E Testing** - Pruebas de extremo a extremo
+- [ ] **Performance Testing** - Pruebas de carga
+- [ ] **Security Testing** - Análisis de vulnerabilidades
+- [ ] **Code Quality** - SonarQube integration
+- [ ] **CI/CD Pipeline** - GitHub Actions
 
 ### 🤝 **Contribuciones**
 
@@ -812,16 +641,58 @@ docker-compose logs backend
 4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Crear Pull Request
 
+### 📝 **Convenciones de Código**
+
+#### **Backend (Java)**
+- **Naming**: CamelCase para clases, camelCase para métodos
+- **Packages**: Organización por dominio
+- **Tests**: Nombre descriptivo con patrón Given-When-Then
+- **Documentation**: JavaDoc para métodos públicos
+
+#### **Frontend (Vue.js)**
+- **Naming**: PascalCase para componentes, camelCase para props
+- **Structure**: Composables en carpeta dedicada
+- **Styles**: TailwindCSS utility classes
+- **Tests**: Vue Testing Library para componentes
+
 ---
 
-## 📞 Soporte
+## 📞 Soporte y Documentación
 
-Para soporte técnico o preguntas:
+### 🔗 **Enlaces Útiles**
 
-- **Issues**: Crear issue en GitHub
-- **Documentación**: Ver archivos en `/docs`
-- **API Docs**: http://localhost:8080/swagger-ui.html
+- **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **Health Check**: http://localhost:8080/actuator/health
+- **Portal Web**: http://localhost
+- **GitHub Issues**: Para reportar bugs y solicitar features
+- **CLAUDE.md**: Instrucciones para IA assistant
+
+### 🆘 **Solución de Problemas**
+
+#### **Errores Comunes**
+
+| Problema | Causa | Solución |
+|----------|-------|----------|
+| **Portal no carga** | Backend no disponible | `docker-compose ps` |
+| **Error 401** | Autenticación | Verificar credenciales |
+| **Base de datos vacía** | Scripts no ejecutados | Verificar DDL/DML |
+| **Loading infinito** | Error en API | Verificar logs backend |
+
+#### **Comandos de Diagnóstico**
+
+```bash
+# Verificar servicios
+docker-compose ps
+docker-compose logs backend
+docker-compose logs frontend
+
+# Health checks
+curl http://localhost:8080/actuator/health
+curl http://localhost/
+
+# Reiniciar servicios
+docker-compose restart
+```
 
 ---
 
@@ -835,10 +706,11 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 **🖥️ Sistema Cotizador de PC Partes**
 
-*Desarrollado con ❤️ usando Spring Boot y tecnologías modernas*
+*Desarrollado con ❤️ usando Spring Boot, Vue.js 3 y tecnologías modernas*
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.0-brightgreen.svg)](https://vuejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://docs.docker.com/compose/)
 
-</div> 
+</div>
