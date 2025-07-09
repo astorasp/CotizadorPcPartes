@@ -18,6 +18,7 @@
 - [🧪 Testing](#-testing)
 - [📚 API Documentation](#-api-documentation)
 - [🌐 Portal Web](#-portal-web)
+- [🔐 Sistema de Roles y Permisos (RBAC)](#-sistema-de-roles-y-permisos-rbac)
 - [🐳 Docker](#-docker)
 - [🛠️ Tecnologías](#️-tecnologías)
 - [📖 Casos de Uso](#-casos-de-uso)
@@ -452,6 +453,170 @@ El **Portal Web** es una aplicación SPA (Single Page Application) desarrollada 
 - **Vue Router** - Navegación SPA
 - **TailwindCSS** - Framework CSS
 - **Vite** - Build tool y dev server
+
+---
+
+## 🔐 Sistema de Roles y Permisos
+
+### 🎯 **Roles del Sistema**
+
+El sistema implementa un **sistema de control de acceso basado en roles (RBAC)** con 5 roles principales:
+
+| Rol | Descripción | Nivel de Acceso |
+|-----|-------------|-----------------|
+| **👑 ADMIN** | Administrador del sistema | **Completo** - Acceso total a todas las funcionalidades |
+| **🏢 GERENTE** | Gerente/Supervisor | **Alto** - Gestión completa excepto configuración del sistema |
+| **💼 VENDEDOR** | Personal de ventas | **Medio** - Cotizaciones, pedidos, consultas |
+| **📦 INVENTARIO** | Gestión de inventario | **Medio** - Componentes, PCs, proveedores, pedidos |
+| **📊 CONSULTOR** | Solo consulta | **Bajo** - Solo lectura y reportes |
+
+### 🛡️ **Matriz de Permisos por Módulo**
+
+#### **🔧 Componentes de Hardware**
+
+| Operación | ADMIN | GERENTE | VENDEDOR | INVENTARIO | CONSULTOR |
+|-----------|-------|---------|-----------|------------|-----------|
+| **Ver componentes** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Crear componentes** | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **Editar componentes** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Eliminar componentes** | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+#### **🖥️ Armado de PCs**
+
+| Operación | ADMIN | GERENTE | VENDEDOR | INVENTARIO | CONSULTOR |
+|-----------|-------|---------|-----------|------------|-----------|
+| **Ver PCs** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Crear PCs** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Editar PCs** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Eliminar PCs** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Agregar componentes** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Remover componentes** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Ver costos** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Modificar precios** | ✅ | ✅ | ❌ | ❌ | ❌ |
+
+#### **📋 Cotizaciones**
+
+| Operación | ADMIN | GERENTE | VENDEDOR | INVENTARIO | CONSULTOR |
+|-----------|-------|---------|-----------|------------|-----------|
+| **Ver cotizaciones** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Ver detalles** | ✅ | ✅ | ✅ | ❌ | ✅ |
+| **Ver costos** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Crear cotizaciones** | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Editar cotizaciones** | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Eliminar cotizaciones** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Aprobar cotizaciones** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Modificar precios** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Modificar impuestos** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Ver márgenes** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Convertir a pedido** | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Exportar** | ✅ | ✅ | ✅ | ❌ | ✅ |
+| **Ver reportes** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Reportes financieros** | ✅ | ✅ | ❌ | ❌ | ❌ |
+
+#### **🏢 Proveedores**
+
+| Operación | ADMIN | GERENTE | VENDEDOR | INVENTARIO | CONSULTOR |
+|-----------|-------|---------|-----------|------------|-----------|
+| **Ver proveedores** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Crear proveedores** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Editar proveedores** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Eliminar proveedores** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Búsqueda avanzada** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Ver datos comerciales** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Gestionar relaciones** | ✅ | ✅ | ❌ | ✅ | ❌ |
+
+#### **📦 Pedidos**
+
+| Operación | ADMIN | GERENTE | VENDEDOR | INVENTARIO | CONSULTOR |
+|-----------|-------|---------|-----------|------------|-----------|
+| **Ver pedidos** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Crear pedidos** | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **Editar pedidos** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Eliminar pedidos** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Aprobar pedidos** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Cambiar estado** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Ver cumplimiento** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Gestionar cumplimiento** | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **Ver datos financieros** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Generar reportes** | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+#### **🎁 Promociones**
+
+| Operación | ADMIN | GERENTE | VENDEDOR | INVENTARIO | CONSULTOR |
+|-----------|-------|---------|-----------|------------|-----------|
+| **Ver promociones** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Crear promociones** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Editar promociones** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Eliminar promociones** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Aplicar promociones** | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Ver impacto financiero** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Gestionar stacking** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Ver reportes** | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### 💼 **Casos de Uso por Rol**
+
+#### **👑 ADMIN (Administrador)**
+- **Capacidades**: Acceso completo a todas las funcionalidades
+- **Responsabilidades**: Configuración del sistema, gestión de usuarios, permisos globales
+- **Flujo típico**: Configurar sistema → Gestionar usuarios → Supervisar operaciones → Generar reportes ejecutivos
+
+#### **🏢 GERENTE (Gerente/Supervisor)**
+- **Capacidades**: Gestión completa de operaciones comerciales
+- **Responsabilidades**: Supervisar ventas, aprobar cotizaciones, gestionar proveedores
+- **Flujo típico**: Revisar cotizaciones → Aprobar pedidos → Gestionar precios → Supervisar inventario
+
+#### **💼 VENDEDOR (Personal de Ventas)**
+- **Capacidades**: Crear cotizaciones, gestionar pedidos, consultar información
+- **Responsabilidades**: Atender clientes, generar cotizaciones, convertir a pedidos
+- **Flujo típico**: Consultar componentes → Crear cotización → Aplicar promociones → Convertir a pedido
+
+#### **📦 INVENTARIO (Gestión de Inventario)**
+- **Capacidades**: Gestionar componentes, PCs, proveedores y cumplimiento de pedidos
+- **Responsabilidades**: Mantener catálogo actualizado, gestionar stock, coordinar entregas
+- **Flujo típico**: Actualizar componentes → Gestionar stock → Coordinar proveedores → Seguir pedidos
+
+#### **📊 CONSULTOR (Solo Consulta)**
+- **Capacidades**: Acceso de lectura y generación de reportes
+- **Responsabilidades**: Análisis de datos, generación de reportes, consultoría
+- **Flujo típico**: Consultar datos → Generar reportes → Analizar tendencias → Proporcionar insights
+
+### 🔧 **Implementación Técnica**
+
+#### **Frontend (Vue.js)**
+```javascript
+// Verificación de permisos en componentes
+computed: {
+  canCreateComponents() {
+    return this.authService.canCreateComponentes()
+  },
+  canEditCotizaciones() {
+    return this.authService.canEditCotizaciones()
+  }
+}
+```
+
+#### **Backend (Spring Boot)**
+```java
+// Anotaciones de seguridad en controladores
+@PreAuthorize("hasRole('ADMIN') or hasRole('GERENTE')")
+@DeleteMapping("/{id}")
+public ResponseEntity<ApiResponse> deleteComponente(@PathVariable String id)
+```
+
+#### **Base de Datos**
+- **Tabla usuarios**: Información de usuarios
+- **Tabla roles**: Definición de roles
+- **Tabla usuario_roles**: Asignación de roles a usuarios
+- **Middleware**: Verificación automática en cada request
+
+### 🛡️ **Características de Seguridad**
+
+- **Autenticación**: Basic Auth con credenciales seguras
+- **Autorización**: Verificación de permisos en frontend y backend
+- **Sesiones**: Gestión automática de sesiones activas
+- **Middleware**: Interceptores automáticos para validación
+- **UI Adaptativa**: Interfaz se adapta según permisos del usuario
+- **Logging**: Registro de acciones por usuario y rol
 
 ---
 
