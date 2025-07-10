@@ -44,12 +44,34 @@ docker-compose ps
 
 ### 🌐 **Acceso a los Servicios**
 
-| Servicio | URL | Credenciales |
-|----------|-----|--------------|
-| **Portal Web** | http://localhost | admin / admin123 |
-| **API REST** | http://localhost:8080 | admin / admin123 |
-| **Swagger UI** | http://localhost:8080/swagger-ui.html | admin / admin123 |
-| **Health Check** | http://localhost:8080/actuator/health | admin / admin123 |
+| Servicio | URL | Autenticación |
+|----------|-----|---------------|
+| **Portal Web** | http://localhost | Login con usuarios del sistema (JWT) |
+| **API REST** | http://localhost:8080 | JWT Token (Authorization: Bearer) |
+| **Swagger UI** | http://localhost:8080/swagger-ui.html | JWT Token (Authorization: Bearer) |
+| **Health Check** | http://localhost:8080/actuator/health | JWT Token (Authorization: Bearer) |
+
+### 🔐 **Sistema de Autenticación**
+
+#### **🚪 Login del Portal (Usuarios Finales)**
+| Usuario | Password | Rol | Descripción |
+|---------|----------|-----|-------------|
+| **admin** | password | ADMIN | Acceso completo al sistema |
+| **gerente** | password | GERENTE | Gestión comercial y supervisión |
+| **vendedor** | password | VENDEDOR | Ventas y cotizaciones |
+| **inventario** | password | INVENTARIO | Gestión de inventario |
+| **consultor** | password | CONSULTOR | Solo consulta y reportes |
+
+#### **🔑 Autenticación con JWT**
+1. **Login**: POST `/api/seguridad/auth/login` con credenciales
+2. **Respuesta**: `accessToken` y `refreshToken`
+3. **Uso**: Header `Authorization: Bearer {accessToken}`
+4. **Renovación**: POST `/api/seguridad/auth/refresh` con `refreshToken`
+
+#### **🔧 Desarrollo y Testing**
+- **Tests**: Basic Auth (`test/test123`) configurado en `application-test.properties`
+- **Desarrollo local**: Basic Auth (`admin/admin123`) solo si ms-seguridad no está disponible
+- **Base de Datos**: `cotizador_user / cotizador_pass`
 
 ---
 
