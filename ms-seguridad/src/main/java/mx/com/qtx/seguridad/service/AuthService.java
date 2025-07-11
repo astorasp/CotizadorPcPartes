@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,15 +26,18 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final RolAsignadoRepository rolAsignadoRepository;
     private final JwtService jwtService;
+    private final SessionService sessionService;
     private final BCryptPasswordEncoder passwordEncoder;
     
     public AuthService(
             UsuarioRepository usuarioRepository,
             RolAsignadoRepository rolAsignadoRepository,
-            JwtService jwtService) {
+            JwtService jwtService,
+            SessionService sessionService) {
         this.usuarioRepository = usuarioRepository;
         this.rolAsignadoRepository = rolAsignadoRepository;
         this.jwtService = jwtService;
+        this.sessionService = sessionService;
         this.passwordEncoder = new BCryptPasswordEncoder(12); // Strength 12 para mayor seguridad
     }
 
@@ -46,6 +50,19 @@ public class AuthService {
      * @throws RuntimeException si la autenticación falla
      */
     public TokenResponse authenticate(String username, String password) {
+        return authenticate(username, password, null);
+    }
+
+    /**
+     * Autentica un usuario con usuario y contraseña, incluyendo información de la sesión
+     * 
+     * @param username Nombre de usuario
+     * @param password Contraseña en texto plano
+     * @param request HttpServletRequest para obtener IP y User-Agent (opcional)
+     * @return TokenResponse con tokens y información del usuario si la autenticación es exitosa
+     * @throws RuntimeException si la autenticación falla
+     */
+    public TokenResponse authenticate(String username, String password, HttpServletRequest request) {
         logger.info("Intento de autenticación para usuario: {}", username);
         
         try {
@@ -64,6 +81,12 @@ public class AuthService {
                 throw new RuntimeException("Credenciales inválidas");
             }
             
+            // Verificar si el usuario ya tiene una sesión activa
+            if (sessionService.hasActiveSession(usuario.getId())) {
+                logger.warn("Usuario {} ya tiene una sesión activa", username);
+                throw new RuntimeException("Ya existe una sesión activa para este usuario");
+            }
+            
             // Obtener roles asignados activos
             List<String> roles = getRolesAsignados(usuario.getId());
             
@@ -72,9 +95,17 @@ public class AuthService {
                 throw new RuntimeException("Usuario sin roles asignados");
             }
             
-            // Generar tokens JWT
-            String accessToken = jwtService.generateAccessToken(username, usuario.getId(), roles);
-            String refreshToken = jwtService.generateRefreshToken(username, usuario.getId());
+            // Obtener información de la sesión
+            String ipAddress = getClientIpAddress(request);
+            String userAgent = getUserAgent(request);
+            
+            // Crear nueva sesión
+            String idSesion = sessionService.createSession(usuario.getId(), ipAddress, userAgent);
+            logger.info("Sesión creada para usuario: {} con ID: {}", username, idSesion);
+            
+            // Generar tokens JWT con session ID
+            String accessToken = jwtService.generateAccessToken(username, usuario.getId(), roles, idSesion);
+            String refreshToken = jwtService.generateRefreshToken(username, usuario.getId(), idSesion);
             
             // Preparar respuesta
             TokenResponse authResponse = new TokenResponse();
@@ -83,7 +114,7 @@ public class AuthService {
             authResponse.setTokenType("Bearer");
             authResponse.setExpiresIn(300L); // 5 minutos en segundos
             
-            logger.info("Autenticación exitosa para usuario: {} con roles: {}", username, roles);
+            logger.info("Autenticación exitosa para usuario: {} con roles: {}, sesión: {}", username, roles, idSesion);
             return authResponse;
             
         } catch (RuntimeException e) {
@@ -131,10 +162,17 @@ public class AuthService {
             // Validar refresh token
             String username = jwtService.extractUsername(refreshToken);
             Integer userId = jwtService.extractUserId(refreshToken);
+            String idSesion = jwtService.extractSessionId(refreshToken);
             
             if (!jwtService.isRefreshToken(refreshToken)) {
                 logger.warn("Token no es de tipo refresh para usuario: {}", username);
                 throw new RuntimeException("Token no es de tipo refresh");
+            }
+            
+            // Verificar que la sesión sigue activa
+            if (idSesion != null && !sessionService.isSessionActive(idSesion)) {
+                logger.warn("Sesión {} no está activa durante renovación de token para usuario: {}", idSesion, username);
+                throw new RuntimeException("Sesión no activa");
             }
             
             // Verificar que el usuario sigue activo
@@ -152,8 +190,8 @@ public class AuthService {
                 throw new RuntimeException("Usuario sin roles asignados");
             }
             
-            // Generar nuevo access token
-            String newAccessToken = jwtService.generateAccessToken(username, userId, roles);
+            // Generar nuevo access token manteniendo el mismo session ID
+            String newAccessToken = jwtService.generateAccessToken(username, userId, roles, idSesion);
             
             TokenResponse response = new TokenResponse();
             response.setAccessToken(newAccessToken);
@@ -161,7 +199,7 @@ public class AuthService {
             response.setTokenType("Bearer");
             response.setExpiresIn(300L); // 5 minutos
             
-            logger.debug("Token renovado exitosamente para usuario: {}", username);
+            logger.debug("Token renovado exitosamente para usuario: {}, sesión: {}", username, idSesion);
             return response;
             
         } catch (Exception e) {
@@ -171,7 +209,7 @@ public class AuthService {
     }
 
     /**
-     * Logout del usuario (solo log de la operación)
+     * Logout del usuario cerrando la sesión activa
      * 
      * @param accessToken Access token del usuario
      * @param refreshToken Refresh token del usuario (opcional)
@@ -180,9 +218,28 @@ public class AuthService {
     public Map<String, Object> logout(String accessToken, String refreshToken) {
         try {
             String username = jwtService.extractUsername(accessToken);
-            logger.info("Logout solicitado para usuario: {}", username);
+            String idSesion = jwtService.extractSessionId(accessToken);
+            logger.info("Logout solicitado para usuario: {}, sesión: {}", username, idSesion);
             
             Map<String, Object> response = new HashMap<>();
+            
+            // Cerrar sesión si existe
+            if (idSesion != null) {
+                boolean sessionClosed = sessionService.closeSession(idSesion);
+                if (sessionClosed) {
+                    logger.info("Sesión {} cerrada exitosamente para usuario: {}", idSesion, username);
+                    response.put("sessionClosed", true);
+                    response.put("sessionId", idSesion);
+                } else {
+                    logger.warn("No se pudo cerrar la sesión {} para usuario: {}", idSesion, username);
+                    response.put("sessionClosed", false);
+                }
+            } else {
+                logger.debug("Token no contiene ID de sesión para usuario: {}", username);
+                response.put("sessionClosed", false);
+                response.put("note", "Token no contiene información de sesión");
+            }
+            
             response.put("success", true);
             response.put("message", "Logout exitoso");
             response.put("loggedOutAt", new Date());
@@ -264,6 +321,30 @@ public class AuthService {
 
 
     /**
+     * Valida si una sesión está activa
+     * 
+     * @param idSesion ID de la sesión a validar
+     * @return boolean true si la sesión está activa
+     */
+    public boolean validateSession(String idSesion) {
+        try {
+            if (idSesion == null || idSesion.trim().isEmpty()) {
+                logger.debug("ID de sesión inválido o vacío");
+                return false;
+            }
+            
+            boolean isActive = sessionService.isSessionActive(idSesion);
+            logger.debug("Validación de sesión {}: {}", idSesion, isActive ? "activa" : "inactiva");
+            
+            return isActive;
+            
+        } catch (Exception e) {
+            logger.error("Error al validar sesión {}: {}", idSesion, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Obtiene estadísticas del servicio de autenticación
      * 
      * @return Map con estadísticas
@@ -272,6 +353,55 @@ public class AuthService {
         Map<String, Object> stats = new HashMap<>();
         stats.put("serviceStatus", "active");
         
+        // Agregar estadísticas de sesiones
+        try {
+            Map<String, Object> sessionStats = sessionService.getSessionStats();
+            stats.put("sessionStats", sessionStats);
+        } catch (Exception e) {
+            logger.error("Error al obtener estadísticas de sesiones: {}", e.getMessage());
+            stats.put("sessionStats", Map.of("error", "No disponible"));
+        }
+        
         return stats;
+    }
+
+    // Métodos de utilidad privados para obtener información de la request
+    
+    /**
+     * Obtiene la dirección IP del cliente desde la request
+     * 
+     * @param request HttpServletRequest
+     * @return String IP address o null si no está disponible
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0];
+        }
+        
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp;
+        }
+        
+        return request.getRemoteAddr();
+    }
+    
+    /**
+     * Obtiene el User-Agent del cliente desde la request
+     * 
+     * @param request HttpServletRequest
+     * @return String User-Agent o null si no está disponible
+     */
+    private String getUserAgent(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        
+        return request.getHeader("User-Agent");
     }
 }
