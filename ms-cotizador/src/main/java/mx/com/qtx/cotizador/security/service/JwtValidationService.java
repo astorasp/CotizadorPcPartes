@@ -19,8 +19,11 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Servicio para validación de tokens JWT usando claves JWKS
@@ -37,17 +40,36 @@ public class JwtValidationService {
     private final ConcurrentMap<String, PublicKey> keyCache = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Long> keyCacheTimestamps = new ConcurrentHashMap<>();
     private final long cacheTimeoutMs;
+    
+    // Configuración de rotación reactiva
+    private final boolean keyRotationEnabled;
+    private final int securityAlertThreshold;
+    private final boolean logRotationEvents;
+    private final boolean cleanupOldKeys;
+    
+    // Contador de intentos con KIDs inválidos
+    private final AtomicInteger invalidKidAttempts = new AtomicInteger(0);
 
     public JwtValidationService(
             JwksClient jwksClient,
             @Value("${jwt.expected-issuer:ms-seguridad}") String expectedIssuer,
-            @Value("${jwt.cache-timeout-ms:300000}") long cacheTimeoutMs) {
+            @Value("${jwt.cache-timeout-ms:300000}") long cacheTimeoutMs,
+            @Value("${jwt.key-rotation.enabled:true}") boolean keyRotationEnabled,
+            @Value("${jwt.key-rotation.security-alert-threshold:3}") int securityAlertThreshold,
+            @Value("${jwt.key-rotation.log-rotation-events:true}") boolean logRotationEvents,
+            @Value("${jwt.key-rotation.cleanup-old-keys:true}") boolean cleanupOldKeys) {
         this.jwksClient = jwksClient;
         this.expectedIssuer = expectedIssuer;
         this.cacheTimeoutMs = cacheTimeoutMs;
+        this.keyRotationEnabled = keyRotationEnabled;
+        this.securityAlertThreshold = securityAlertThreshold;
+        this.logRotationEvents = logRotationEvents;
+        this.cleanupOldKeys = cleanupOldKeys;
         
-        logger.info("JwtValidationService inicializado con issuer: {} y cache timeout: {}ms", 
-                   expectedIssuer, cacheTimeoutMs);
+        logger.info("JwtValidationService inicializado - Issuer: {}, Cache timeout: {}ms, " +
+                   "Rotación reactiva: {}, Alert threshold: {}, Log events: {}, Cleanup: {}", 
+                   expectedIssuer, cacheTimeoutMs, keyRotationEnabled, securityAlertThreshold, 
+                   logRotationEvents, cleanupOldKeys);
     }
 
     /**
@@ -122,7 +144,7 @@ public class JwtValidationService {
     }
 
     /**
-     * Obtiene la clave pública por ID desde cache o JWKS
+     * Obtiene la clave pública por ID desde cache o JWKS con rotación reactiva
      */
     private PublicKey getPublicKey(String keyId) throws JwtValidationException {
         // Verificar cache
@@ -135,31 +157,82 @@ public class JwtValidationService {
             return cachedKey;
         }
 
+        // Si el KID no está en cache o expiró, verificar si es diferente al actual
+        boolean isNewKeyId = !keyCache.containsKey(keyId);
+        
+        if (isNewKeyId && !keyCache.isEmpty() && keyRotationEnabled) {
+            if (logRotationEvents) {
+                logger.info("🔄 Detectado nuevo KID: {}. Iniciando rotación reactiva de llaves", keyId);
+            }
+        }
+
         // Obtener desde JWKS
         try {
             JwksResponse jwksResponse = jwksClient.fetchJwks();
             JwkKey jwkKey = jwksResponse.findKeyById(keyId);
             
             if (jwkKey == null) {
-                // Intentar con la primera clave disponible
-                jwkKey = jwksResponse.getFirstKey();
-                if (jwkKey == null) {
-                    throw new JwtValidationException("No se encontró clave pública para keyId: " + keyId);
+                // KID del token no existe en JWKS - ALERTA DE SEGURIDAD
+                int currentAttempts = invalidKidAttempts.incrementAndGet();
+                
+                logger.error("🚨 SECURITY ALERT: Token contiene KID '{}' que NO existe en JWKS del ms-seguridad. " +
+                           "Intento #{} - Posible vulneración de seguridad!", keyId, currentAttempts);
+                           
+                // Listar KIDs disponibles para debugging
+                List<String> availableKids = jwksResponse.getKeys().stream()
+                    .map(JwkKey::getKeyId)
+                    .toList();
+                logger.error("KIDs disponibles en JWKS: {}", availableKids);
+                
+                // Alerta crítica si se supera el threshold
+                if (currentAttempts >= securityAlertThreshold) {
+                    logger.error("🚨🚨 CRITICAL SECURITY ALERT: {} intentos consecutivos con KIDs inválidos detectados! " +
+                               "Posible ataque en curso. Revisar logs de seguridad inmediatamente.", currentAttempts);
+                    
+                    // Reset counter después de alerta crítica
+                    invalidKidAttempts.set(0);
                 }
-                logger.warn("KeyId {} no encontrado, usando primera clave disponible: {}", 
-                           keyId, jwkKey.getKeyId());
+                
+                throw new JwtValidationException("KID del token '" + keyId + "' no encontrado en JWKS. Posible token malicioso.");
             }
             
+            // Reset counter en caso de KID válido
+            invalidKidAttempts.set(0);
+            
+            // KID encontrado - proceder con rotación
             PublicKey publicKey = buildPublicKey(jwkKey);
             
-            // Actualizar cache
+            if (isNewKeyId && !keyCache.isEmpty() && keyRotationEnabled) {
+                // Rotación exitosa
+                if (logRotationEvents) {
+                    logger.info("✅ Rotación de llave exitosa. Reemplazando llave actual con nueva llave para KID: {}", keyId);
+                }
+                
+                // Limpiar cache anterior si está habilitado
+                if (cleanupOldKeys) {
+                    String oldKid = keyCache.keySet().iterator().next(); // Obtener primer KID anterior
+                    if (!oldKid.equals(keyId)) {
+                        keyCache.remove(oldKid);
+                        keyCacheTimestamps.remove(oldKid);
+                        if (logRotationEvents) {
+                            logger.info("🗑️ Llave anterior removida del cache. KID anterior: {}, KID nuevo: {}", oldKid, keyId);
+                        }
+                    }
+                }
+            }
+            
+            // Actualizar cache con nueva llave
             keyCache.put(keyId, publicKey);
             keyCacheTimestamps.put(keyId, System.currentTimeMillis());
             
             logger.debug("Clave pública obtenida y cacheada para keyId: {}", keyId);
             return publicKey;
             
+        } catch (JwtValidationException e) {
+            // Re-lanzar excepciones de validación sin modificar
+            throw e;
         } catch (Exception e) {
+            logger.error("Error obteniendo clave pública para keyId: {}", keyId, e);
             throw new JwtValidationException("Error obteniendo clave pública para keyId: " + keyId, e);
         }
     }
@@ -222,6 +295,66 @@ public class JwtValidationService {
         keyCache.clear();
         keyCacheTimestamps.clear();
         logger.info("Cache de claves públicas limpiado");
+    }
+
+    /**
+     * Fuerza la rotación de llave para un KID específico
+     * Útil para testing o rotación manual
+     */
+    public boolean forceKeyRotation(String newKeyId) {
+        try {
+            logger.info("🔄 Forzando rotación de llave para KID: {}", newKeyId);
+            
+            // Remover de cache para forzar recarga
+            keyCache.remove(newKeyId);
+            keyCacheTimestamps.remove(newKeyId);
+            
+            // Intentar obtener la nueva llave
+            JwksResponse jwksResponse = jwksClient.fetchJwks();
+            JwkKey jwkKey = jwksResponse.findKeyById(newKeyId);
+            
+            if (jwkKey == null) {
+                logger.error("❌ Rotación fallida: KID '{}' no encontrado en JWKS", newKeyId);
+                return false;
+            }
+            
+            // Construir y cachear nueva llave
+            PublicKey publicKey = buildPublicKey(jwkKey);
+            keyCache.put(newKeyId, publicKey);
+            keyCacheTimestamps.put(newKeyId, System.currentTimeMillis());
+            
+            logger.info("✅ Rotación manual exitosa para KID: {}", newKeyId);
+            return true;
+            
+        } catch (Exception e) {
+            logger.error("❌ Error en rotación manual para KID: {}", newKeyId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene información detallada del estado actual de llaves
+     */
+    public KeyRotationStatus getKeyRotationStatus() {
+        return new KeyRotationStatus(
+            keyCache.keySet(),
+            keyCacheTimestamps,
+            cacheTimeoutMs,
+            System.currentTimeMillis()
+        );
+    }
+
+    /**
+     * Obtiene configuración y estadísticas de rotación reactiva
+     */
+    public KeyRotationConfig getKeyRotationConfig() {
+        return new KeyRotationConfig(
+            keyRotationEnabled,
+            securityAlertThreshold,
+            logRotationEvents,
+            cleanupOldKeys,
+            invalidKidAttempts.get()
+        );
     }
 
     /**
@@ -310,6 +443,121 @@ public class JwtValidationService {
                     "keyCount=" + keyCount +
                     ", timestampCount=" + timestampCount +
                     ", timeoutMs=" + timeoutMs +
+                    '}';
+        }
+    }
+
+    /**
+     * Estado de rotación de llaves JWT
+     */
+    public static class KeyRotationStatus {
+        private final Set<String> cachedKeyIds;
+        private final Map<String, Long> keyTimestamps;
+        private final long cacheTimeoutMs;
+        private final long currentTime;
+
+        public KeyRotationStatus(Set<String> cachedKeyIds, Map<String, Long> keyTimestamps, 
+                               long cacheTimeoutMs, long currentTime) {
+            this.cachedKeyIds = Set.copyOf(cachedKeyIds);
+            this.keyTimestamps = Map.copyOf(keyTimestamps);
+            this.cacheTimeoutMs = cacheTimeoutMs;
+            this.currentTime = currentTime;
+        }
+
+        public Set<String> getCachedKeyIds() {
+            return cachedKeyIds;
+        }
+
+        public Map<String, Long> getKeyTimestamps() {
+            return keyTimestamps;
+        }
+
+        public boolean isKeyExpired(String keyId) {
+            Long timestamp = keyTimestamps.get(keyId);
+            return timestamp == null || (currentTime - timestamp) >= cacheTimeoutMs;
+        }
+
+        public long getKeyAgeMs(String keyId) {
+            Long timestamp = keyTimestamps.get(keyId);
+            return timestamp == null ? -1 : currentTime - timestamp;
+        }
+
+        public String getCurrentActiveKeyId() {
+            return cachedKeyIds.isEmpty() ? null : cachedKeyIds.iterator().next();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder("KeyRotationStatus{\n");
+            sb.append("  cachedKeys=").append(cachedKeyIds.size()).append("\n");
+            
+            for (String keyId : cachedKeyIds) {
+                long ageMs = getKeyAgeMs(keyId);
+                boolean expired = isKeyExpired(keyId);
+                sb.append("  - KID: ").append(keyId)
+                  .append(", age: ").append(ageMs).append("ms")
+                  .append(", expired: ").append(expired).append("\n");
+            }
+            
+            sb.append("  cacheTimeout: ").append(cacheTimeoutMs).append("ms\n");
+            sb.append("}");
+            return sb.toString();
+        }
+    }
+
+    /**
+     * Configuración y estadísticas de rotación reactiva
+     */
+    public static class KeyRotationConfig {
+        private final boolean enabled;
+        private final int securityAlertThreshold;
+        private final boolean logRotationEvents;
+        private final boolean cleanupOldKeys;
+        private final int currentInvalidAttempts;
+
+        public KeyRotationConfig(boolean enabled, int securityAlertThreshold, 
+                               boolean logRotationEvents, boolean cleanupOldKeys, 
+                               int currentInvalidAttempts) {
+            this.enabled = enabled;
+            this.securityAlertThreshold = securityAlertThreshold;
+            this.logRotationEvents = logRotationEvents;
+            this.cleanupOldKeys = cleanupOldKeys;
+            this.currentInvalidAttempts = currentInvalidAttempts;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public int getSecurityAlertThreshold() {
+            return securityAlertThreshold;
+        }
+
+        public boolean isLogRotationEvents() {
+            return logRotationEvents;
+        }
+
+        public boolean isCleanupOldKeys() {
+            return cleanupOldKeys;
+        }
+
+        public int getCurrentInvalidAttempts() {
+            return currentInvalidAttempts;
+        }
+
+        public boolean isNearSecurityThreshold() {
+            return currentInvalidAttempts >= (securityAlertThreshold - 1);
+        }
+
+        @Override
+        public String toString() {
+            return "KeyRotationConfig{" +
+                    "enabled=" + enabled +
+                    ", securityAlertThreshold=" + securityAlertThreshold +
+                    ", logRotationEvents=" + logRotationEvents +
+                    ", cleanupOldKeys=" + cleanupOldKeys +
+                    ", currentInvalidAttempts=" + currentInvalidAttempts +
+                    ", nearThreshold=" + isNearSecurityThreshold() +
                     '}';
         }
     }

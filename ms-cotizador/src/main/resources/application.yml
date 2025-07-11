@@ -43,6 +43,12 @@ jwt:
     refresh-interval-ms: ${JWT_JWKS_REFRESH_INTERVAL_MS:300000}
     max-retries: ${JWT_JWKS_MAX_RETRIES:3}
     initial-delay-ms: ${JWT_JWKS_INITIAL_DELAY_MS:10000}
+  # Configuración de rotación reactiva de llaves
+  key-rotation:
+    enabled: ${JWT_KEY_ROTATION_ENABLED:true}          # Habilitar rotación reactiva
+    security-alert-threshold: ${JWT_SECURITY_ALERT_THRESHOLD:3}  # Alertas después de N intentos con KID inválido
+    log-rotation-events: ${JWT_LOG_ROTATION_EVENTS:true}         # Registrar eventos de rotación
+    cleanup-old-keys: ${JWT_CLEANUP_OLD_KEYS:true}              # Limpiar llaves anteriores después de rotación
 
 # Configuración de Spring Boot Actuator
 management:

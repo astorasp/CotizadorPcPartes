@@ -1,18 +1,14 @@
 package mx.com.qtx.seguridad.service;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import mx.com.qtx.seguridad.config.RsaKeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 
 @Service

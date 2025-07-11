@@ -33,6 +33,9 @@ public class KeyController {
      * Endpoint JWKS compatible con estándar RFC 7517
      * Usado por otros servicios para validar tokens JWT de forma estándar
      * 
+     * NOTA: Este endpoint tiene rate limiting aplicado para prevenir abuso.
+     * Límites: 60 requests/minuto y 1000 requests/hora por IP.
+     * 
      * @return JwksResponse con llave pública en formato JWKS
      */
     @GetMapping("/jwks")
@@ -41,7 +44,10 @@ public class KeyController {
             JwksResponse jwksResponse = keyManagementService.getPublicKeyAsJwks();
             
             if (jwksResponse != null && jwksResponse.hasValidKeys()) {
-                return ResponseEntity.ok(jwksResponse);
+                return ResponseEntity.ok()
+                    .header("Cache-Control", "public, max-age=300") // Cache por 5 minutos
+                    .header("X-Content-Type-Options", "nosniff")
+                    .body(jwksResponse);
             } else {
                 // Crear respuesta de error vacía JWKS
                 JwksResponse errorResponse = new JwksResponse(java.util.Collections.emptyList());
