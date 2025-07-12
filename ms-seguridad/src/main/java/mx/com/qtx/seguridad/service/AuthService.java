@@ -155,22 +155,33 @@ public class AuthService {
      * @return TokenResponse con nuevo access token
      */
     public TokenResponse refreshToken(String refreshToken) {
+        return refreshToken(refreshToken, null);
+    }
+    
+    /**
+     * Renueva un access token usando un refresh token válido
+     * 
+     * @param refreshToken Refresh token válido
+     * @param request HttpServletRequest para obtener IP y User-Agent (opcional)
+     * @return TokenResponse con nuevo access token
+     */
+    public TokenResponse refreshToken(String refreshToken, HttpServletRequest request) {
         logger.debug("Solicitud de renovación de token");
         
         try {
             // Validar refresh token
             String username = jwtService.extractUsername(refreshToken);
             Integer userId = jwtService.extractUserId(refreshToken);
-            String idSesion = jwtService.extractSessionId(refreshToken);
+            String idSesionAnterior = jwtService.extractSessionId(refreshToken);
             
             if (!jwtService.isRefreshToken(refreshToken)) {
                 logger.warn("Token no es de tipo refresh para usuario: {}", username);
                 throw new RuntimeException("Token no es de tipo refresh");
             }
             
-            // Verificar que la sesión sigue activa
-            if (idSesion != null && !sessionService.isSessionActive(idSesion)) {
-                logger.warn("Sesión {} no está activa durante renovación de token para usuario: {}", idSesion, username);
+            // Verificar que la sesión anterior sigue activa
+            if (idSesionAnterior != null && !sessionService.isSessionActive(idSesionAnterior)) {
+                logger.warn("Sesión {} no está activa durante renovación de token para usuario: {}", idSesionAnterior, username);
                 throw new RuntimeException("Sesión no activa");
             }
             
@@ -189,16 +200,32 @@ public class AuthService {
                 throw new RuntimeException("Usuario sin roles asignados");
             }
             
-            // Generar nuevo access token manteniendo el mismo session ID
-            String newAccessToken = jwtService.generateAccessToken(username, userId, roles, idSesion);
+            // Cerrar sesión anterior si existe
+            if (idSesionAnterior != null) {
+                logger.info("Cerrando sesión anterior {} durante renovación de token para usuario: {}", idSesionAnterior, username);
+                sessionService.closeSession(idSesionAnterior);
+            }
+            
+            // Crear nueva sesión para el nuevo access token
+            String ipAddress = getClientIpAddress(request);
+            String userAgent = getUserAgent(request);
+            String idSesionNueva = sessionService.createSession(userId, ipAddress, userAgent);
+            logger.info("Nueva sesión creada durante renovación: {} para usuario: {}", idSesionNueva, username);
+            
+            // Generar nuevo access token con la nueva sesión
+            String newAccessToken = jwtService.generateAccessToken(username, userId, roles, idSesionNueva);
+            
+            // Generar nuevo refresh token también con la nueva sesión
+            String newRefreshToken = jwtService.generateRefreshToken(username, userId, idSesionNueva);
             
             TokenResponse response = new TokenResponse();
             response.setAccessToken(newAccessToken);
-            response.setRefreshToken(refreshToken); // Mantener el mismo refresh token
+            response.setRefreshToken(newRefreshToken); // Nuevo refresh token con nueva sesión
             response.setTokenType("Bearer");
             response.setExpiresIn(300L); // 5 minutos
             
-            logger.debug("Token renovado exitosamente para usuario: {}, sesión: {}", username, idSesion);
+            logger.debug("Token renovado exitosamente para usuario: {}, sesión anterior: {}, sesión nueva: {}", 
+                username, idSesionAnterior, idSesionNueva);
             return response;
             
         } catch (Exception e) {

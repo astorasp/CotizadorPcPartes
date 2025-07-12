@@ -152,4 +152,13 @@ public interface AccesoRepository extends JpaRepository<Acceso, Long> {
            "WHERE a.activo = true " +
            "AND a.fechaFin IS NULL")
     List<Acceso> findActiveSessionsWithoutEndDate();
+
+    /**
+     * Buscar sesiones activas que iniciaron antes de una fecha específica
+     * (usado para limpiar sesiones expiradas basándose en el tiempo de vida del token)
+     * 
+     * @param fechaLimite Fecha límite para considerar sesiones expiradas
+     * @return List<Acceso> con sesiones activas que iniciaron antes de la fecha límite
+     */
+    List<Acceso> findByActivoTrueAndFechaInicioBefore(java.time.LocalDateTime fechaLimite);
 }

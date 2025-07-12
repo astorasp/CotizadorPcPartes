@@ -10,6 +10,7 @@ services:
       MYSQL_USER: ${MYSQL_COTIZADOR_USER}
       MYSQL_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
       MYSQL_ROOT_HOST: '%'
+      TZ: America/Mazatlan
     # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
       - ./ms-cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
@@ -34,6 +35,7 @@ services:
       MYSQL_USER: ${MYSQL_SEGURIDAD_USER}
       MYSQL_PASSWORD: ${MYSQL_SEGURIDAD_PASSWORD}
       MYSQL_ROOT_HOST: '%'
+      TZ: America/Mazatlan
     # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
       - ./ms-seguridad/scripts/seguridad_ddl.sql:/docker-entrypoint-initdb.d/01-seguridad-ddl.sql
@@ -70,10 +72,15 @@ services:
       # Seguridad
       SECURITY_USERNAME: ${SECURITY_USERNAME}
       SECURITY_PASSWORD: ${SECURITY_PASSWORD}
+      # Session Cleanup Configuration
+      SESSION_CLEANUP_ENABLED: ${SESSION_CLEANUP_ENABLED}
+      SESSION_CLEANUP_INTERVAL_SECONDS: ${SESSION_CLEANUP_INTERVAL_SECONDS}
       # Java
       JAVA_OPTS: "${SEGURIDAD_JAVA_OPTS}"
       # Spring profiles
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      # Timezone
+      TZ: America/Mazatlan
     # PUERTOS NO EXPUESTOS - Solo acceso a través del gateway
     networks:
       - cotizador-network
@@ -132,6 +139,8 @@ services:
       JAVA_OPTS: "${COTIZADOR_JAVA_OPTS}"
       # Spring profiles
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      # Timezone
+      TZ: America/Mazatlan
     # PUERTO NO EXPUESTO - Solo acceso a través del gateway
     networks:
       - cotizador-network
@@ -154,6 +163,9 @@ services:
       dockerfile: Dockerfile
     container_name: cotizador-frontend-vue
     restart: unless-stopped
+    environment:
+      # Timezone
+      TZ: America/Mazatlan
     # PUERTO NO EXPUESTO - Solo acceso a través del gateway
     networks:
       - cotizador-network
@@ -176,6 +188,9 @@ services:
       dockerfile: Dockerfile
     container_name: cotizador-gateway
     restart: unless-stopped
+    environment:
+      # Timezone
+      TZ: America/Mazatlan
     ports:
       - "80:80"  # ÚNICO PUERTO EXPUESTO
     networks:

@@ -80,6 +80,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/actuator/info").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 
+                // URLs de monitoreo interno - acceso sin autenticación
+                .requestMatchers(HttpMethod.GET, "/monitoring/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/seguridad/v1/api/monitoring/**").permitAll()
+                
                 // URLs de documentación (Swagger)
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()

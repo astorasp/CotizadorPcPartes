@@ -52,9 +52,9 @@ public class SessionValidationClient {
         this.connectTimeout = Duration.ofMillis(connectTimeoutMs);
         
         // Construir URLs de endpoints
-        this.validateSessionUrl = baseUrl + contextPath + "/sessions/validate";
-        this.getSessionInfoUrl = baseUrl + contextPath + "/sessions/info";
-        this.closeSessionUrl = baseUrl + contextPath + "/sessions/close";
+        this.validateSessionUrl = baseUrl + contextPath + "/session/validate";
+        this.getSessionInfoUrl = baseUrl + contextPath + "/session/info";
+        this.closeSessionUrl = baseUrl + contextPath + "/session/close";
         
         this.webClient = WebClient.builder()
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024)) // 1MB max

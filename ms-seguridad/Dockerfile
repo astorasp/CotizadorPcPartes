@@ -1,5 +1,5 @@
 # Dockerfile para ms-seguridad
-# Utiliza multi-stage build para optimizar el tamaño de la imagen
+# Multi-stage build que compila el código dentro del contenedor
 
 # Etapa 1: Build
 FROM eclipse-temurin:21-jdk-alpine AS builder
@@ -9,17 +9,23 @@ LABEL maintainer="QTX Development Team"
 LABEL description="Microservicio de Seguridad - JWT Authentication"
 LABEL version="1.0.0"
 
-# Variables de build
-ARG JAR_FILE=target/ms-seguridad-1.0.0.jar
+# Instalar Maven y herramientas necesarias
+RUN apk add --no-cache maven curl
 
 # Crear directorio de trabajo
-WORKDIR /build
+WORKDIR /app
 
-# Copiar el JAR de la aplicación
-COPY ${JAR_FILE} app.jar
+# Copiar archivos de configuración de Maven
+COPY pom.xml .
 
-# Extraer las capas del JAR para optimización
-RUN java -Djarmode=layertools -jar app.jar extract
+# Descargar dependencias (esto se cachea si el pom.xml no cambia)
+RUN mvn dependency:resolve
+
+# Copiar el código fuente
+COPY src ./src
+
+# Compilar la aplicación
+RUN mvn clean package -DskipTests
 
 # Etapa 2: Runtime
 FROM eclipse-temurin:21-jre-alpine AS runtime
@@ -42,20 +48,20 @@ RUN addgroup -g 1001 seguridad && \
 RUN mkdir -p /app/logs /app/config && \
     chown -R seguridad:seguridad /app
 
+# Copiar el JAR desde la etapa de build
+COPY --from=builder /app/target/ms-seguridad-1.0.0.jar /app/seguridad.jar
+
+# Cambiar ownership del archivo JAR
+RUN chown seguridad:seguridad /app/seguridad.jar
+
 # Cambiar al usuario no-root
 USER seguridad
 
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar las capas extraídas desde el builder
-COPY --from=builder --chown=seguridad:seguridad /build/dependencies/ ./
-COPY --from=builder --chown=seguridad:seguridad /build/spring-boot-loader/ ./
-COPY --from=builder --chown=seguridad:seguridad /build/snapshot-dependencies/ ./
-COPY --from=builder --chown=seguridad:seguridad /build/application/ ./
-
-# Variables de entorno
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseStringDeduplication" \
+# Variables de entorno con optimizaciones para contenedores
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Djava.security.egd=file:/dev/./urandom" \
     SPRING_PROFILES_ACTIVE=docker \
     SERVER_PORT=8081 \
     MANAGEMENT_SERVER_PORT=8091
@@ -63,12 +69,12 @@ ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseStringDeduplication" \
 # Exponer puertos
 EXPOSE 8081 8091
 
-# Health check
+# Health check usando Spring Boot Actuator
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8081/actuator/health || exit 1
 
-# Punto de entrada
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+# Comando para ejecutar la aplicación
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar seguridad.jar"]
 
 # Metadata adicional
 LABEL org.opencontainers.image.title="ms-seguridad"

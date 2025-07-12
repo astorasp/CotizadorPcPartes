@@ -67,3 +67,10 @@ jwt:
     enabled: ${JWT_RATE_LIMITING_ENABLED:true}              # Habilitar rate limiting
     max-requests-per-minute: ${JWT_MAX_REQUESTS_PER_MINUTE:60}   # Máximo 60 requests por minuto por IP
     max-requests-per-hour: ${JWT_MAX_REQUESTS_PER_HOUR:1000}     # Máximo 1000 requests por hora por IP
+
+# Configuración de limpieza de sesiones
+session:
+  cleanup:
+    enabled: true
+    interval:
+      seconds: 15  # Ejecutar cada 15 segundos

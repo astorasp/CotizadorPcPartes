@@ -60,6 +60,14 @@ public class AuthController {
             
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
+            
+            // Verificar si es un error de sesión activa
+            if (e.getMessage() != null && e.getMessage().contains("Ya existe una sesión activa")) {
+                error.put("error", "active_session");
+                error.put("message", "Usuario cuenta con una sesión activa");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+            }
+            
             error.put("error", "invalid_credentials");
             error.put("message", "Usuario o contraseña incorrectos");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -76,13 +84,14 @@ public class AuthController {
      * Endpoint para renovar tokens (PRD 3.2)
      * Valida refresh token y genera nuevo access token
      * 
-     * @param request Objeto con refresh token
+     * @param requestBody Objeto con refresh token
+     * @param httpRequest HTTP request para obtener IP y User-Agent
      * @return TokenResponse con nuevo access token
      */
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> requestBody, HttpServletRequest httpRequest) {
         try {
-            String refreshToken = request.get("refreshToken");
+            String refreshToken = requestBody.get("refreshToken");
             
             if (refreshToken == null || refreshToken.trim().isEmpty()) {
                 Map<String, String> error = new HashMap<>();
@@ -91,7 +100,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
             }
 
-            TokenResponse tokenResponse = authService.refreshToken(refreshToken);
+            TokenResponse tokenResponse = authService.refreshToken(refreshToken, httpRequest);
             return ResponseEntity.ok(tokenResponse);
             
         } catch (RuntimeException e) {

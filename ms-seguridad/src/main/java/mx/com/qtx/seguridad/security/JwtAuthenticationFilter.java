@@ -52,6 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+        logger.info("🔍 JWT Filter ejecutándose para: {}", path);
+        
         try {
             // Extraer token del header Authorization
             String token = extractTokenFromRequest(request);
@@ -173,6 +176,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
         String method = request.getMethod();
+        
+        logger.debug("🔍 shouldNotFilter - Path: {}, Method: {}", path, method);
 
         // URLs públicas que no necesitan filtro JWT
         if ("POST".equals(method) && "/auth/login".equals(path)) {
@@ -186,6 +191,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if ("GET".equals(method) && path.startsWith("/actuator/health")) {
             return true;
         }
+
+        if ("GET".equals(method) && path.startsWith("/sessions/validate")) {
+            return true;
+        }        
         
         if ("GET".equals(method) && "/keys/jwks".equals(path)) {
             return true;
@@ -198,8 +207,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if ("GET".equals(method) && path.startsWith("/v3/api-docs")) {
             return true;
         }
+        
+        if ("GET".equals(method) && path.startsWith("/monitoring/session-cleanup-job")) {
+            return true;
+        }
 
         // Para todas las demás URLs, ejecutar el filtro
+        logger.debug("⚡ Aplicando filtro JWT para: {} {}", method, path);
         return false;
     }
 

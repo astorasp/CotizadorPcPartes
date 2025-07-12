@@ -52,43 +52,23 @@
         </rollingPolicy>
     </appender>
     
-    <!-- Appender específico para tests -->
-    <appender name="TEST_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${TEST_LOG_FILE}.log</file>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${TEST_LOG_FILE}-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
-            <maxFileSize>5MB</maxFileSize>
-            <maxHistory>7</maxHistory>
-            <totalSizeCap>50MB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
-    
-    <!-- Appender para errores de tests -->
-    <appender name="TEST_ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${TEST_LOG_FILE}-errors.log</file>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${TEST_LOG_FILE}-errors-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
-            <maxFileSize>2MB</maxFileSize>
-            <maxHistory>7</maxHistory>
-            <totalSizeCap>20MB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
     
     <!-- Logger específico para el paquete de la aplicación -->
-    <logger name="mx.com.qtx.seguridad" level="INFO" additivity="false">
+    <logger name="mx.com.qtx.seguridad" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    
+    <!-- Logger específico para SessionCleanupJob con nivel INFO para mayor visibilidad -->
+    <logger name="mx.com.qtx.seguridad.scheduler.SessionCleanupJob" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </logger>
+    
+    <!-- Logger específico para configuración de Quartz -->
+    <logger name="mx.com.qtx.seguridad.config.QuartzConfig" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
         <appender-ref ref="ERROR_FILE"/>
@@ -116,15 +96,24 @@
     <springProfile name="test">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="TEST_FILE"/>
-            <appender-ref ref="TEST_ERROR_FILE"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
         </root>
         
         <!-- Logger específico para tests -->
         <logger name="mx.com.qtx.seguridad" level="DEBUG">
-            <appender-ref ref="TEST_FILE"/>
-            <appender-ref ref="TEST_ERROR_FILE"/>
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
         </logger>
+    </springProfile>
+    
+    <springProfile name="docker">
+        <!-- Root en DEBUG para desarrollo en Docker -->
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
+        </root>
     </springProfile>
     
     <springProfile name="prod">
@@ -135,7 +124,7 @@
     </springProfile>
     
     <!-- Configuración por defecto si no hay perfil -->
-    <springProfile name="!dev &amp; !test &amp; !prod">
+    <springProfile name="!dev &amp; !test &amp; !prod &amp; !docker">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="TEST_FILE"/>

@@ -232,3 +232,8 @@ application-local.properties
 dist/
 build/
 out/ 
+
+# planning files 
+prd.md
+plan.md
+tasks.md

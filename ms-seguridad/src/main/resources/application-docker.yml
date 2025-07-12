@@ -58,8 +58,11 @@ management:
 logging:
   level:
     mx.com.qtx.seguridad: INFO
+    mx.com.qtx.seguridad.scheduler.SessionCleanupJob: INFO
+    mx.com.qtx.seguridad.config.QuartzConfig: INFO
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
+    org.quartz: WARN
     root: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
@@ -72,3 +75,10 @@ jwt:
   refresh-token:
     expiration: 900000  # 15 minutos en milisegundos
   algorithm: RS256
+
+# Configuración de limpieza de sesiones
+session:
+  cleanup:
+    enabled: ${SESSION_CLEANUP_ENABLED:true}
+    interval:
+      seconds: ${SESSION_CLEANUP_INTERVAL_SECONDS:15}

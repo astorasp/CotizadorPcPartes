@@ -25,6 +25,17 @@ spring:
   test:
     database:
       replace: none
+      
+  # Quartz configuration for tests
+  quartz:
+    job-store-type: memory
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceId: AUTO
+          threadPool:
+            threadCount: 1
 
 # Configuración del servidor
 server:
@@ -59,3 +70,10 @@ management:
     health:
       enabled: true
       show-details: always
+
+# Configuración de limpieza de sesiones para tests
+session:
+  cleanup:
+    enabled: false  # Deshabilitado por defecto en tests
+    interval:
+      seconds: 1  # Si se habilita, ejecutar cada segundo

@@ -76,20 +76,20 @@ INSERT INTO rol (id, nombre, activo, fecha_creacion, fecha_modificacion) VALUES
 -- Insertar usuario administrador
 -- Contraseña: admin123 (BCrypt strength 12)
 INSERT INTO usuario (id, usuario, password, activo, fecha_creacion, fecha_modificacion) VALUES
-(1, 'admin', '$2a$12$IUgNrSprzR3Ocwhcowqb0.NUiKmxOeQVAyFDJYr5AtLVr8iRZiUwC', true, NOW(), NOW());
+(1, 'admin', '$2a$12$jdrYIKBJmaImZO9zj1xZkOaIyIDRNVr4Fq2pEZesSF4IvwkJ39uLi', true, NOW(), NOW());
 
 -- Insertar usuario normal
 -- Contraseña: user123 (BCrypt strength 12)  
 INSERT INTO usuario (id, usuario, password, activo, fecha_creacion, fecha_modificacion) VALUES
-(2, 'testuser', '$2a$12$pp2wCuSdMHuu5HPk8Sc5Cuc7DYJalgXKGDPeNPn4CqgpKu7t54Ckq', true, NOW(), NOW());
+(2, 'testuser', '$2a$12$EWK2AXaS89uv1lWLWcNvUureXbRH/cWVq1a3v5cZeRdyydF0MiI7m', true, NOW(), NOW());
 
 -- Usuario inactivo para tests
 INSERT INTO usuario (id, usuario, password, activo, fecha_creacion, fecha_modificacion) VALUES
-(3, 'inactive', '$2a$12$pp2wCuSdMHuu5HPk8Sc5Cuc7DYJalgXKGDPeNPn4CqgpKu7t54Ckq', false, NOW(), NOW());
+(3, 'inactive', '$2a$12$EWK2AXaS89uv1lWLWcNvUureXbRH/cWVq1a3v5cZeRdyydF0MiI7m', false, NOW(), NOW());
 
 -- Usuario sin roles para tests
 INSERT INTO usuario (id, usuario, password, activo, fecha_creacion, fecha_modificacion) VALUES
-(4, 'noroles', '$2a$12$pp2wCuSdMHuu5HPk8Sc5Cuc7DYJalgXKGDPeNPn4CqgpKu7t54Ckq', true, NOW(), NOW());
+(4, 'noroles', '$2a$12$EWK2AXaS89uv1lWLWcNvUureXbRH/cWVq1a3v5cZeRdyydF0MiI7m', true, NOW(), NOW());
 
 -- Asignar rol ADMIN al usuario admin
 INSERT INTO rol_asignado (id_usuario, id_rol, activo, fecha_creacion, fecha_modificacion) VALUES

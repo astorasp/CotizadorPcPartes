@@ -5,6 +5,7 @@ import mx.com.qtx.seguridad.dto.TokenResponse;
 import mx.com.qtx.seguridad.entity.Acceso;
 import mx.com.qtx.seguridad.repository.AccesoRepository;
 import mx.com.qtx.seguridad.repository.UsuarioRepository;
+import io.jsonwebtoken.Claims;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ class AuthServiceTest {
     
     @Autowired
     private UsuarioRepository usuarioRepository;
+    
+    @Autowired
+    private JwtService jwtService;
 
     private HttpServletRequest mockRequest;
 
@@ -113,7 +117,7 @@ class AuthServiceTest {
     void shouldRejectNonExistentUser() {
         // Given
         String nonExistentUser = "noexiste";
-        String password = "password123";
+        String password = "user123";
 
         // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class, 
@@ -206,12 +210,24 @@ class AuthServiceTest {
         // Then
         assertNotNull(refreshedResponse);
         assertNotNull(refreshedResponse.getAccessToken());
-        assertEquals(refreshToken, refreshedResponse.getRefreshToken()); // El refresh token se reutiliza
+        
+        // El refresh token debe ser diferente (nuevo token con nuevo JTI)
+        assertNotNull(refreshedResponse.getRefreshToken());
+        assertNotEquals(refreshToken, refreshedResponse.getRefreshToken());
+        
         assertEquals("Bearer", refreshedResponse.getTokenType());
         assertTrue(refreshedResponse.getExpiresIn() > 0);
         
         // El nuevo access token debe ser diferente
         assertNotEquals(initialResponse.getAccessToken(), refreshedResponse.getAccessToken());
+        
+        // Validar que ambos tokens tienen la misma información de usuario pero diferentes JTIs
+        Claims initialClaims = jwtService.validateToken(initialResponse.getRefreshToken());
+        Claims refreshedClaims = jwtService.validateToken(refreshedResponse.getRefreshToken());
+        
+        assertEquals(initialClaims.getSubject(), refreshedClaims.getSubject());
+        assertEquals(initialClaims.get("user_id"), refreshedClaims.get("user_id"));
+        assertNotEquals(initialClaims.getId(), refreshedClaims.getId()); // JTI debe ser diferente
     }
 
     @Test
