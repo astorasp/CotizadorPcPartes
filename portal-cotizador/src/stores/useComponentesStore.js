@@ -294,7 +294,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     const searchTerm = filters.value.searchTerm.toLowerCase()
     const selectedType = filters.value.selectedType
     
-    filteredComponentes.value = componentes.value.filter(componente => {
+    filteredComponentes.value = (componentes.value || []).filter(componente => {
       // Filtro de búsqueda (migración exacta de la lógica original)
       const matchesSearch = !searchTerm || 
         componente.id.toLowerCase().includes(searchTerm) ||

@@ -125,8 +125,8 @@ export const usePcsStore = defineStore('pcs', () => {
   })
 
   const availableComponentsForSelect = computed(() => {
-    // Filtrar componentes que no sean PCs
-    return availableComponents.value.filter(comp => comp.tipoComponente !== COMPONENT_TYPES.PC)
+    // Filtrar componentes que no sean PCs (validación defensiva)
+    return (availableComponents.value || []).filter(comp => comp.tipoComponente !== COMPONENT_TYPES.PC)
   })
 
   // Computed para validación del formulario de PC
@@ -340,8 +340,10 @@ export const usePcsStore = defineStore('pcs', () => {
       const pc = await pcsApi.getById(pcId)
       currentPc.value = pc
       
-      // Cargar componentes disponibles
-      await loadAvailableComponents()
+      // Cargar componentes disponibles (solo si está autenticado)
+      if (authService.isAuthenticated()) {
+        await loadAvailableComponents()
+      }
       
       // Cargar componentes de la PC
       await loadPcComponents(pcId)
@@ -377,10 +379,19 @@ export const usePcsStore = defineStore('pcs', () => {
    * Cargar componentes disponibles (migración de loadAvailableComponents)
    */
   const loadAvailableComponents = async () => {
+    // Verificar autenticación antes de hacer la llamada API
+    if (!authService.isAuthenticated()) {
+      if (DEBUG_CONFIG.ENABLED) {
+        console.log('[PcsStore] Usuario no autenticado, omitiendo carga de componentes')
+      }
+      availableComponents.value = []
+      return
+    }
+    
     try {
       const allComponents = await componentesApi.getAll()
-      // Filtrar solo componentes que no sean PCs
-      availableComponents.value = allComponents.filter(comp => comp.tipoComponente !== COMPONENT_TYPES.PC)
+      // Filtrar solo componentes que no sean PCs (validación defensiva)
+      availableComponents.value = (allComponents || []).filter(comp => comp.tipoComponente !== COMPONENT_TYPES.PC)
       
       if (DEBUG_CONFIG.ENABLED) {
         console.log(`[PcsStore] Loaded ${availableComponents.value.length} available components`)
@@ -513,7 +524,7 @@ export const usePcsStore = defineStore('pcs', () => {
     const searchTerm = filters.value.searchTerm.toLowerCase()
     const priceRange = filters.value.priceRange
     
-    filteredPcs.value = pcs.value.filter(pc => {
+    filteredPcs.value = (pcs.value || []).filter(pc => {
       // Filtro de búsqueda (migración exacta de la lógica original)
       const matchesSearch = !searchTerm || 
         pc.id.toLowerCase().includes(searchTerm) ||

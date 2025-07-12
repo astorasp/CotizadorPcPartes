@@ -103,8 +103,8 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
   })
 
   const availableComponentsForSelect = computed(() => {
-    // Filtrar componentes que no sean PCs para evitar problemas
-    return availableComponents.value.filter(comp => comp.tipoComponente !== 'PC')
+    // Filtrar componentes que no sean PCs para evitar problemas (validación defensiva)
+    return (availableComponents.value || []).filter(comp => comp.tipoComponente !== 'PC')
   })
 
   // Computed para validación del formulario
@@ -164,8 +164,10 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       const data = await cotizacionesApi.getAll()
       cotizaciones.value = data || []
       
-      // Cargar componentes disponibles para modales
-      await loadAvailableComponents()
+      // Cargar componentes disponibles para modales (solo si está autenticado)
+      if (authService.isAuthenticated()) {
+        await loadAvailableComponents()
+      }
       
       // Aplicar filtros existentes
       applyFilters()
@@ -311,8 +313,10 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     try {
       modalLoading.value = true
       
-      // Cargar componentes disponibles
-      await loadAvailableComponents()
+      // Cargar componentes disponibles (solo si está autenticado)
+      if (authService.isAuthenticated()) {
+        await loadAvailableComponents()
+      }
       
       // Resetear estado
       isEditMode.value = false
@@ -407,10 +411,19 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    * Cargar componentes disponibles (migración de loadAvailableComponents)
    */
   const loadAvailableComponents = async () => {
+    // Verificar autenticación antes de hacer la llamada API
+    if (!authService.isAuthenticated()) {
+      if (DEBUG_CONFIG.ENABLED) {
+        console.log('[CotizacionesStore] Usuario no autenticado, omitiendo carga de componentes')
+      }
+      availableComponents.value = []
+      return
+    }
+    
     try {
       const allComponents = await componentesApi.getAll()
-      // Filtrar solo componentes que no sean PCs
-      availableComponents.value = allComponents.filter(comp => comp.tipoComponente !== 'PC')
+      // Filtrar solo componentes que no sean PCs (validación defensiva)
+      availableComponents.value = (allComponents || []).filter(comp => comp.tipoComponente !== 'PC')
       
       if (DEBUG_CONFIG.ENABLED) {
         console.log(`[CotizacionesStore] Loaded ${availableComponents.value.length} available components`)
@@ -614,7 +627,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       const cotizacionData = {
         tipoCotizador: formData.value.tipoCotizador,
         fecha: formData.value.fecha,
-        impuestos: currentImpuestos.value.filter(imp => imp.tipo && imp.pais && imp.tasa > 0),
+        impuestos: (currentImpuestos.value || []).filter(imp => imp.tipo && imp.pais && imp.tasa > 0),
         detalles: currentComponents.value
       }
 
@@ -645,7 +658,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     const searchTerm = filters.value.searchTerm.toLowerCase()
     const fechaFilter = filters.value.fechaFilter
     
-    filteredCotizaciones.value = cotizaciones.value.filter(cotizacion => {
+    filteredCotizaciones.value = (cotizaciones.value || []).filter(cotizacion => {
       // Usar folio en lugar de id y manejar tipoCotizador por defecto
       const cotizacionId = cotizacion.folio || cotizacion.id || ''
       const tipoCotizador = cotizacion.tipoCotizador || 'Estándar'

@@ -28,8 +28,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import LoadingSpinner from './LoadingSpinner.vue'
+
+const slots = useSlots()
 
 const props = defineProps({
   // Texto del botón
@@ -157,7 +159,7 @@ const iconClasses = computed(() => {
   
   return [
     sizeMap[props.size] || sizeMap.md,
-    props.text || $slots.default ? 'mr-2' : ''
+    props.text || slots.default ? 'mr-2' : ''
   ].filter(Boolean)
 })
 

@@ -69,13 +69,13 @@ const indicatorExpanded = ref(false)
 
 // Computadas para filtrar operaciones
 const blockingOperations = computed(() => {
-  return loadingStore.getActiveOperations.value
+  return (loadingStore.getActiveOperations.value || [])
     .filter(([key, operation]) => operation.blockUI)
     .map(([key, operation]) => operation)
 })
 
 const nonBlockingOperations = computed(() => {
-  return loadingStore.getActiveOperations.value
+  return (loadingStore.getActiveOperations.value || [])
     .filter(([key, operation]) => !operation.blockUI)
     .map(([key, operation]) => operation)
 })

@@ -271,7 +271,7 @@ const toggleRol = (rol) => {
   
   if (estaAsignado) {
     // Quitar rol - check both id and rolId
-    rolesUsuario.value = rolesUsuario.value.filter(r => {
+    rolesUsuario.value = (rolesUsuario.value || []).filter(r => {
       const roleIdToCheck = r.id || r.rolId
       return roleIdToCheck !== rol.id
     })
@@ -285,7 +285,7 @@ const toggleRol = (rol) => {
 
 const agregarCambio = (accion, rolId, rolNombre) => {
   // Remover cambio previo para este rol si existe
-  cambiosPendientes.value = cambiosPendientes.value.filter(c => c.rolId !== rolId)
+  cambiosPendientes.value = (cambiosPendientes.value || []).filter(c => c.rolId !== rolId)
   
   // Agregar nuevo cambio
   cambiosPendientes.value.push({
