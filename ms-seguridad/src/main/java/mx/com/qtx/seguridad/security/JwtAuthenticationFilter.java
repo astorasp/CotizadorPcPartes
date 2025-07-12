@@ -124,6 +124,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtService.extractUsername(token);
             Integer userId = jwtService.extractUserId(token);
             List<String> roles = jwtService.extractRoles(token);
+            String sessionId = jwtService.extractSessionId(token);
 
             if (username == null || username.trim().isEmpty()) {
                 logger.warn("Token válido pero sin username");
@@ -133,6 +134,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Verificar que sea un access token
             if (!jwtService.isAccessToken(token)) {
                 logger.warn("Token no es de tipo access para usuario: {}", username);
+                return;
+            }
+
+            // Verificar que la sesión siga activa
+            if (sessionId != null && !authService.validateSession(sessionId)) {
+                logger.warn("🚫 Sesión {} inactiva para usuario: {} - Bloqueando acceso", sessionId, username);
+                SecurityContextHolder.clearContext();
                 return;
             }
 
