@@ -66,6 +66,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/auth/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/keys/jwks").permitAll()
                 .requestMatchers(HttpMethod.GET, "/keys/health").permitAll()
+                
+                // URLs públicas de gestión de sesiones
+                .requestMatchers(HttpMethod.GET, "/session/validate/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/session/close/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/session/info/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/session/health").permitAll()
+                
                 .requestMatchers("/error").permitAll()
                 
                 // URLs de actuator para monitoreo

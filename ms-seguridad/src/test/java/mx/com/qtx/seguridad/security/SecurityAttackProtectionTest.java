@@ -1,7 +1,6 @@
 package mx.com.qtx.seguridad.security;
 
 import mx.com.qtx.seguridad.integration.BaseIntegrationTest;
-import mx.com.qtx.seguridad.dto.LoginRequest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -42,9 +41,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
         };
 
         for (String maliciousInput : sqlInjectionAttempts) {
-            LoginRequest loginRequest = new LoginRequest();
-            loginRequest.setUsuario(maliciousInput);
-            loginRequest.setPassword("password123");
+            Map<String, String> loginRequest = Map.of(
+                "usuario", maliciousInput,
+                "password", "password123"
+            );
 
             // When
             ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -71,9 +71,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
         };
 
         for (String maliciousInput : sqlInjectionAttempts) {
-            LoginRequest loginRequest = new LoginRequest();
-            loginRequest.setUsuario("admin");
-            loginRequest.setPassword(maliciousInput);
+            Map<String, String> loginRequest = Map.of(
+                "usuario", "admin",
+                "password", maliciousInput
+            );
 
             // When
             ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -106,9 +107,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
         };
 
         for (String maliciousInput : xssAttempts) {
-            LoginRequest loginRequest = new LoginRequest();
-            loginRequest.setUsuario(maliciousInput);
-            loginRequest.setPassword("password123");
+            Map<String, String> loginRequest = Map.of(
+                "usuario", maliciousInput,
+                "password", "password123"
+            );
 
             // When
             ResponseEntity<String> response = restTemplate.postForEntity(
@@ -138,9 +140,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
     @DisplayName("Debe manejar múltiples intentos de login fallidos")
     void shouldHandleMultipleFailedLoginAttempts() {
         // Given
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("admin");
-        loginRequest.setPassword("wrongpassword");
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "admin",
+            "password", "wrongpassword"
+        );
 
         // When - Realizar múltiples intentos fallidos
         for (int i = 0; i < 10; i++) {
@@ -155,9 +158,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
         }
 
         // Then - El servicio debe seguir funcionando (no bloqueado)
-        LoginRequest validLogin = new LoginRequest();
-        validLogin.setUsuario("admin");
-        validLogin.setPassword("admin123");
+        Map<String, String> validLogin = Map.of(
+            "usuario", "admin",
+            "password", "admin123"
+        );
 
         ResponseEntity<Map> validResponse = restTemplate.postForEntity(
                 baseUrl + "/auth/login",
@@ -179,9 +183,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
             CompletableFuture<Void>[] futures = IntStream.range(0, 20)
                 .mapToObj(i -> CompletableFuture.runAsync(() -> {
                     try {
-                        LoginRequest loginRequest = new LoginRequest();
-                        loginRequest.setUsuario("admin");
-                        loginRequest.setPassword("wrongpassword" + i);
+                        Map<String, String> loginRequest = Map.of(
+                            "usuario", "admin",
+                            "password", "wrongpassword" + i
+                        );
 
                         restTemplate.postForEntity(
                                 baseUrl + "/auth/login",
@@ -197,9 +202,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
             CompletableFuture.allOf(futures).join();
 
             // Then - El servicio debe seguir respondiendo
-            LoginRequest validLogin = new LoginRequest();
-            validLogin.setUsuario("admin");
-            validLogin.setPassword("admin123");
+            Map<String, String> validLogin = Map.of(
+                "usuario", "admin",
+                "password", "admin123"
+            );
 
             ResponseEntity<Map> response = restTemplate.postForEntity(
                     baseUrl + "/auth/login",
@@ -301,9 +307,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
         // Given - Campos extremadamente largos
         String longString = "a".repeat(10000);
         
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario(longString);
-        loginRequest.setPassword(longString);
+        Map<String, String> loginRequest = Map.of(
+            "usuario", longString,
+            "password", longString
+        );
 
         // When
         ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -330,9 +337,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
         };
 
         for (String dangerousInput : dangerousInputs) {
-            LoginRequest loginRequest = new LoginRequest();
-            loginRequest.setUsuario(dangerousInput);
-            loginRequest.setPassword("password123");
+            Map<String, String> loginRequest = Map.of(
+                "usuario", dangerousInput,
+                "password", "password123"
+            );
 
             // When
             ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -353,24 +361,78 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
     // ===============================
 
     @Test
-    @DisplayName("Debe manejar ráfagas de requests")
+    @DisplayName("Debe manejar ráfagas de requests usando ciclo login-logout completo")
     void shouldHandleRequestBursts() {
-        // Given
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("admin");
-        loginRequest.setPassword("admin123");
-
-        // When - Realizar muchas requests rápidamente
-        for (int i = 0; i < 50; i++) {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
+        // Given - Usar el mismo usuario reutilizando sesiones mediante logout
+        String usuario = "admin";
+        String password = "admin123";
+        
+        // When - Realizar muchas requests usando ciclo completo login → logout → re-login
+        for (int i = 0; i < 20; i++) {
+            // 1. LOGIN - Crear nueva sesión
+            Map<String, String> loginRequest = Map.of(
+                "usuario", usuario,
+                "password", password
+            );
+            
+            ResponseEntity<Map> loginResponse = restTemplate.postForEntity(
                     baseUrl + "/auth/login",
                     createJsonEntity(loginRequest),
                     Map.class
             );
             
-            // Then - Debe seguir funcionando
-            assertEquals(HttpStatus.OK, response.getStatusCode());
+            // Verificar que el login fue exitoso
+            assertEquals(HttpStatus.OK, loginResponse.getStatusCode());
+            assertNotNull(loginResponse.getBody());
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> loginBody = (Map<String, Object>) loginResponse.getBody();
+            String accessToken = (String) loginBody.get("accessToken");
+            String refreshToken = (String) loginBody.get("refreshToken");
+            
+            assertNotNull(accessToken);
+            assertNotNull(refreshToken);
+            assertEquals("Bearer", loginBody.get("tokenType"));
+            
+            // 2. LOGOUT - Cerrar sesión correctamente para liberar al usuario
+            Map<String, String> logoutRequest = Map.of(
+                "accessToken", accessToken,
+                "refreshToken", refreshToken
+            );
+            
+            ResponseEntity<Map> logoutResponse = restTemplate.exchange(
+                    baseUrl + "/auth/logout",
+                    org.springframework.http.HttpMethod.POST,
+                    createAuthEntity(logoutRequest, accessToken),
+                    Map.class
+            );
+            
+            // Verificar que el logout fue exitoso
+            assertEquals(HttpStatus.OK, logoutResponse.getStatusCode());
+            assertNotNull(logoutResponse.getBody());
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> logoutBody = (Map<String, Object>) logoutResponse.getBody();
+            assertEquals("Sesión cerrada exitosamente", logoutBody.get("message"));
+            assertEquals("success", logoutBody.get("status"));
+            
+            // 3. El siguiente ciclo puede reusar el mismo usuario porque la sesión está cerrada
         }
+        
+        // Then - Verificar que después de todo el ciclo, el usuario puede hacer login nuevamente
+        Map<String, String> finalLoginRequest = Map.of(
+            "usuario", usuario,
+            "password", password
+        );
+        
+        ResponseEntity<Map> finalResponse = restTemplate.postForEntity(
+                baseUrl + "/auth/login",
+                createJsonEntity(finalLoginRequest),
+                Map.class
+        );
+        
+        assertEquals(HttpStatus.OK, finalResponse.getStatusCode());
+        assertNotNull(finalResponse.getBody());
     }
 
     // ===============================
@@ -381,9 +443,10 @@ public class SecurityAttackProtectionTest extends BaseIntegrationTest {
     @DisplayName("Debe manejar timeout en operaciones de autenticación")
     void shouldHandleAuthenticationTimeout() {
         // Given
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("admin");
-        loginRequest.setPassword("admin123");
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "admin",
+            "password", "admin123"
+        );
 
         // When - Verificar que la respuesta llega en tiempo razonable
         long startTime = System.currentTimeMillis();

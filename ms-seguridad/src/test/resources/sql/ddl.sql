@@ -32,12 +32,32 @@ CREATE TABLE IF NOT EXISTS rol_asignado (
     FOREIGN KEY (id_rol) REFERENCES rol(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Crear tabla de acceso para gestión de sesiones únicas
+CREATE TABLE IF NOT EXISTS acceso (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id_sesion VARCHAR(255) NOT NULL UNIQUE,
+    usuario_id BIGINT NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_fin TIMESTAMP NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Crear índices para mejorar performance
 CREATE INDEX idx_usuario_activo ON usuario(activo);
 CREATE INDEX idx_rol_activo ON rol(activo);
 CREATE INDEX idx_rol_asignado_activo ON rol_asignado(activo);
 CREATE INDEX idx_rol_asignado_usuario ON rol_asignado(id_usuario);
 CREATE INDEX idx_rol_asignado_rol ON rol_asignado(id_rol);
+-- Índices para tabla acceso
+CREATE INDEX idx_acceso_id_sesion ON acceso(id_sesion);
+CREATE INDEX idx_acceso_usuario_id ON acceso(usuario_id);
+CREATE INDEX idx_acceso_activo ON acceso(activo);
+CREATE INDEX idx_acceso_usuario_activo ON acceso(usuario_id, activo);
+CREATE INDEX idx_acceso_fecha_inicio ON acceso(fecha_inicio);
+CREATE INDEX idx_acceso_fecha_fin ON acceso(fecha_fin);
 
 -- =======================================================
 -- DATOS DE PRUEBA

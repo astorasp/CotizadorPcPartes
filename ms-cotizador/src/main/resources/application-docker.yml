@@ -61,6 +61,20 @@ jwt:
     security-alert-threshold: ${JWT_SECURITY_ALERT_THRESHOLD:3}  # Alertas después de N intentos con KID inválido
     log-rotation-events: ${JWT_LOG_ROTATION_EVENTS:true}         # Registrar eventos de rotación
     cleanup-old-keys: ${JWT_CLEANUP_OLD_KEYS:true}              # Limpiar llaves anteriores después de rotación
+  # Configuración de validación de sesiones
+  session-validation:
+    enabled: ${JWT_SESSION_VALIDATION_ENABLED:true}             # Habilitar validación de sesiones en JWT
+
+# Configuración de Sesiones para Docker
+session:
+  cache:
+    ttl-ms: ${SESSION_CACHE_TTL_MS:30000}          # TTL del caché de sesiones (30 segundos)
+    max-size: ${SESSION_CACHE_MAX_SIZE:1000}       # Tamaño máximo del caché
+    enabled: ${SESSION_CACHE_ENABLED:true}         # Habilitar caché de sesiones
+  validation:
+    timeout-ms: ${SESSION_VALIDATION_TIMEOUT_MS:10000}    # Timeout para validación de sesiones (más alto para Docker)
+    max-retries: ${SESSION_VALIDATION_MAX_RETRIES:5}      # Máximo número de reintentos (más alto para Docker)
+    retry-delay-ms: ${SESSION_VALIDATION_RETRY_DELAY_MS:2000}  # Delay entre reintentos (más alto para Docker)
 
 # Configuración de seguridad para Docker - Deshabilitar Basic Auth  
 security:

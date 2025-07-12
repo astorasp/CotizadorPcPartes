@@ -1,6 +1,7 @@
 package mx.com.qtx.seguridad.integration;
 
 import mx.com.qtx.seguridad.config.TestContainerConfig;
+import mx.com.qtx.seguridad.repository.AccesoRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Map;
@@ -25,7 +27,7 @@ import java.util.Map;
 @ActiveProfiles("test")
 @Import(TestContainerConfig.class)
 @Testcontainers
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public abstract class BaseIntegrationTest {
 
     @LocalServerPort
@@ -34,11 +36,20 @@ public abstract class BaseIntegrationTest {
     @Autowired
     protected TestRestTemplate restTemplate;
     
+    @Autowired
+    protected AccesoRepository accesoRepository;
+    
     protected String baseUrl;
 
     @BeforeEach
+    @Transactional
     void setUpBaseTest() {
         baseUrl = "http://localhost:" + port + "/seguridad/v1/api";
+        
+        // Limpiar todas las sesiones activas antes de cada test
+        // Esto evita conflictos de "sesión activa existente" entre tests
+        accesoRepository.deleteAll();
+        accesoRepository.flush(); // Forzar el commit inmediato
     }
 
     /**
@@ -84,7 +95,7 @@ public abstract class BaseIntegrationTest {
      * Realiza login de test y retorna el access token
      */
     protected String performTestLogin() {
-        return performTestLogin("admin", "admin123");
+        return performTestLogin("testuser", "user123");
     }
 
     /**
@@ -114,7 +125,7 @@ public abstract class BaseIntegrationTest {
      * Obtiene un refresh token de test
      */
     protected String performTestLoginAndGetRefreshToken() {
-        return performTestLoginAndGetRefreshToken("admin", "admin123");
+        return performTestLoginAndGetRefreshToken("testuser", "user123");
     }
 
     /**
@@ -204,6 +215,21 @@ public abstract class BaseIntegrationTest {
             "password", password,
             "activo", true
         );
+    }
+
+    /**
+     * Realiza múltiples logins con diferentes usuarios para evitar conflictos de sesión única
+     * Usado para tests que requieren múltiples autenticaciones consecutivas
+     */
+    protected String performTestLoginWithUser(String username) {
+        return performTestLogin(username, "user123");
+    }
+
+    /**
+     * Genera un usuario único para cada test method para evitar conflictos de sesión
+     */
+    protected String getUniqueTestUser() {
+        return "testuser_" + System.currentTimeMillis();
     }
 
     /**

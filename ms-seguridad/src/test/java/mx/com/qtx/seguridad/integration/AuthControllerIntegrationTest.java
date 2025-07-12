@@ -1,6 +1,5 @@
 package mx.com.qtx.seguridad.integration;
 
-import mx.com.qtx.seguridad.dto.LoginRequest;
 import mx.com.qtx.seguridad.dto.TokenResponse;
 import mx.com.qtx.seguridad.dto.TokenTtlResponse;
 
@@ -29,9 +28,10 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
     @DisplayName("POST /auth/login - Debe autenticar usuario válido exitosamente")
     void shouldAuthenticateValidUser() {
         // Given
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("admin");
-        loginRequest.setPassword("admin123");
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "admin",
+            "password", "admin123"
+        );
 
         // When
         ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -57,9 +57,10 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
     @DisplayName("POST /auth/login - Debe rechazar credenciales inválidas")
     void shouldRejectInvalidCredentials() {
         // Given
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("invalid");
-        loginRequest.setPassword("wrongpassword");
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "invalid",
+            "password", "wrongpassword"
+        );
 
         // When
         ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -81,9 +82,10 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
     @DisplayName("POST /auth/login - Debe rechazar request con campos faltantes")
     void shouldRejectMissingFields() {
         // Given - Login request incompleto
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("admin");
-        // password faltante
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "admin"
+            // password faltante
+        );
 
         // When
         ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -197,8 +199,8 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("POST /auth/logout - Debe realizar logout exitosamente")
     void shouldLogoutSuccessfully() {
-        // Given - Obtener tokens válidos primero
-        String accessToken = performTestLogin("admin", "admin123");
+        // Given - Obtener tokens válidos primero (usar diferentes usuarios para evitar conflicto de sesión)
+        String accessToken = performTestLogin("testuser", "user123");
         String refreshToken = performTestLoginAndGetRefreshToken("admin", "admin123");
 
         Map<String, String> logoutRequest = new HashMap<>();

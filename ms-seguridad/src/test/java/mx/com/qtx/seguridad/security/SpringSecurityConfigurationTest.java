@@ -1,7 +1,6 @@
 package mx.com.qtx.seguridad.security;
 
 import mx.com.qtx.seguridad.integration.BaseIntegrationTest;
-import mx.com.qtx.seguridad.dto.LoginRequest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -153,13 +152,14 @@ public class SpringSecurityConfigurationTest extends BaseIntegrationTest {
     @DisplayName("Debe incluir headers CORS en respuestas reales")
     void shouldIncludeCorsHeadersInActualResponses() {
         // Given
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("admin");
-        loginRequest.setPassword("admin123");
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "admin",
+            "password", "admin123"
+        );
 
         org.springframework.http.HttpHeaders headers = createJsonHeaders();
         headers.set("Origin", "http://localhost:3000");
-        org.springframework.http.HttpEntity<LoginRequest> entity = new org.springframework.http.HttpEntity<>(loginRequest, headers);
+        org.springframework.http.HttpEntity<Map<String, String>> entity = new org.springframework.http.HttpEntity<>(loginRequest, headers);
 
         // When
         ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -293,8 +293,8 @@ public class SpringSecurityConfigurationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("Debe estar configurado como stateless (sin sesiones)")
     void shouldBeConfiguredAsStateless() {
-        // Given
-        String token1 = performTestLogin("admin", "admin123");
+        // Given - Usar diferentes usuarios para evitar conflicto de sesión única
+        String token1 = performTestLogin("testuser", "user123");
         String token2 = performTestLogin("admin", "admin123");
 
         // When & Then - Cada token debe ser independiente
@@ -447,9 +447,10 @@ public class SpringSecurityConfigurationTest extends BaseIntegrationTest {
     void shouldValidateContentTypeOnPostEndpoints() {
         // Given
         String loginRequestAsString = "{\"usuario\":\"admin\",\"password\":\"admin123\"}";
-        LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsuario("admin");
-        loginRequest.setPassword("admin123");
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "admin",
+            "password", "admin123"
+        );
 
         // When & Then - Content-Type incorrecto
         org.springframework.http.HttpHeaders incorrectHeaders = new org.springframework.http.HttpHeaders();

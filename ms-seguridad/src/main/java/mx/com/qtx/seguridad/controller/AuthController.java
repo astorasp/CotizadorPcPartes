@@ -1,17 +1,14 @@
 package mx.com.qtx.seguridad.controller;
 
-import mx.com.qtx.seguridad.dto.LoginRequest;
 import mx.com.qtx.seguridad.dto.TokenResponse;
 import mx.com.qtx.seguridad.dto.TokenTtlResponse;
 import mx.com.qtx.seguridad.service.AuthService;
 import mx.com.qtx.seguridad.service.JwtService;
 
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
@@ -40,11 +37,23 @@ public class AuthController {
      * @return TokenResponse con access y refresh tokens
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest, HttpServletRequest request) {
         try {
+            String usuario = loginRequest.get("usuario");
+            String password = loginRequest.get("password");
+            
+            if (usuario == null || usuario.trim().isEmpty() || 
+                password == null || password.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "missing_credentials");
+                error.put("message", "Usuario y contraseña son requeridos");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+            
             TokenResponse tokenResponse = authService.authenticate(
-                loginRequest.getUsuario(), 
-                loginRequest.getPassword()
+                usuario, 
+                password,
+                request
             );
             
             return ResponseEntity.ok(tokenResponse);

@@ -24,6 +24,7 @@ public class JwtService {
     private static final String CLAIM_ROLES = "roles";
     private static final String CLAIM_TOKEN_TYPE = "token_type";
     private static final String CLAIM_USER_ID = "user_id";
+    private static final String CLAIM_SESSION_ID = "session_id";
     
     // Issuer del token
     private static final String ISSUER = "ms-seguridad";
@@ -67,6 +68,19 @@ public class JwtService {
      * @return String JWT access token
      */
     public String generateAccessToken(String username, Integer userId, List<String> roles) {
+        return generateAccessToken(username, userId, roles, null);
+    }
+
+    /**
+     * Genera un access token JWT con roles incluidos y session ID
+     * 
+     * @param username Nombre de usuario
+     * @param userId ID del usuario
+     * @param roles Lista de roles asignados al usuario
+     * @param idSesion ID de sesión (puede ser null para compatibilidad)
+     * @return String JWT access token
+     */
+    public String generateAccessToken(String username, Integer userId, List<String> roles, String idSesion) {
         try {
             Date now = new Date();
             Date expiration = new Date(now.getTime() + accessTokenExpiration);
@@ -77,7 +91,7 @@ public class JwtService {
             RSAPrivateKey privateKey = rsaKeyProvider.getPrivateKey();
             String keyId = getCurrentKeyId();
             
-            String token = Jwts.builder()
+            JwtBuilder builder = Jwts.builder()
                     .setHeaderParam("kid", keyId)
                     .setIssuer(ISSUER)
                     .setSubject(username)
@@ -88,9 +102,15 @@ public class JwtService {
                     .setId(UUID.randomUUID().toString())
                     .claim(CLAIM_USER_ID, userId)
                     .claim(CLAIM_ROLES, roles)
-                    .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS)
-                    .signWith(privateKey, SignatureAlgorithm.RS256)
-                    .compact();
+                    .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS);
+            
+            // Agregar session ID si está presente
+            if (idSesion != null && !idSesion.trim().isEmpty()) {
+                builder.claim(CLAIM_SESSION_ID, idSesion);
+                logger.debug("Session ID incluido en access token: {}", idSesion);
+            }
+            
+            String token = builder.signWith(privateKey, SignatureAlgorithm.RS256).compact();
             
             logger.debug("Access token generado para usuario: {} con roles: {}, kid: {}", username, roles, keyId);
             return token;
@@ -109,6 +129,18 @@ public class JwtService {
      * @return String JWT refresh token
      */
     public String generateRefreshToken(String username, Integer userId) {
+        return generateRefreshToken(username, userId, null);
+    }
+
+    /**
+     * Genera un refresh token JWT con session ID
+     * 
+     * @param username Nombre de usuario
+     * @param userId ID del usuario
+     * @param idSesion ID de sesión (puede ser null para compatibilidad)
+     * @return String JWT refresh token
+     */
+    public String generateRefreshToken(String username, Integer userId, String idSesion) {
         try {
             Date now = new Date();
             Date expiration = new Date(now.getTime() + refreshTokenExpiration);
@@ -116,7 +148,7 @@ public class JwtService {
             RSAPrivateKey privateKey = rsaKeyProvider.getPrivateKey();
             String keyId = getCurrentKeyId();
             
-            String token = Jwts.builder()
+            JwtBuilder builder = Jwts.builder()
                     .setHeaderParam("kid", keyId)
                     .setIssuer(ISSUER)
                     .setSubject(username)
@@ -126,9 +158,15 @@ public class JwtService {
                     .setNotBefore(now)
                     .setId(UUID.randomUUID().toString())
                     .claim(CLAIM_USER_ID, userId)
-                    .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH)
-                    .signWith(privateKey, SignatureAlgorithm.RS256)
-                    .compact();
+                    .claim(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH);
+            
+            // Agregar session ID si está presente
+            if (idSesion != null && !idSesion.trim().isEmpty()) {
+                builder.claim(CLAIM_SESSION_ID, idSesion);
+                logger.debug("Session ID incluido en refresh token: {}", idSesion);
+            }
+            
+            String token = builder.signWith(privateKey, SignatureAlgorithm.RS256).compact();
             
             logger.debug("Refresh token generado para usuario: {}, kid: {}", username, keyId);
             return token;
@@ -234,6 +272,30 @@ public class JwtService {
     public String extractTokenType(String token) {
         Claims claims = validateToken(token);
         return (String) claims.get(CLAIM_TOKEN_TYPE);
+    }
+
+    /**
+     * Extrae el session ID del token
+     * 
+     * @param token JWT token
+     * @return String session ID o null si no existe
+     */
+    public String extractSessionId(String token) {
+        try {
+            Claims claims = validateToken(token);
+            String sessionId = (String) claims.get(CLAIM_SESSION_ID);
+            
+            if (sessionId != null && !sessionId.trim().isEmpty()) {
+                logger.debug("Session ID extraído del token: {}", sessionId);
+                return sessionId;
+            } else {
+                logger.debug("Token no contiene session ID válido");
+                return null;
+            }
+        } catch (Exception e) {
+            logger.debug("Error al extraer session ID del token: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -362,8 +424,9 @@ public class JwtService {
             Claims claims = validateRefreshToken(refreshToken);
             String username = claims.getSubject();
             Integer userId = extractUserId(refreshToken);
+            String sessionId = extractSessionId(refreshToken);
             
-            return generateAccessToken(username, userId, roles);
+            return generateAccessToken(username, userId, roles, sessionId);
             
         } catch (Exception e) {
             logger.error("Error al renovar access token: {}", e.getMessage());
@@ -405,6 +468,7 @@ public class JwtService {
             info.put("userId", extractUserId(token));
             info.put("roles", extractRoles(token));
             info.put("tokenType", extractTokenType(token));
+            info.put("sessionId", extractSessionId(token));
             info.put("timeToExpiration", getFormattedTimeToExpiration(token));
             info.put("expired", isTokenExpired(token));
             

@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import mx.com.qtx.cotizador.security.service.SessionCacheService;
 
 /**
  * Servicio para validación de tokens JWT usando claves JWKS
@@ -36,6 +37,7 @@ public class JwtValidationService {
     private static final Logger logger = LoggerFactory.getLogger(JwtValidationService.class);
 
     private final JwksClient jwksClient;
+    private final SessionCacheService sessionCacheService;
     private final String expectedIssuer;
     private final ConcurrentMap<String, PublicKey> keyCache = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Long> keyCacheTimestamps = new ConcurrentHashMap<>();
@@ -47,33 +49,41 @@ public class JwtValidationService {
     private final boolean logRotationEvents;
     private final boolean cleanupOldKeys;
     
+    // Configuración de validación de sesiones
+    private final boolean sessionValidationEnabled;
+    
     // Contador de intentos con KIDs inválidos
     private final AtomicInteger invalidKidAttempts = new AtomicInteger(0);
 
     public JwtValidationService(
             JwksClient jwksClient,
+            SessionCacheService sessionCacheService,
             @Value("${jwt.expected-issuer:ms-seguridad}") String expectedIssuer,
             @Value("${jwt.cache-timeout-ms:300000}") long cacheTimeoutMs,
             @Value("${jwt.key-rotation.enabled:true}") boolean keyRotationEnabled,
             @Value("${jwt.key-rotation.security-alert-threshold:3}") int securityAlertThreshold,
             @Value("${jwt.key-rotation.log-rotation-events:true}") boolean logRotationEvents,
-            @Value("${jwt.key-rotation.cleanup-old-keys:true}") boolean cleanupOldKeys) {
+            @Value("${jwt.key-rotation.cleanup-old-keys:true}") boolean cleanupOldKeys,
+            @Value("${jwt.session-validation.enabled:true}") boolean sessionValidationEnabled) {
         this.jwksClient = jwksClient;
+        this.sessionCacheService = sessionCacheService;
         this.expectedIssuer = expectedIssuer;
         this.cacheTimeoutMs = cacheTimeoutMs;
         this.keyRotationEnabled = keyRotationEnabled;
         this.securityAlertThreshold = securityAlertThreshold;
         this.logRotationEvents = logRotationEvents;
         this.cleanupOldKeys = cleanupOldKeys;
+        this.sessionValidationEnabled = sessionValidationEnabled;
         
         logger.info("JwtValidationService inicializado - Issuer: {}, Cache timeout: {}ms, " +
-                   "Rotación reactiva: {}, Alert threshold: {}, Log events: {}, Cleanup: {}", 
+                   "Rotación reactiva: {}, Alert threshold: {}, Log events: {}, Cleanup: {}, " +
+                   "Validación sesiones: {}", 
                    expectedIssuer, cacheTimeoutMs, keyRotationEnabled, securityAlertThreshold, 
-                   logRotationEvents, cleanupOldKeys);
+                   logRotationEvents, cleanupOldKeys, sessionValidationEnabled);
     }
 
     /**
-     * Valida un token JWT completo
+     * Valida un token JWT completo incluyendo validación de sesión
      * 
      * @param token El token JWT a validar
      * @return Claims del token si es válido
@@ -87,13 +97,20 @@ public class JwtValidationService {
             // Obtener la clave pública
             PublicKey publicKey = getPublicKey(keyId);
             
-            // Validar el token
-            return Jwts.parser()
+            // Validar estructura y firma del token
+            Claims claims = Jwts.parser()
                     .verifyWith(publicKey)
                     .requireIssuer(expectedIssuer)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
+            
+            // Validar sesión si está habilitada
+            if (sessionValidationEnabled) {
+                validateTokenSession(claims);
+            }
+            
+            return claims;
                     
         } catch (ExpiredJwtException e) {
             throw new JwtValidationException("Token expirado", e);
@@ -107,6 +124,42 @@ public class JwtValidationService {
             throw new JwtValidationException("Token vacío o nulo", e);
         } catch (Exception e) {
             throw new JwtValidationException("Error inesperado validando token", e);
+        }
+    }
+
+    /**
+     * Valida la sesión asociada al token
+     * 
+     * @param claims Claims del token ya validado
+     * @throws JwtValidationException si la sesión no es válida
+     */
+    private void validateTokenSession(Claims claims) throws JwtValidationException {
+        try {
+            // Extraer sessionId del token
+            String sessionId = claims.get("session_id", String.class);
+            
+            if (sessionId == null || sessionId.trim().isEmpty()) {
+                // Token sin sesión - permitir por compatibilidad hacia atrás
+                logger.debug("Token sin session_id - permitido por compatibilidad");
+                return;
+            }
+            
+            // Validar sesión usando SessionCacheService
+            boolean isSessionActive = sessionCacheService.validateSession(sessionId);
+            
+            if (!isSessionActive) {
+                logger.warn("Sesión inválida o expirada: {}", sessionId);
+                throw new JwtValidationException("Sesión inválida o expirada");
+            }
+            
+            logger.debug("Sesión válida: {}", sessionId);
+            
+        } catch (JwtValidationException e) {
+            // Re-lanzar excepciones de validación
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error validando sesión del token", e);
+            throw new JwtValidationException("Error validando sesión", e);
         }
     }
 
