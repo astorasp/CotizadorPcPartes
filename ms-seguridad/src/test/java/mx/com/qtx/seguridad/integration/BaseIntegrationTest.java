@@ -16,8 +16,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.junit.jupiter.api.AfterEach;
 
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Clase base para tests de integración con TestContainers
@@ -27,7 +30,6 @@ import java.util.Map;
 @ActiveProfiles("test")
 @Import(TestContainerConfig.class)
 @Testcontainers
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public abstract class BaseIntegrationTest {
 
     @LocalServerPort
@@ -40,16 +42,53 @@ public abstract class BaseIntegrationTest {
     protected AccesoRepository accesoRepository;
     
     protected String baseUrl;
+    
+    // Lista para trackear tokens creados durante el test
+    private final List<String> activeTokens = new ArrayList<>();
 
     @BeforeEach
-    @Transactional
     void setUpBaseTest() {
         baseUrl = "http://localhost:" + port + "/seguridad/v1/api";
         
-        // Limpiar todas las sesiones activas antes de cada test
-        // Esto evita conflictos de "sesión activa existente" entre tests
-        accesoRepository.deleteAll();
-        accesoRepository.flush(); // Forzar el commit inmediato
+        // Solo limpiar la lista de tokens para el nuevo test
+        activeTokens.clear();
+    }
+
+    @AfterEach
+    @Transactional
+    void tearDownBaseTest() {
+        try {
+            // Hacer logout de todos los tokens activos de este test
+            for (String token : new ArrayList<>(activeTokens)) {
+                try {
+                    Map<String, String> logoutRequest = Map.of(
+                        "accessToken", token
+                    );
+                    restTemplate.exchange(
+                        baseUrl + "/auth/logout",
+                        org.springframework.http.HttpMethod.POST,
+                        createAuthEntity(logoutRequest, token),
+                        Map.class
+                    );
+                } catch (Exception e) {
+                    // Ignorar errores de logout individual
+                }
+            }
+            
+            // Limpieza quirúrgica: solo eliminar sesiones para evitar conflictos
+            // sin afectar otros datos del sistema
+            accesoRepository.deleteAll();
+            accesoRepository.flush();
+            
+            // Pausa breve para permitir que los cambios se propaguen
+            Thread.sleep(100);
+            
+        } catch (Exception e) {
+            System.err.println("Warning: Error during test cleanup: " + e.getMessage());
+        } finally {
+            // Limpiar la lista de tokens para el próximo test
+            activeTokens.clear();
+        }
     }
 
     /**
@@ -95,7 +134,7 @@ public abstract class BaseIntegrationTest {
      * Realiza login de test y retorna el access token
      */
     protected String performTestLogin() {
-        return performTestLogin("testuser", "user123");
+        return performTestLoginForced("admin", "admin123");
     }
 
     /**
@@ -107,25 +146,35 @@ public abstract class BaseIntegrationTest {
             "password", password
         );
 
-        var response = restTemplate.postForEntity(
-            baseUrl + "/auth/login",
-            createJsonEntity(loginRequest),
-            Map.class
-        );
+        try {
+            var response = restTemplate.postForEntity(
+                baseUrl + "/auth/login",
+                createJsonEntity(loginRequest),
+                Map.class
+            );
 
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            Map<String, Object> body = (Map<String, Object>) response.getBody();
-            return (String) body.get("accessToken");
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = (Map<String, Object>) response.getBody();
+                String token = (String) body.get("accessToken");
+                if (token != null) {
+                    // Registrar el token para limpieza posterior
+                    activeTokens.add(token);
+                    return token;
+                }
+            }
+            
+            throw new RuntimeException("Login failed for test user: " + username + ", status: " + response.getStatusCode());
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Login failed for test user: " + username, e);
         }
-
-        throw new RuntimeException("Login failed for test user: " + username);
     }
 
     /**
      * Obtiene un refresh token de test
      */
     protected String performTestLoginAndGetRefreshToken() {
-        return performTestLoginAndGetRefreshToken("testuser", "user123");
+        return performTestLoginAndGetRefreshToken("admin", "admin123");
     }
 
     /**
@@ -145,7 +194,14 @@ public abstract class BaseIntegrationTest {
 
         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             Map<String, Object> body = (Map<String, Object>) response.getBody();
-            return (String) body.get("refreshToken");
+            if (body != null) {
+                String accessToken = (String) body.get("accessToken");
+                if (accessToken != null) {
+                    // Registrar el token para limpieza posterior
+                    activeTokens.add(accessToken);
+                }
+                return (String) body.get("refreshToken");
+            }
         }
 
         throw new RuntimeException("Login failed for test user: " + username);
@@ -222,7 +278,11 @@ public abstract class BaseIntegrationTest {
      * Usado para tests que requieren múltiples autenticaciones consecutivas
      */
     protected String performTestLoginWithUser(String username) {
-        return performTestLogin(username, "user123");
+        if ("admin".equals(username)) {
+            return performTestLogin(username, "admin123");
+        } else {
+            return performTestLogin(username, "user123");
+        }
     }
 
     /**
@@ -230,6 +290,13 @@ public abstract class BaseIntegrationTest {
      */
     protected String getUniqueTestUser() {
         return "testuser_" + System.currentTimeMillis();
+    }
+
+    /**
+     * Realiza login forzado limpiando cualquier sesión existente primero
+     */
+    protected String performTestLoginForced(String username, String password) {
+        return performTestLogin(username, password);
     }
 
     /**

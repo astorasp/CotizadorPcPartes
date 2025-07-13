@@ -1,10 +1,8 @@
 package mx.com.qtx.seguridad.controller;
 
 import mx.com.qtx.seguridad.dto.UsuarioDto;
-import mx.com.qtx.seguridad.dto.UsuarioMapper;
 import mx.com.qtx.seguridad.domain.Usuario;
-import mx.com.qtx.seguridad.repository.UsuarioRepository;
-import mx.com.qtx.seguridad.repository.RolAsignadoRepository;
+import mx.com.qtx.seguridad.service.UsuarioService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,7 +11,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -32,19 +29,10 @@ import java.util.Optional;
 @PreAuthorize("hasRole('ADMIN')")
 public class UsuarioController {
 
-    private final UsuarioRepository usuarioRepository;
-    private final RolAsignadoRepository rolAsignadoRepository;
-    private final UsuarioMapper usuarioMapper;
-    private final PasswordEncoder passwordEncoder;
+    private final UsuarioService usuarioService;
 
-    public UsuarioController(UsuarioRepository usuarioRepository,
-                           RolAsignadoRepository rolAsignadoRepository,
-                           UsuarioMapper usuarioMapper,
-                           PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = usuarioRepository;
-        this.rolAsignadoRepository = rolAsignadoRepository;
-        this.usuarioMapper = usuarioMapper;
-        this.passwordEncoder = passwordEncoder;
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
     }
 
     /**
@@ -67,16 +55,12 @@ public class UsuarioController {
             Sort.Direction sortDirection = Sort.Direction.fromString(direction);
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
             
-            Page<Usuario> usuariosPage = usuarioRepository.findAll(pageable);
+            Page<Usuario> usuariosPage = usuarioService.obtenerUsuariosPaginados(pageable);
             
             List<UsuarioDto> usuariosDto = usuariosPage.getContent().stream()
                     .map(usuario -> {
-                        List<String> roles = rolAsignadoRepository.findByUsuarioIdAndActivo(usuario.getId(), true)
-                                .stream()
-                                .map(ra -> ra.getRol().getNombre())
-                                .distinct()
-                                .toList();
-                        return usuarioMapper.toDto(usuario, roles);
+                        List<String> roles = usuarioService.obtenerRolesDeUsuario(usuario.getId());
+                        return usuarioService.convertirADtoConRoles(usuario, roles);
                     })
                     .toList();
             
@@ -108,7 +92,7 @@ public class UsuarioController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUsuario(@PathVariable Integer id) {
         try {
-            Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+            Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(id);
             
             if (usuarioOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
@@ -118,13 +102,9 @@ public class UsuarioController {
             }
 
             Usuario usuario = usuarioOpt.get();
-            List<String> roles = rolAsignadoRepository.findByUsuarioIdAndActivo(id, true)
-                    .stream()
-                    .map(ra -> ra.getRol().getNombre())
-                    .distinct()
-                    .toList();
+            List<String> roles = usuarioService.obtenerRolesDeUsuario(id);
             
-            UsuarioDto usuarioDto = usuarioMapper.toDto(usuario, roles);
+            UsuarioDto usuarioDto = usuarioService.convertirADtoConRoles(usuario, roles);
             
             return ResponseEntity.ok(usuarioDto);
             
@@ -146,7 +126,7 @@ public class UsuarioController {
     public ResponseEntity<?> createUsuario(@Valid @RequestBody UsuarioDto usuarioDto) {
         try {
             // Validar que el DTO sea válido para creación
-            if (!usuarioMapper.isValidForCreation(usuarioDto)) {
+            if (!usuarioService.esValidoParaCreacion(usuarioDto)) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "validation_error");
                 error.put("message", "Datos inválidos para crear usuario. Usuario y contraseña son requeridos.");
@@ -154,7 +134,7 @@ public class UsuarioController {
             }
 
             // Verificar que el usuario no exista
-            Optional<Usuario> existingUser = usuarioRepository.findByUsuario(usuarioDto.getUsuario());
+            Optional<Usuario> existingUser = usuarioService.buscarPorNombreUsuario(usuarioDto.getUsuario());
             if (existingUser.isPresent()) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "user_exists");
@@ -162,18 +142,11 @@ public class UsuarioController {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
             }
 
-            // Crear nueva entidad Usuario
-            Usuario nuevoUsuario = usuarioMapper.toEntity(usuarioDto);
-            
-            // Encriptar contraseña
-            String passwordHash = passwordEncoder.encode(usuarioDto.getPassword());
-            nuevoUsuario.setPassword(passwordHash);
-            
-            // Guardar usuario
-            Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
+            // Crear usuario usando el servicio
+            Usuario usuarioGuardado = usuarioService.crearUsuario(usuarioDto);
             
             // Crear respuesta DTO (sin contraseña)
-            UsuarioDto responseDto = usuarioMapper.toDto(usuarioGuardado);
+            UsuarioDto responseDto = usuarioService.convertirADto(usuarioGuardado);
             
             return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
             
@@ -195,7 +168,7 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUsuario(@PathVariable Integer id, @Valid @RequestBody UsuarioDto usuarioDto) {
         try {
-            Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+            Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(id);
             
             if (usuarioOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
@@ -210,8 +183,7 @@ public class UsuarioController {
             if (usuarioDto.getUsuario() != null && 
                 !usuarioDto.getUsuario().equals(usuarioExistente.getUsuario())) {
                 
-                Optional<Usuario> existingUser = usuarioRepository.findByUsuario(usuarioDto.getUsuario());
-                if (existingUser.isPresent() && !existingUser.get().getId().equals(id)) {
+                if (usuarioService.existeOtroUsuarioConNombre(usuarioDto.getUsuario(), id)) {
                     Map<String, String> error = new HashMap<>();
                     error.put("error", "user_exists");
                     error.put("message", "Ya existe otro usuario con ese nombre");
@@ -219,26 +191,13 @@ public class UsuarioController {
                 }
             }
 
-            // Actualizar campos del usuario
-            Usuario usuarioActualizado = usuarioMapper.updateEntity(usuarioExistente, usuarioDto);
-            
-            // Si se proporcionó nueva contraseña, encriptarla
-            if (usuarioDto.hasPassword()) {
-                String passwordHash = passwordEncoder.encode(usuarioDto.getPassword());
-                usuarioActualizado.setPassword(passwordHash);
-            }
-            
-            // Guardar cambios
-            Usuario usuarioGuardado = usuarioRepository.save(usuarioActualizado);
+            // Actualizar usuario usando el servicio
+            Usuario usuarioGuardado = usuarioService.actualizarUsuario(usuarioExistente, usuarioDto);
             
             // Obtener roles actuales para la respuesta
-            List<String> roles = rolAsignadoRepository.findByUsuarioIdAndActivo(id, true)
-                    .stream()
-                    .map(ra -> ra.getRol().getNombre())
-                    .distinct()
-                    .toList();
+            List<String> roles = usuarioService.obtenerRolesDeUsuario(id);
             
-            UsuarioDto responseDto = usuarioMapper.toDto(usuarioGuardado, roles);
+            UsuarioDto responseDto = usuarioService.convertirADtoConRoles(usuarioGuardado, roles);
             
             return ResponseEntity.ok(responseDto);
             
@@ -259,7 +218,7 @@ public class UsuarioController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUsuario(@PathVariable Integer id) {
         try {
-            Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+            Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(id);
             
             if (usuarioOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
@@ -270,14 +229,8 @@ public class UsuarioController {
 
             Usuario usuario = usuarioOpt.get();
             
-            // Soft delete - marcar como inactivo
-            usuario.setActivo(false);
-            usuarioRepository.save(usuario);
-            
-            // También desactivar todas las asignaciones de roles
-            var rolesAsignados = rolAsignadoRepository.findByUsuarioId(id);
-            rolesAsignados.forEach(ra -> ra.setActivo(false));
-            rolAsignadoRepository.saveAll(rolesAsignados);
+            // Desactivar usuario usando el servicio
+            usuarioService.desactivarUsuario(usuario);
             
             Map<String, String> response = new HashMap<>();
             response.put("message", "Usuario desactivado exitosamente");
@@ -302,9 +255,10 @@ public class UsuarioController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getUserStats() {
         try {
-            long totalUsers = usuarioRepository.count();
-            long activeUsers = usuarioRepository.countByActivoTrue();
-            long inactiveUsers = totalUsers - activeUsers;
+            long[] estadisticas = usuarioService.obtenerEstadisticasUsuarios();
+            long totalUsers = estadisticas[0];
+            long activeUsers = estadisticas[1];
+            long inactiveUsers = estadisticas[2];
             
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalUsers", totalUsers);

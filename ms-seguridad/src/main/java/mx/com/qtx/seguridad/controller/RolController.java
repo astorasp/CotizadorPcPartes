@@ -2,11 +2,8 @@ package mx.com.qtx.seguridad.controller;
 
 import mx.com.qtx.seguridad.domain.Rol;
 import mx.com.qtx.seguridad.domain.RolAsignado;
-import mx.com.qtx.seguridad.domain.RolAsignadoId;
 import mx.com.qtx.seguridad.domain.Usuario;
-import mx.com.qtx.seguridad.repository.RolRepository;
-import mx.com.qtx.seguridad.repository.RolAsignadoRepository;
-import mx.com.qtx.seguridad.repository.UsuarioRepository;
+import mx.com.qtx.seguridad.service.RolService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,16 +24,10 @@ import java.util.Optional;
 @PreAuthorize("hasRole('ADMIN')")
 public class RolController {
 
-    private final RolRepository rolRepository;
-    private final RolAsignadoRepository rolAsignadoRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final RolService rolService;
 
-    public RolController(RolRepository rolRepository,
-                        RolAsignadoRepository rolAsignadoRepository,
-                        UsuarioRepository usuarioRepository) {
-        this.rolRepository = rolRepository;
-        this.rolAsignadoRepository = rolAsignadoRepository;
-        this.usuarioRepository = usuarioRepository;
+    public RolController(RolService rolService) {
+        this.rolService = rolService;
     }
 
     /**
@@ -47,7 +38,7 @@ public class RolController {
     @GetMapping
     public ResponseEntity<?> getRoles() {
         try {
-            List<Rol> roles = rolRepository.findByActivoTrue();
+            List<Rol> roles = rolService.obtenerRolesActivos();
             
             List<Map<String, Object>> rolesResponse = roles.stream()
                     .map(rol -> {
@@ -84,7 +75,7 @@ public class RolController {
     @GetMapping("/usuario/{usuarioId}")
     public ResponseEntity<?> getRolesByUsuario(@PathVariable Integer usuarioId) {
         try {
-            Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
+            Optional<Usuario> usuarioOpt = rolService.buscarUsuarioPorId(usuarioId);
             
             if (usuarioOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
@@ -93,7 +84,7 @@ public class RolController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
             }
 
-            List<RolAsignado> rolesAsignados = rolAsignadoRepository.findByUsuarioIdAndActivo(usuarioId, true);
+            List<RolAsignado> rolesAsignados = rolService.obtenerRolesPorUsuario(usuarioId);
             
             List<Map<String, Object>> rolesResponse = rolesAsignados.stream()
                     .map(ra -> {
@@ -132,7 +123,7 @@ public class RolController {
     public ResponseEntity<?> asignarRol(@PathVariable Integer usuarioId, @PathVariable Integer rolId) {
         try {
             // Verificar que el usuario existe
-            Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
+            Optional<Usuario> usuarioOpt = rolService.buscarUsuarioPorId(usuarioId);
             if (usuarioOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "user_not_found");
@@ -141,8 +132,8 @@ public class RolController {
             }
 
             // Verificar que el rol existe y está activo
-            Optional<Rol> rolOpt = rolRepository.findById(rolId);
-            if (rolOpt.isEmpty() || !rolOpt.get().isActivo()) {
+            Optional<Rol> rolOpt = rolService.buscarRolActivoPorId(rolId);
+            if (rolOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "role_not_found");
                 error.put("message", "Rol no encontrado o inactivo");
@@ -152,31 +143,14 @@ public class RolController {
             Usuario usuario = usuarioOpt.get();
             Rol rol = rolOpt.get();
 
-            // Verificar si la asignación ya existe
-            RolAsignadoId rolAsignadoId = new RolAsignadoId(usuarioId, rolId);
-            Optional<RolAsignado> existingAssignment = rolAsignadoRepository.findById(rolAsignadoId);
+            // Asignar rol usando el servicio
+            boolean asignado = rolService.asignarRol(usuarioId, rolId, usuario, rol);
             
-            if (existingAssignment.isPresent()) {
-                RolAsignado existing = existingAssignment.get();
-                if (existing.isActivo()) {
-                    Map<String, String> error = new HashMap<>();
-                    error.put("error", "role_already_assigned");
-                    error.put("message", "El rol ya está asignado al usuario");
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-                } else {
-                    // Reactivar asignación existente
-                    existing.setActivo(true);
-                    rolAsignadoRepository.save(existing);
-                }
-            } else {
-                // Crear nueva asignación
-                RolAsignado nuevaAsignacion = new RolAsignado();
-                nuevaAsignacion.setId(rolAsignadoId);
-                nuevaAsignacion.setUsuario(usuario);
-                nuevaAsignacion.setRol(rol);
-                nuevaAsignacion.setActivo(true);
-                
-                rolAsignadoRepository.save(nuevaAsignacion);
+            if (!asignado) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "role_already_assigned");
+                error.put("message", "El rol ya está asignado al usuario");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
             }
             
             Map<String, Object> response = new HashMap<>();
@@ -209,7 +183,7 @@ public class RolController {
     public ResponseEntity<?> revocarRol(@PathVariable Integer usuarioId, @PathVariable Integer rolId) {
         try {
             // Verificar que el usuario existe
-            Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
+            Optional<Usuario> usuarioOpt = rolService.buscarUsuarioPorId(usuarioId);
             if (usuarioOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "user_not_found");
@@ -218,7 +192,7 @@ public class RolController {
             }
 
             // Verificar que el rol existe
-            Optional<Rol> rolOpt = rolRepository.findById(rolId);
+            Optional<Rol> rolOpt = rolService.buscarRolPorId(rolId);
             if (rolOpt.isEmpty()) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "role_not_found");
@@ -226,21 +200,15 @@ public class RolController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
             }
 
-            // Buscar la asignación activa
-            RolAsignadoId rolAsignadoId = new RolAsignadoId(usuarioId, rolId);
-            Optional<RolAsignado> assignmentOpt = rolAsignadoRepository.findById(rolAsignadoId);
+            // Revocar rol usando el servicio
+            boolean revocado = rolService.revocarRol(usuarioId, rolId);
             
-            if (assignmentOpt.isEmpty() || !assignmentOpt.get().isActivo()) {
+            if (!revocado) {
                 Map<String, String> error = new HashMap<>();
                 error.put("error", "role_not_assigned");
                 error.put("message", "El rol no está asignado al usuario");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
             }
-
-            // Desactivar la asignación (soft delete)
-            RolAsignado assignment = assignmentOpt.get();
-            assignment.setActivo(false);
-            rolAsignadoRepository.save(assignment);
             
             Usuario usuario = usuarioOpt.get();
             Rol rol = rolOpt.get();
@@ -272,14 +240,14 @@ public class RolController {
     @GetMapping("/stats")
     public ResponseEntity<?> getRoleStats() {
         try {
-            List<Rol> rolesActivos = rolRepository.findByActivoTrue();
+            List<Rol> rolesActivos = rolService.obtenerRolesConEstadisticas();
             
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalRoles", rolesActivos.size());
             
             List<Map<String, Object>> roleDetails = rolesActivos.stream()
                     .map(rol -> {
-                        long assignedUsers = rolAsignadoRepository.countByRolIdAndActivo(rol.getId(), true);
+                        long assignedUsers = rolService.contarUsuariosAsignados(rol.getId());
                         
                         Map<String, Object> roleStat = new HashMap<>();
                         roleStat.put("rolId", rol.getId());

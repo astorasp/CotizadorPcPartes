@@ -1,6 +1,6 @@
 package mx.com.qtx.seguridad.integration;
 
-import mx.com.qtx.seguridad.dto.TokenResponse;
+
 import mx.com.qtx.seguridad.dto.TokenTtlResponse;
 
 import org.junit.jupiter.api.Test;
@@ -199,9 +199,23 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("POST /auth/logout - Debe realizar logout exitosamente")
     void shouldLogoutSuccessfully() {
-        // Given - Obtener tokens válidos primero (usar diferentes usuarios para evitar conflicto de sesión)
-        String accessToken = performTestLogin("testuser", "user123");
-        String refreshToken = performTestLoginAndGetRefreshToken("admin", "admin123");
+        // Given - Obtener ambos tokens del mismo login para evitar conflicto de sesión única
+        Map<String, String> loginRequest = Map.of(
+            "usuario", "admin",
+            "password", "admin123"
+        );
+
+        ResponseEntity<Map> loginResponse = restTemplate.postForEntity(
+                baseUrl + "/auth/login",
+                createJsonEntity(loginRequest),
+                Map.class
+        );
+        
+        Map<String, Object> loginBody = loginResponse.getBody();
+        String accessToken = (String) loginBody.get("accessToken");
+        String refreshToken = (String) loginBody.get("refreshToken");
+        
+        // No es necesario registrar tokens aquí ya que haremos logout explícito
 
         Map<String, String> logoutRequest = new HashMap<>();
         logoutRequest.put("accessToken", accessToken);

@@ -215,10 +215,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if ("GET".equals(method) && path.startsWith("/v3/api-docs")) {
             return true;
         }
-        
-        if ("GET".equals(method) && path.startsWith("/monitoring/session-cleanup-job")) {
-            return true;
-        }
 
         // Para todas las demás URLs, ejecutar el filtro
         logger.debug("⚡ Aplicando filtro JWT para: {} {}", method, path);
