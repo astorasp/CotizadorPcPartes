@@ -35,10 +35,17 @@
 git clone <repository-url>
 cd CotizadorPcPartes
 
-# 2. Levantar todo el sistema
+# 2. Inicializar configuración de entorno
+# Linux/macOS:
+./init-env.sh
+
+# Windows PowerShell:
+./init-env.ps1
+
+# 3. Levantar todo el sistema
 docker-compose up -d
 
-# 3. Verificar que los servicios estén funcionando
+# 4. Verificar que los servicios estén funcionando
 docker-compose ps
 ```
 
@@ -259,6 +266,39 @@ CotizadorPcPartes/
 ---
 
 ## 🔧 Configuración y Desarrollo
+
+### ⚙️ **Configuración de Entorno (REQUERIDO)**
+
+Antes de ejecutar el sistema, **debes inicializar** los archivos de configuración:
+
+#### **🐧 Linux / 🍎 macOS**
+```bash
+# Ejecutar script de inicialización
+./init-env.sh
+
+# Opciones disponibles:
+# - Genera automáticamente contraseñas seguras
+# - Crea archivos .env y .env.production
+# - Verifica dependencias (Docker, Docker Compose)
+```
+
+#### **🪟 Windows PowerShell**
+```powershell
+# Ejecutar script de inicialización
+./init-env.ps1
+
+# Opciones avanzadas:
+./init-env.ps1 -AutoGeneratePasswords  # Genera contraseñas automáticamente
+./init-env.ps1 -Force                  # Sobrescribe archivos existentes
+```
+
+#### **📁 Archivos Creados**
+- **`.env`**: Configuración Docker Compose (desde `.env.example`)
+- **`portal-cotizador/.env.production`**: Configuración frontend Vue.js (desde `portal-cotizador/.env.example`)
+
+⚠️ **IMPORTANTE**: Estos archivos **NO** están en Git por seguridad. Debes ejecutar el script de inicialización en cada nuevo entorno.
+
+---
 
 ### 🛠️ **Desarrollo Local (Sin Docker)**
 
@@ -860,24 +900,34 @@ docker-compose ps
 
 | Problema | Causa | Solución |
 |----------|-------|----------|
+| **`docker-compose up` falla** | Archivos .env faltantes | **Ejecutar `./init-env.sh` o `./init-env.ps1` primero** |
 | **Portal no carga** | Backend no disponible | `docker-compose ps` |
 | **Error 401** | Autenticación | Verificar credenciales |
+| **API calls fallan** | `.env.production` faltante | **Ejecutar script de inicialización** |
 | **Base de datos vacía** | Scripts no ejecutados | Verificar DDL/DML |
 | **Loading infinito** | Error en API | Verificar logs backend |
 
 #### **Comandos de Diagnóstico**
 
 ```bash
-# Verificar servicios
+# 1. Verificar archivos de configuración
+ls -la .env portal-cotizador/.env.production
+
+# 2. Si faltan archivos, ejecutar inicialización
+./init-env.sh  # Linux/macOS
+# o
+./init-env.ps1  # Windows
+
+# 3. Verificar servicios
 docker-compose ps
 docker-compose logs backend
 docker-compose logs frontend
 
-# Health checks
-curl http://localhost:8080/actuator/health
+# 4. Health checks
+curl http://localhost/actuator/health
 curl http://localhost/
 
-# Reiniciar servicios
+# 5. Reiniciar servicios
 docker-compose restart
 ```
 
