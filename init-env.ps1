@@ -69,6 +69,37 @@ function Replace-EnvValue {
     $newContent | Set-Content $FilePath
 }
 
+function New-VueEnvProduction {
+    $vueEnvExample = "portal-cotizador\.env.example"
+    $vueEnvFile = "portal-cotizador\.env.production"
+    
+    # Verificar si el directorio portal-cotizador existe
+    if (-not (Test-Path "portal-cotizador")) {
+        Write-Warning "Directorio portal-cotizador no encontrado, omitiendo creación de .env.production"
+        return
+    }
+    
+    # Verificar si existe el archivo .env.example
+    if (-not (Test-Path $vueEnvExample)) {
+        Write-Warning "No se encontró $vueEnvExample, omitiendo creación de .env.production"
+        return
+    }
+    
+    # Si el archivo ya existe, preguntar si sobrescribir
+    if ((Test-Path $vueEnvFile) -and -not $Force) {
+        Write-Warning "El archivo $vueEnvFile ya existe"
+        $response = Read-Host "¿Deseas sobrescribirlo? (y/N)"
+        if ($response -ne "y" -and $response -ne "Y") {
+            Write-Info "Manteniendo archivo .env.production existente"
+            return
+        }
+    }
+    
+    # Copiar .env.example a .env.production
+    Copy-Item $vueEnvExample $vueEnvFile
+    Write-Success "Archivo .env.production creado desde .env.example en portal-cotizador\"
+}
+
 function Test-DockerAvailable {
     try {
         $null = docker --version
@@ -127,6 +158,10 @@ function Main {
     Write-Info "Creando archivo .env desde .env.example..."
     Copy-Item ".env.example" ".env"
     
+    # Crear archivo .env.production para el portal Vue.js
+    Write-Info "Creando archivo .env.production para el portal Vue.js..."
+    New-VueEnvProduction
+    
     # Preguntar si generar contraseñas automáticamente (si no se especificó en parámetro)
     $generatePasswords = $AutoGeneratePasswords
     if (-not $AutoGeneratePasswords) {
@@ -178,13 +213,17 @@ function Main {
     Write-Host "  3. Verifica el estado con: docker-compose ps"
     Write-Host ""
     Write-Info "URLs de los servicios:"
-    Write-Host "  🔐 ms-seguridad: http://localhost:8081"
-    Write-Host "  🏪 ms-cotizador: http://localhost:8080/cotizador/v1/api"
+    Write-Host "  🌐 Portal Web: http://localhost (a través del gateway)"
+    Write-Host "  🔐 ms-seguridad: http://localhost/api/seguridad"
+    Write-Host "  🏪 ms-cotizador: http://localhost/api/cotizador"
     Write-Host "  📊 Health checks:"
-    Write-Host "     - Seguridad: http://localhost:8091/actuator/health"
-    Write-Host "     - Cotizador: http://localhost:8080/cotizador/v1/api/actuator/health"
+    Write-Host "     - Seguridad: http://localhost/seguridad/actuator/health"
+    Write-Host "     - Cotizador: http://localhost/actuator/health"
     Write-Host ""
-    Write-Warning "IMPORTANTE: Nunca commitees el archivo .env al repositorio"
+    Write-Warning "IMPORTANTE: Nunca commitees los archivos .env al repositorio"
+    Write-Info "Archivos de configuración creados:"
+    Write-Host "  - .env (desde .env.example - configuración Docker Compose)"
+    Write-Host "  - portal-cotizador\.env.production (desde .env.example - configuración frontend)"
 }
 
 # Ejecutar función principal

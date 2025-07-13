@@ -66,6 +66,39 @@ replace_env_value() {
     fi
 }
 
+# Función para crear el archivo .env.production del portal Vue.js
+create_vue_env_production() {
+    local vue_env_example="portal-cotizador/.env.example"
+    local vue_env_file="portal-cotizador/.env.production"
+    
+    # Verificar si el directorio portal-cotizador existe
+    if [[ ! -d "portal-cotizador" ]]; then
+        print_warning "Directorio portal-cotizador no encontrado, omitiendo creación de .env.production"
+        return
+    fi
+    
+    # Verificar si existe el archivo .env.example
+    if [[ ! -f "$vue_env_example" ]]; then
+        print_warning "No se encontró $vue_env_example, omitiendo creación de .env.production"
+        return
+    fi
+    
+    # Si el archivo ya existe, preguntar si sobrescribir
+    if [[ -f "$vue_env_file" ]]; then
+        print_warning "El archivo $vue_env_file ya existe"
+        read -p "¿Deseas sobrescribirlo? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_info "Manteniendo archivo .env.production existente"
+            return
+        fi
+    fi
+    
+    # Copiar .env.example a .env.production
+    cp "$vue_env_example" "$vue_env_file"
+    print_success "Archivo .env.production creado desde .env.example en portal-cotizador/"
+}
+
 # Función principal
 main() {
     print_header
@@ -99,6 +132,10 @@ main() {
     
     print_info "Creando archivo .env desde .env.example..."
     cp .env.example .env
+    
+    # Crear archivo .env.production para el portal Vue.js
+    print_info "Creando archivo .env.production para el portal Vue.js..."
+    create_vue_env_production
     
     # Preguntar si generar contraseñas automáticamente
     echo
@@ -147,13 +184,17 @@ main() {
     echo "  3. Verifica el estado con: docker-compose ps"
     echo
     print_info "URLs de los servicios:"
-    echo "  🔐 ms-seguridad: http://localhost:8081"
-    echo "  🏪 ms-cotizador: http://localhost:8080/cotizador/v1/api"
+    echo "  🌐 Portal Web: http://localhost (a través del gateway)"
+    echo "  🔐 ms-seguridad: http://localhost/api/seguridad"
+    echo "  🏪 ms-cotizador: http://localhost/api/cotizador"
     echo "  📊 Health checks:"
-    echo "     - Seguridad: http://localhost:8091/actuator/health"
-    echo "     - Cotizador: http://localhost:8080/cotizador/v1/api/actuator/health"
+    echo "     - Seguridad: http://localhost/seguridad/actuator/health"
+    echo "     - Cotizador: http://localhost/actuator/health"
     echo
-    print_warning "IMPORTANTE: Nunca commitees el archivo .env al repositorio"
+    print_warning "IMPORTANTE: Nunca commitees los archivos .env al repositorio"
+    print_info "Archivos de configuración creados:"
+    echo "  - .env (desde .env.example - configuración Docker Compose)"
+    echo "  - portal-cotizador/.env.production (desde .env.example - configuración frontend)"
 }
 
 # Ejecutar función principal

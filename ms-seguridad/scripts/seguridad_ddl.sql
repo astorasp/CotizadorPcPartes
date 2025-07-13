@@ -155,13 +155,21 @@ INSERT INTO rol (nombre, activo) VALUES
 ('INVENTARIO', TRUE),
 ('CONSULTOR', TRUE);
 
--- Insertar usuario administrador por defecto
+-- Insertar usuarios por defecto del sistema
 INSERT INTO usuario (usuario, password, activo) VALUES 
-('admin', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE); -- password: password
+('admin', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE),     -- password: password
+('gerente', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE),   -- password: password
+('vendedor', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE),  -- password: password
+('inventario', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE), -- password: password
+('consultor', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE);  -- password: password
 
--- Asignar rol ADMIN al usuario admin
+-- Asignar roles a los usuarios
 INSERT INTO rol_asignado (id_usuario, id_rol, activo) VALUES 
-(1, 1, TRUE);
+(1, 1, TRUE), -- admin -> ADMIN
+(2, 4, TRUE), -- gerente -> GERENTE  
+(3, 5, TRUE), -- vendedor -> VENDEDOR
+(4, 6, TRUE), -- inventario -> INVENTARIO
+(5, 7, TRUE); -- consultor -> CONSULTOR
 
 -- =====================================================
 -- Script completado exitosamente
