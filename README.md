@@ -11,6 +11,7 @@
 ## 📋 Tabla de Contenidos
 
 - [🚀 Inicio Rápido](#-inicio-rápido)
+- [🎯 ¿Qué es el Sistema Cotizador de PC Partes?](#-qué-es-el-sistema-cotizador-de-pc-partes)
 - [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
 - [💡 Sistema de Loading Centralizado](#-sistema-de-loading-centralizado)
 - [📁 Estructura del Proyecto](#-estructura-del-proyecto)
@@ -26,28 +27,78 @@
 
 ---
 
-## 🚀 Inicio Rápido
+## 🎯 ¿Qué es el Sistema Cotizador de PC Partes?
 
-### ⚡ **Despliegue con Docker (Recomendado)**
+Este proyecto es una solución de software completa diseñada para empresas que venden componentes de hardware y ensamblan computadoras personalizadas. Su objetivo principal es simplificar y automatizar todo el proceso de venta, desde la gestión del inventario hasta la entrega final del pedido, a través de un portal web intuitivo y roles de usuario bien definidos.
 
-```bash
-# 1. Clonar el repositorio
-git clone <repository-url>
-cd CotizadorPcPartes
+### El Flujo de Trabajo: De la Pieza al Pedido
 
-# 2. Inicializar configuración de entorno
-# Linux/macOS:
-./init-env.sh
+El sistema está organizado en módulos que reflejan un flujo de trabajo real en una tienda de computadoras:
 
-# Windows PowerShell:
-./init-env.ps1
+1.  **Módulo de Seguridad:**
+    *   Controla el ingreso al sistema. Todo usuario, sin importar su rol, debe **iniciar sesión** para acceder. El sistema garantiza que solo personal autorizado pueda operar y previene que un usuario tenga múltiples sesiones activas simultáneamente.
 
-# 3. Levantar todo el sistema
-docker-compose up -d
+2.  **Módulo de Gestión de Componentes y Proveedores:**
+    *   El ciclo comienza aquí. El **Personal de Inventario** o el **Gerente** se encargan de **registrar, consultar, editar y eliminar proveedores**.
+    *   Luego, **registran cada componente de hardware** (CPU, RAM, etc.) en el sistema, asociándolo a un proveedor y definiendo su costo y precio base.
 
-# 4. Verificar que los servicios estén funcionando
-docker-compose ps
-```
+3.  **Módulo de Ensamblaje de PCs:**
+    *   Con un catálogo de componentes ya cargado, el **Personal de Inventario** o el **Gerente** pueden **ensamblar PCs virtuales**.
+    *   Este módulo permite **crear configuraciones de PC**, seleccionando componentes compatibles. El sistema valida reglas de negocio (ej. no más de dos tarjetas de video) y calcula el costo total de la PC ensamblada.
+
+4.  **Módulo de Gestión de Cotizaciones:**
+    *   Aquí es donde entra el **Vendedor**. Cuando un cliente solicita un presupuesto, el vendedor puede **crear una nueva cotización**, ya sea agregando componentes individuales o una PC pre-ensamblada.
+    *   Opcionalmente, el **Gerente** o **Vendedor** pueden **aplicar promociones** (creadas previamente en el módulo de promociones) para ofrecer descuentos.
+    *   La cotización puede ser **consultada, editada o anulada** según sea necesario.
+
+5.  **Módulo de Gestión de Pedidos:**
+    *   Una vez que el cliente aprueba la cotización, el **Vendedor** la convierte en un **pedido formal** con un solo clic.
+    *   A partir de este punto, el **Personal de Inventario** puede **consultar los pedidos pendientes** y **actualizar su estado** (ej. "En ensamblaje", "Listo para entrega", "Entregado") a medida que avanza en el proceso de preparación y envío.
+
+6.  **Módulos de Soporte y Administración:**
+    *   **Gestión de Promociones:** El **Gerente** puede **crear, editar o eliminar promociones** que estarán disponibles para ser aplicadas en las cotizaciones.
+    *   **Consultas y Reportes:** Todos los roles tienen la capacidad de **consultar información** relevante para su trabajo. El rol de **Consultor** está específicamente limitado a esta función de solo lectura en todo el sistema.
+    *   **Gestión de Usuarios:** Exclusivamente, el **Administrador** puede **gestionar las cuentas de usuario y sus roles**, controlando así quién tiene acceso a qué funcionalidades.
+
+En resumen, este sistema orquesta una serie de casos de uso interconectados que digitalizan y optimizan la operación comercial, proporcionando a cada rol las herramientas precisas que necesita para cumplir con sus responsabilidades.
+
+### Funcionalidades por Rol
+
+Cada rol tiene un conjunto específico de responsabilidades y permisos dentro del sistema, asegurando que los usuarios solo accedan a las herramientas que necesitan para su trabajo.
+
+#### 👑 Administrador (Rol: `ADMIN`)
+El rol con control total sobre el sistema. Es el único que puede gestionar la configuración fundamental y los accesos.
+*   **Gestión de Usuarios:** Crear, editar y eliminar cuentas de usuario.
+*   **Gestión de Roles:** Asignar y modificar los roles de los usuarios.
+*   **Acceso Total:** Tiene todos los permisos de los demás roles, lo que le permite supervisar y operar en cualquier módulo del sistema (componentes, cotizaciones, pedidos, etc.).
+
+#### 🏢 Gerente (Rol: `GERENTE`)
+Responsable de la estrategia comercial y la supervisión de las operaciones.
+*   **Gestión de Promociones:** Crear, modificar y eliminar las ofertas y descuentos que se aplicarán en las cotizaciones.
+*   **Gestión de Inventario:** Puede editar componentes y proveedores, pero no crearlos desde cero.
+*   **Supervisión de Ventas:** Tiene acceso completo al ciclo de venta, pudiendo crear y anular cotizaciones y pedidos.
+*   **Visibilidad Completa:** Puede consultar toda la información del sistema, incluyendo costos y reportes financieros.
+
+#### 💼 Vendedor (Rol: `VENDEDOR`)
+El rol enfocado en el proceso de venta directa con el cliente.
+*   **Creación de Cotizaciones:** Es su función principal. Puede crear cotizaciones, añadirles productos y aplicar promociones existentes.
+*   **Conversión a Pedido:** Convierte una cotización aprobada por el cliente en un pedido formal.
+*   **Consulta:** Puede consultar el catálogo de componentes, PCs y proveedores para asistir al cliente, pero no puede modificarlos.
+*   **Seguimiento:** Puede ver el estado de sus propias cotizaciones y pedidos.
+
+#### 📦 Personal de Inventario (Rol: `INVENTARIO`)
+Responsable de la gestión física y digital del catálogo de productos.
+*   **Gestión de Catálogo:** Puede crear, consultar y editar tanto componentes como PCs ensambladas.
+*   **Gestión de Proveedores:** Registra y mantiene actualizada la información de los proveedores.
+*   **Gestión de Pedidos:** Consulta los pedidos generados por los vendedores y actualiza su estado a medida que los prepara y despacha.
+*   **Acceso Limitado a Ventas:** No puede crear ni modificar cotizaciones.
+
+#### 📊 Consultor (Rol: `CONSULTOR`)
+Un rol de solo lectura, diseñado para análisis y auditoría sin riesgo de modificar datos.
+*   **Consulta Total:** Puede ver toda la información del sistema: componentes, PCs, cotizaciones, pedidos, proveedores y promociones.
+*   **Sin Modificación:** No puede realizar ninguna acción de creación, edición o eliminación en ningún módulo.
+
+---
 
 ### 🌐 **Acceso a los Servicios**
 
@@ -261,6 +312,29 @@ CotizadorPcPartes/
 ├── docker-scripts.sh                # Docker Management Script
 ├── CLAUDE.md                        # AI Assistant Instructions
 └── README.md                        # This file
+```
+
+## 🚀 Inicio Rápido
+
+### ⚡ **Despliegue con Docker (Recomendado)**
+
+```bash
+# 1. Clonar el repositorio
+git clone <repository-url>
+cd CotizadorPcPartes
+
+# 2. Inicializar configuración de entorno
+# Linux/macOS:
+./init-env.sh
+
+# Windows PowerShell:
+./init-env.ps1
+
+# 3. Levantar todo el sistema
+docker-compose up -d
+
+# 4. Verificar que los servicios estén funcionando
+docker-compose ps
 ```
 
 ---
