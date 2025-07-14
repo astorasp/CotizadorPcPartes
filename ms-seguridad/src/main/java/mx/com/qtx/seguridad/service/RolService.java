@@ -1,10 +1,10 @@
 package mx.com.qtx.seguridad.service;
 
-import mx.com.qtx.seguridad.domain.Rol;
-import mx.com.qtx.seguridad.domain.RolAsignado;
-import mx.com.qtx.seguridad.domain.RolAsignadoId;
-import mx.com.qtx.seguridad.domain.Usuario;
 import mx.com.qtx.seguridad.repository.RolRepository;
+import mx.com.qtx.seguridad.entity.Rol;
+import mx.com.qtx.seguridad.entity.RolAsignado;
+import mx.com.qtx.seguridad.entity.RolAsignadoId;
+import mx.com.qtx.seguridad.entity.Usuario;
 import mx.com.qtx.seguridad.repository.RolAsignadoRepository;
 import mx.com.qtx.seguridad.repository.UsuarioRepository;
 

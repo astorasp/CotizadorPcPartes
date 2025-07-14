@@ -1,12 +1,13 @@
 package mx.com.qtx.seguridad.repository;
 
-import mx.com.qtx.seguridad.domain.RolAsignado;
-import mx.com.qtx.seguridad.domain.RolAsignadoId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import mx.com.qtx.seguridad.entity.RolAsignado;
+import mx.com.qtx.seguridad.entity.RolAsignadoId;
 
 import java.util.List;
 import java.util.Optional;

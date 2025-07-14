@@ -1,10 +1,11 @@
 package mx.com.qtx.seguridad.repository;
 
-import mx.com.qtx.seguridad.domain.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import mx.com.qtx.seguridad.entity.Usuario;
 
 import java.util.List;
 import java.util.Optional;

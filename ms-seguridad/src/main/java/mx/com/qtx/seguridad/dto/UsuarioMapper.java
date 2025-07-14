@@ -1,8 +1,9 @@
 package mx.com.qtx.seguridad.dto;
 
-import mx.com.qtx.seguridad.domain.Usuario;
-import mx.com.qtx.seguridad.domain.RolAsignado;
 import org.springframework.stereotype.Component;
+
+import mx.com.qtx.seguridad.entity.RolAsignado;
+import mx.com.qtx.seguridad.entity.Usuario;
 
 import java.util.List;
 import java.util.stream.Collectors;

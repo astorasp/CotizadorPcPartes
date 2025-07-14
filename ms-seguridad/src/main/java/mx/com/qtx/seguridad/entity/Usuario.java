@@ -1,4 +1,4 @@
-package mx.com.qtx.seguridad.domain;
+package mx.com.qtx.seguridad.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

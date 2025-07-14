@@ -44,7 +44,7 @@ public class Acceso {
     // Relación ManyToOne con Usuario
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private mx.com.qtx.seguridad.domain.Usuario usuario;
+    private mx.com.qtx.seguridad.entity.Usuario usuario;
 
     // Constructor por defecto requerido por JPA
     public Acceso() {
@@ -127,11 +127,11 @@ public class Acceso {
         this.usuarioId = usuarioId;
     }
 
-    public mx.com.qtx.seguridad.domain.Usuario getUsuario() {
+    public mx.com.qtx.seguridad.entity.Usuario getUsuario() {
         return usuario;
     }
 
-    public void setUsuario(mx.com.qtx.seguridad.domain.Usuario usuario) {
+    public void setUsuario(mx.com.qtx.seguridad.entity.Usuario usuario) {
         this.usuario = usuario;
     }
 

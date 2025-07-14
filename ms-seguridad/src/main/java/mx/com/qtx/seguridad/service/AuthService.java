@@ -1,8 +1,8 @@
 package mx.com.qtx.seguridad.service;
 
-import mx.com.qtx.seguridad.domain.Usuario;
-import mx.com.qtx.seguridad.domain.RolAsignado;
 import mx.com.qtx.seguridad.dto.TokenResponse;
+import mx.com.qtx.seguridad.entity.RolAsignado;
+import mx.com.qtx.seguridad.entity.Usuario;
 import mx.com.qtx.seguridad.repository.UsuarioRepository;
 import mx.com.qtx.seguridad.repository.RolAsignadoRepository;
 import org.slf4j.Logger;

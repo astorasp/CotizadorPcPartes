@@ -1,7 +1,7 @@
 package mx.com.qtx.seguridad.controller;
 
 import mx.com.qtx.seguridad.dto.UsuarioDto;
-import mx.com.qtx.seguridad.domain.Usuario;
+import mx.com.qtx.seguridad.entity.Usuario;
 import mx.com.qtx.seguridad.service.UsuarioService;
 
 import org.springframework.data.domain.Page;

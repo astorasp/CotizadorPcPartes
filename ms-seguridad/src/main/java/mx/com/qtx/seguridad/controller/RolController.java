@@ -1,8 +1,8 @@
 package mx.com.qtx.seguridad.controller;
 
-import mx.com.qtx.seguridad.domain.Rol;
-import mx.com.qtx.seguridad.domain.RolAsignado;
-import mx.com.qtx.seguridad.domain.Usuario;
+import mx.com.qtx.seguridad.entity.Rol;
+import mx.com.qtx.seguridad.entity.RolAsignado;
+import mx.com.qtx.seguridad.entity.Usuario;
 import mx.com.qtx.seguridad.service.RolService;
 
 import org.springframework.http.HttpStatus;
