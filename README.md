@@ -97,6 +97,40 @@ Responsable de la gestión física y digital del catálogo de productos.
 Un rol de solo lectura, diseñado para análisis y auditoría sin riesgo de modificar datos.
 *   **Consulta Total:** Puede ver toda la información del sistema: componentes, PCs, cotizaciones, pedidos, proveedores y promociones.
 *   **Sin Modificación:** No puede realizar ninguna acción de creación, edición o eliminación en ningún módulo.
+---
+
+### Matriz de Permisos por Funcionalidad
+
+La siguiente tabla resume las capacidades clave de cada rol dentro del sistema.
+
+| Funcionalidad | 👑 Admin | 🏢 Gerente | 💼 Vendedor | 📦 Inventario | 📊 Consultor |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **GESTIÓN DE USUARIOS** | | | | | |
+| Crear / Editar / Eliminar Usuarios | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **GESTIÓN DE PROVEEDORES** | | | | | |
+| Crear / Editar Proveedores | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Eliminar Proveedores | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Consultar Proveedores | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **GESTIÓN DE COMPONENTES** | | | | | |
+| Crear / Editar Componentes | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Eliminar Componentes | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Consultar Componentes | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **GESTIÓN DE PCs ENSAMBLADAS** | | | | | |
+| Ensamblar / Modificar PCs | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Descontinuar PCs | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Consultar PCs | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **GESTIÓN DE PROMOCIONES** | | | | | |
+| Crear / Editar / Eliminar Promociones | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Consultar Promociones | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **GESTIÓN DE COTIZACIONES** | | | | | |
+| Crear / Editar Cotizaciones | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Anular Cotizaciones | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Aplicar Promociones | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Consultar Cotizaciones | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **GESTIÓN DE PEDIDOS** | | | | | |
+| Generar Pedido desde Cotización | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Actualizar Estado de Pedido | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Consultar Pedidos | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ---
 
