@@ -5,7 +5,6 @@ import mx.com.qtx.seguridad.security.JwtExceptionHandler;
 import mx.com.qtx.seguridad.service.JwtService;
 import mx.com.qtx.seguridad.service.AuthService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
