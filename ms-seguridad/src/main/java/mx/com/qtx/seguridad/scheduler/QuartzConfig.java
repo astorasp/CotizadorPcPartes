@@ -1,6 +1,5 @@
-package mx.com.qtx.seguridad.config;
+package mx.com.qtx.seguridad.scheduler;
 
-import mx.com.qtx.seguridad.scheduler.SessionCleanupJob;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

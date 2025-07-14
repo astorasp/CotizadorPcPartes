@@ -1,7 +1,6 @@
 package mx.com.qtx.cotizador.security.service;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import mx.com.qtx.cotizador.security.client.JwksClient;
 import mx.com.qtx.cotizador.security.dto.JwkKey;
 import mx.com.qtx.cotizador.security.dto.JwksResponse;
@@ -11,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -24,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import mx.com.qtx.cotizador.security.service.SessionCacheService;
 
 /**
  * Servicio para validación de tokens JWT usando claves JWKS

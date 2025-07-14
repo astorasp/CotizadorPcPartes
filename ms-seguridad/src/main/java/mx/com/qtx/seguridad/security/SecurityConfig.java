@@ -1,7 +1,5 @@
-package mx.com.qtx.seguridad.config;
+package mx.com.qtx.seguridad.security;
 
-import mx.com.qtx.seguridad.security.JwtAuthenticationFilter;
-import mx.com.qtx.seguridad.security.JwtExceptionHandler;
 import mx.com.qtx.seguridad.service.JwtService;
 import mx.com.qtx.seguridad.service.AuthService;
 
