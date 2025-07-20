@@ -1,3 +1,7 @@
+-- Configurar UTF-8 explícitamente al inicio
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 -- Crear base de datos
 CREATE DATABASE IF NOT EXISTS cotizador
 CHARACTER SET utf8mb4
