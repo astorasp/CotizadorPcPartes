@@ -23,6 +23,14 @@
       @extend="tokenMonitor.extendSession"
       @reject="tokenMonitor.rejectExtension"
     />
+
+    <!-- Modal de refresh token expirado -->
+    <RefreshTokenExpiredModal
+      :show="tokenMonitor.showRefreshTokenExpiredModal.value"
+      :message="tokenMonitor.refreshTokenExpiredMessage.value"
+      :reason="tokenMonitor.refreshTokenExpiredReason.value"
+      @close="tokenMonitor.closeRefreshTokenExpiredModal"
+    />
   </div>
 </template>
 
@@ -32,6 +40,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 import AlertSystem from '@/components/ui/AlertSystem.vue'
 import GlobalLoadingManager from '@/components/ui/GlobalLoadingManager.vue'
 import SessionExpirationModal from '@/components/auth/SessionExpirationModal.vue'
+import RefreshTokenExpiredModal from '@/components/auth/RefreshTokenExpiredModal.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useTokenMonitor } from '@/composables/useTokenMonitor'
 

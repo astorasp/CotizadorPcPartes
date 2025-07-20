@@ -523,4 +523,38 @@ public class JwtService {
             return 0;
         }
     }
+
+    /**
+     * Verifica si un refresh token está próximo a expirar
+     * 
+     * @param refreshToken Refresh token a verificar
+     * @param minutesThreshold Umbral en minutos antes de la expiración (default 5)
+     * @return boolean true si está próximo a expirar
+     */
+    public boolean isRefreshTokenNearExpiration(String refreshToken, int minutesThreshold) {
+        try {
+            if (!isRefreshToken(refreshToken) || !isTokenValid(refreshToken)) {
+                return false;
+            }
+            
+            long remainingSeconds = getTokenRemainingTime(refreshToken);
+            long thresholdSeconds = minutesThreshold * 60L;
+            
+            return remainingSeconds > 0 && remainingSeconds <= thresholdSeconds;
+            
+        } catch (Exception e) {
+            logger.debug("Error al verificar proximidad de expiración del refresh token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Verifica si un refresh token está próximo a expirar (umbral por defecto: 5 minutos)
+     * 
+     * @param refreshToken Refresh token a verificar
+     * @return boolean true si está próximo a expirar
+     */
+    public boolean isRefreshTokenNearExpiration(String refreshToken) {
+        return isRefreshTokenNearExpiration(refreshToken, 5);
+    }
 }

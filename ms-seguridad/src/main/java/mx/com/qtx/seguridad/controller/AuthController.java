@@ -105,9 +105,25 @@ public class AuthController {
             
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "invalid_refresh_token");
-            error.put("message", "Refresh token inválido o expirado");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            
+            // Verificar tipos específicos de errores de refresh token
+            if (e.getMessage() != null && e.getMessage().contains("refresh token ha expirado")) {
+                error.put("error", "refresh_token_expired");
+                error.put("message", "El refresh token ha expirado completamente. Se requiere nueva autenticación.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            } else if (e.getMessage() != null && e.getMessage().contains("No es posible renovar más la sesión")) {
+                error.put("error", "session_renewal_limit_reached");
+                error.put("message", "No es posible renovar más la sesión. El tiempo restante es insuficiente. Debe volver a autenticarse.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            } else if (e.getMessage() != null && e.getMessage().contains("Token no es de tipo refresh")) {
+                error.put("error", "invalid_token_type");
+                error.put("message", "El token proporcionado no es un refresh token válido");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            } else {
+                error.put("error", "invalid_refresh_token");
+                error.put("message", "Refresh token inválido o expirado");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
             
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -240,6 +256,64 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(TokenTtlResponse.invalid("Error al procesar la solicitud"));
+        }
+    }
+
+    /**
+     * Endpoint para verificar el estado del refresh token
+     * Permite detectar si un refresh token está próximo a expirar
+     * 
+     * @param requestBody Objeto con refresh token
+     * @return Estado del refresh token con tiempo restante
+     */
+    @PostMapping("/refresh-status")
+    public ResponseEntity<?> refreshTokenStatus(@RequestBody Map<String, String> requestBody) {
+        try {
+            String refreshToken = requestBody.get("refreshToken");
+            
+            if (refreshToken == null || refreshToken.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "missing_refresh_token");
+                error.put("message", "Refresh token es requerido");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            // Verificar si es un refresh token válido
+            if (!jwtService.isRefreshToken(refreshToken)) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "invalid_token_type");
+                error.put("message", "El token no es de tipo refresh");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            // Verificar si el token es válido (no expirado)
+            if (!jwtService.isTokenValid(refreshToken)) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "refresh_token_expired");
+                error.put("message", "El refresh token ha expirado");
+                error.put("expired", true);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+            }
+
+            // Calcular tiempo restante
+            long remainingSeconds = jwtService.getTokenRemainingTime(refreshToken);
+            String username = jwtService.extractUsername(refreshToken);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("valid", true);
+            response.put("username", username);
+            response.put("remainingSeconds", remainingSeconds);
+            response.put("timeRemaining", jwtService.getFormattedTimeToExpiration(refreshToken));
+            response.put("nearExpiration", remainingSeconds < 300); // 5 minutos
+            response.put("checkedAt", java.time.LocalDateTime.now());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "status_check_error");
+            error.put("message", "Error al verificar estado del refresh token");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 

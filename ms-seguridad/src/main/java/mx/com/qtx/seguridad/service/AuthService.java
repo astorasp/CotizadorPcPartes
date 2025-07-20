@@ -213,12 +213,30 @@ public class AuthService {
                 sessionService.closeAllUserSessions(userId);
             }
 
-            //expiration
-            Date newAccessExpirationDate = new Date(System.currentTimeMillis() + accessTokenExpiration);
-            logger.debug("Nueva fecha de expiración del access token: {}", newAccessExpirationDate);
-            if (expiration != null && expiration.before(newAccessExpirationDate)) {
-                logger.warn("El refresh token expiró antes de la renovación: {}", username);
-                throw new RuntimeException("El refresh token ha expirado");
+            // Verificar si el refresh token está próximo a expirar o ya expiró
+            if (expiration != null) {
+                Date now = new Date();
+                if (expiration.before(now)) {
+                    logger.warn("El refresh token ha expirado para usuario: {}", username);
+                    throw new RuntimeException("El refresh token ha expirado completamente");
+                }
+                
+                // VERIFICACIÓN CRÍTICA: ¿El próximo access token expiraría después del refresh token?
+                Date newAccessTokenExpiration = new Date(now.getTime() + accessTokenExpiration);
+                if (newAccessTokenExpiration.after(expiration)) {
+                    long refreshTimeRemaining = expiration.getTime() - now.getTime();
+                    logger.warn("No se puede renovar más - el nuevo access token ({}) expiraría después del refresh token ({}) para usuario: {}", 
+                               newAccessTokenExpiration, expiration, username);
+                    logger.warn("Tiempo restante del refresh token: {}ms, duración del access token: {}ms", 
+                               refreshTimeRemaining, accessTokenExpiration);
+                    throw new RuntimeException("No es posible renovar más la sesión - tiempo insuficiente en refresh token");
+                }
+                
+                // Log informativo sobre tiempo restante
+                long timeToExpiration = expiration.getTime() - now.getTime();
+                if (timeToExpiration < 120000) { // Menos de 2 minutos
+                    logger.info("Refresh token expirará en {}ms para usuario: {}", timeToExpiration, username);
+                }
             }
 
             // Crear nueva sesión para el nuevo access token

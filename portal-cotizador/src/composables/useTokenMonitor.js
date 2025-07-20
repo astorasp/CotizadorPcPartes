@@ -10,8 +10,11 @@ export function useTokenMonitor() {
   
   // Estado reactivo
   const showExpirationWarning = ref(false)
+  const showRefreshTokenExpiredModal = ref(false)
   const secondsUntilExpiry = ref(0)
   const isRenewing = ref(false)
+  const refreshTokenExpiredMessage = ref('')
+  const refreshTokenExpiredReason = ref('refresh_token_expired')
   
   // Variables de control
   let monitorInterval = null
@@ -75,9 +78,29 @@ export function useTokenMonitor() {
   /**
    * Mostrar modal de advertencia de expiración
    */
-  const showWarning = () => {
+  const showWarning = async () => {
     if (!authStore.isLoggedIn) {
       console.warn('[TokenMonitor] No se puede mostrar warning - usuario no autenticado')
+      return
+    }
+    
+    // VERIFICACIÓN CRÍTICA: ¿Es posible renovar el token?
+    const renewCheck = await authService.canRenewToken()
+    console.log('[TokenMonitor] Verificación de renovación:', renewCheck)
+    
+    if (!renewCheck.canRenew) {
+      console.log('[TokenMonitor] No es posible renovar - mostrando modal de sesión expirada directamente')
+      
+      // Mostrar directamente el modal de sesión expirada
+      const message = renewCheck.reason === 'session_renewal_limit_reached' 
+        ? 'Ha alcanzado el límite máximo de renovaciones de sesión. Debe volver a autenticarse.'
+        : 'Su sesión ha expirado completamente. Debe volver a autenticarse.'
+      
+      handleRefreshTokenExpired({
+        message: message,
+        timestamp: new Date(),
+        reason: renewCheck.reason
+      })
       return
     }
     
@@ -177,6 +200,36 @@ export function useTokenMonitor() {
       expirationTimeout = null
     }
   }
+
+  /**
+   * Manejar cuando el refresh token ha expirado completamente
+   */
+  const handleRefreshTokenExpired = (detail) => {
+    console.log('[TokenMonitor] Refresh token expirado detectado:', detail)
+    
+    // Mostrar modal específico para refresh token expirado
+    showRefreshTokenExpiredModal.value = true
+    refreshTokenExpiredMessage.value = detail.message || 'Su sesión ha expirado completamente. Debe volver a autenticarse.'
+    refreshTokenExpiredReason.value = detail.reason || 'refresh_token_expired'
+    
+    // Cerrar el modal de warning normal si está abierto
+    closeWarning()
+    stopMonitoring()
+  }
+
+  /**
+   * Cerrar modal de refresh token expirado y redirigir a login
+   */
+  const closeRefreshTokenExpiredModal = () => {
+    showRefreshTokenExpiredModal.value = false
+    refreshTokenExpiredMessage.value = ''
+    refreshTokenExpiredReason.value = 'refresh_token_expired'
+    
+    // Forzar logout y redirección
+    authStore.logout().then(() => {
+      window.location.href = '/login'
+    })
+  }
   
   /**
    * Manejar logout automático
@@ -208,8 +261,8 @@ export function useTokenMonitor() {
     checkTokenExpiration()
     
     // Verificar cada 5 segundos
-    monitorInterval = setInterval(() => {
-      checkTokenExpiration()
+    monitorInterval = setInterval(async () => {
+      await checkTokenExpiration()
     }, 5000)
   }
   
@@ -239,7 +292,7 @@ export function useTokenMonitor() {
   /**
    * Verificar si el token está próximo a expirar
    */
-  const checkTokenExpiration = () => {
+  const checkTokenExpiration = async () => {
     if (!authStore.isLoggedIn) {
       stopMonitoring()
       return
@@ -262,7 +315,7 @@ export function useTokenMonitor() {
     // Si está próximo a expirar, mostrar warning
     if (secondsLeft <= WARNING_SECONDS) {
       console.log(`[TokenMonitor] Token expira en ${secondsLeft} segundos, mostrando warning`)
-      showWarning()
+      await showWarning()
       return
     }
     
@@ -321,6 +374,12 @@ export function useTokenMonitor() {
       } else {
         stopMonitoring()
       }
+    })
+
+    // Escuchar evento de refresh token expirado
+    window.addEventListener('refresh-token-expired', (event) => {
+      console.log('[TokenMonitor] Evento refresh-token-expired recibido')
+      handleRefreshTokenExpired(event.detail)
     })
   })
   
@@ -475,12 +534,16 @@ export function useTokenMonitor() {
   return {
     // Estado
     showExpirationWarning,
+    showRefreshTokenExpiredModal,
     secondsUntilExpiry,
     isRenewing,
+    refreshTokenExpiredMessage,
+    refreshTokenExpiredReason,
     
     // Métodos
     extendSession,
     rejectExtension,
+    closeRefreshTokenExpiredModal,
     startMonitoring,
     stopMonitoring,
     

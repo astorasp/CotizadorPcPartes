@@ -57,7 +57,8 @@ management:
 
 logging:
   level:
-    mx.com.qtx.seguridad: INFO
+    mx.com.qtx.seguridad.service: DEBUG
+    mx.com.qtx.seguridad.controller: DEBUG
     mx.com.qtx.seguridad.scheduler.SessionCleanupJob: INFO
     mx.com.qtx.seguridad.config.QuartzConfig: INFO
     org.springframework.security: WARN
@@ -71,9 +72,9 @@ logging:
 # JWT Configuration
 jwt:
   access-token:
-    expiration: 300000  # 5 minutos en milisegundos
+    expiration: ${JWT_ACCESS_TOKEN_DURATION:300000}  # 5 minutos en milisegundos
   refresh-token:
-    expiration: 900000  # 15 minutos en milisegundos
+    expiration: ${JWT_REFRESH_TOKEN_DURATION:900000}  # 15 minutos en milisegundos
   algorithm: RS256
 
 # Configuración de limpieza de sesiones

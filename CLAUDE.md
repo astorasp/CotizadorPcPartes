@@ -70,13 +70,14 @@ npm run format    # Prettier formatting
 # Start entire system
 docker-compose up -d
 
-# Use management script
-./docker-scripts.sh start     # Start system
-./docker-scripts.sh stop      # Stop system
-./docker-scripts.sh logs      # View logs
-./docker-scripts.sh status    # Check service status
-./docker-scripts.sh health    # Check health endpoints
-./docker-scripts.sh clean     # Clean containers and volumes
+# Stop entire system
+docker-compose down
+
+# View logs
+docker-compose logs -f [service-name]
+
+# Rebuild and start
+docker-compose up -d --build
 ```
 
 ### Database Commands
@@ -87,12 +88,8 @@ docker exec -it cotizador-mysql mysql -u cotizador_user -p cotizador
 # Access MySQL Seguridad container  
 docker exec -it seguridad-mysql mysql -u seguridad_user -p seguridad
 
-# Re-initialize databases
-./docker-scripts.sh db-init
-
-# Service-specific database access via script
-./docker-scripts.sh shell-mysql           # Cotizador DB
-./docker-scripts.sh shell-mysql-seguridad # Seguridad DB
+# Re-initialize databases (recreate containers)
+docker-compose down -v && docker-compose up -d
 ```
 
 ## Architecture
@@ -298,6 +295,23 @@ Authentication and authorization entities:
 - `roles` → system roles (ADMIN, GERENTE, VENDEDOR, INVENTARIO, CONSULTOR)
 - `rol_asignado` → user-role assignments (many-to-many)
 - `accesos` → session tracking and audit trail
+
+### Role-Based Access Control (RBAC) Matrix
+The frontend implements a comprehensive permissions system in `portal-cotizador/src/services/authService.js`:
+
+**Role Hierarchy** (highest to lowest privilege):
+1. **ADMIN** - Full system access
+2. **GERENTE** - Management operations
+3. **INVENTARIO** - Inventory management
+4. **VENDEDOR** - Sales operations
+5. **CONSULTOR** - Read-only access
+
+**Key Permission Categories**:
+- **COMPONENTES**: Create (ADMIN, INVENTARIO), Edit (ADMIN, GERENTE, INVENTARIO), Delete (ADMIN only)
+- **PCS**: Create/Edit (ADMIN, GERENTE, INVENTARIO), Delete (ADMIN, GERENTE), Modify Price (ADMIN, GERENTE)  
+- **COTIZACIONES**: Create/Edit (ADMIN, GERENTE, VENDEDOR), View Costs/Margins (ADMIN, GERENTE), Modify Taxes (ADMIN only)
+- **PEDIDOS**: Manage Fulfillment (ADMIN, INVENTARIO), View Financial Data (ADMIN, GERENTE)
+- **PROMOCIONES**: Create/Edit/Delete (ADMIN, GERENTE), Apply (ADMIN, GERENTE, VENDEDOR)
 
 ## Key API Endpoints
 

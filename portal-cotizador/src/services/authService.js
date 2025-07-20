@@ -184,11 +184,151 @@ export const authService = {
       }
     } catch (error) {
       console.error('Token refresh error:', error)
+      
+      // Verificar si es específicamente un refresh token expirado o límite alcanzado
+      const errorCode = error.response?.data?.error
+      if (errorCode === 'refresh_token_expired') {
+        // Limpiar tokens y disparar evento para UI
+        this.clearTokens()
+        window.dispatchEvent(new CustomEvent('refresh-token-expired', {
+          detail: {
+            message: 'Su sesión ha expirado completamente. Debe volver a autenticarse.',
+            timestamp: new Date(),
+            reason: 'refresh_token_expired'
+          }
+        }))
+        
+        return {
+          success: false,
+          error: 'refresh_token_expired',
+          message: 'Refresh token expirado - se requiere nueva autenticación'
+        }
+      } else if (errorCode === 'session_renewal_limit_reached') {
+        // Limpiar tokens y disparar evento para UI con mensaje específico
+        this.clearTokens()
+        window.dispatchEvent(new CustomEvent('refresh-token-expired', {
+          detail: {
+            message: 'Ha alcanzado el límite máximo de renovaciones de sesión. Debe volver a autenticarse.',
+            timestamp: new Date(),
+            reason: 'session_renewal_limit_reached'
+          }
+        }))
+        
+        return {
+          success: false,
+          error: 'session_renewal_limit_reached',
+          message: 'Límite de renovaciones alcanzado - se requiere nueva autenticación'
+        }
+      }
+      
       this.clearTokens()
       return {
         success: false,
         error: error.response?.data?.message || 'Error renovando token'
       }
+    }
+  },
+
+  /**
+   * Verificar el estado del refresh token
+   */
+  async checkRefreshTokenStatus() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+      
+      if (!refreshToken) {
+        return {
+          valid: false,
+          error: 'No refresh token available'
+        }
+      }
+      
+      const response = await axios.post(`${AUTH_BASE_URL}/refresh-status`, {
+        refreshToken
+      })
+      
+      return {
+        valid: true,
+        data: response.data
+      }
+    } catch (error) {
+      const errorCode = error.response?.data?.error
+      if (errorCode === 'refresh_token_expired') {
+        this.clearTokens()
+        window.dispatchEvent(new CustomEvent('refresh-token-expired', {
+          detail: {
+            message: 'Su sesión ha expirado completamente. Debe volver a autenticarse.',
+            timestamp: new Date(),
+            reason: 'refresh_token_expired'
+          }
+        }))
+      } else if (errorCode === 'session_renewal_limit_reached') {
+        this.clearTokens()
+        window.dispatchEvent(new CustomEvent('refresh-token-expired', {
+          detail: {
+            message: 'Ha alcanzado el límite máximo de renovaciones de sesión. Debe volver a autenticarse.',
+            timestamp: new Date(),
+            reason: 'session_renewal_limit_reached'
+          }
+        }))
+      }
+      
+      return {
+        valid: false,
+        error: error.response?.data?.message || 'Error verificando refresh token',
+        errorCode: errorCode
+      }
+    }
+  },
+
+  /**
+   * Verificar si una renovación de token será posible
+   * Revisa si el próximo access token cabría dentro del tiempo del refresh token
+   */
+  async canRenewToken() {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+      const accessTokenDuration = localStorage.getItem('expiresIn') // en milisegundos
+      
+      if (!refreshToken || !accessTokenDuration) {
+        return { canRenew: false, reason: 'missing_tokens' }
+      }
+
+      // Decodificar el refresh token para obtener su tiempo de expiración
+      const payload = JSON.parse(atob(refreshToken.split('.')[1]))
+      if (!payload.exp) {
+        return { canRenew: false, reason: 'invalid_refresh_token' }
+      }
+
+      const refreshTokenExpiresAt = payload.exp * 1000 // convertir a milisegundos
+      const now = Date.now()
+      const accessTokenDurationMs = parseInt(accessTokenDuration)
+
+      // Verificar si el refresh token ya expiró
+      if (refreshTokenExpiresAt <= now) {
+        return { canRenew: false, reason: 'refresh_token_expired' }
+      }
+
+      // Calcular si el próximo access token cabría en el tiempo restante del refresh token
+      const nextAccessTokenExpiresAt = now + accessTokenDurationMs
+      const canRenew = nextAccessTokenExpiresAt <= refreshTokenExpiresAt
+
+      const timeRemaining = refreshTokenExpiresAt - now
+      const result = {
+        canRenew,
+        reason: canRenew ? 'can_renew' : 'session_renewal_limit_reached',
+        refreshTokenTimeRemaining: timeRemaining,
+        accessTokenDuration: accessTokenDurationMs,
+        nextAccessTokenWouldExpireAt: nextAccessTokenExpiresAt,
+        refreshTokenExpiresAt: refreshTokenExpiresAt
+      }
+
+      console.log('[AuthService] canRenewToken check:', result)
+      return result
+
+    } catch (error) {
+      console.error('[AuthService] Error checking if token can be renewed:', error)
+      return { canRenew: false, reason: 'check_error' }
     }
   },
 
@@ -626,6 +766,10 @@ export const authService = {
               // Reintentar request original con nuevo token
               originalRequest.headers.Authorization = `Bearer ${refreshResult.data.accessToken}`
               return axios(originalRequest)
+            } else if (refreshResult.error === 'refresh_token_expired' || refreshResult.error === 'session_renewal_limit_reached') {
+              // El refresh token expiró o se alcanzó el límite - el evento ya fue disparado en refreshToken()
+              // No hacer nada más aquí, la UI ya fue notificada
+              return Promise.reject(error)
             }
           } catch (refreshError) {
             console.error('Token refresh failed:', refreshError)
