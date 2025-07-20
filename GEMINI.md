@@ -1,64 +1,100 @@
-# Análisis del Proyecto por Gemini
+# Análisis del Proyecto: Sistema de Cotización de Partes de PC
 
-Basado en el análisis de los archivos `README.md`, `docker-compose.yml` y la configuración de NGINX, aquí tienes una descripción completa del proyecto y su arquitectura.
+*Última actualización: 2024-07-19*
 
-### Descripción General del Proyecto
-
-El proyecto es un **Sistema de Cotización de Partes de PC**, una aplicación web integral diseñada para gestionar todo el ciclo de vida de la venta de componentes de hardware y computadoras personalizadas.
-
-**Funcionalidad Principal:**
-
-*   **Gestión de Catálogo:** Permite administrar un inventario de componentes de hardware (CPUs, GPUs, monitores, etc.), incluyendo sus costos, precios, marcas y proveedores.
-*   **Ensamblaje de PCs:** Ofrece una herramienta para "construir" PCs personalizadas, seleccionando componentes compatibles y calculando el precio final automáticamente.
-*   **Cotizaciones:** Permite a los vendedores crear y gestionar cotizaciones para clientes, aplicando promociones y calculando impuestos según el país.
-*   **Gestión de Pedidos:** Convierte cotizaciones aprobadas en pedidos formales y permite dar seguimiento a su estado.
-*   **Gestión de Proveedores y Promociones:** Administra la información de los proveedores y permite crear diversas promociones (ej. descuentos por volumen, ofertas N×M).
-*   **Seguridad y Roles:** Implementa un sistema de Control de Acceso Basado en Roles (RBAC) con 5 roles predefinidos (Administrador, Gerente, Vendedor, Inventario, Consultor), cada uno con permisos específicos para acceder a diferentes funcionalidades.
+Este documento es la fuente de verdad consolidada sobre la arquitectura, funcionalidades y mecanismos internos del proyecto, basado en un análisis exhaustivo del código fuente.
 
 ---
 
-### Arquitectura del Sistema
+## 1. Descripción General del Proyecto
 
-El sistema está diseñado siguiendo una **arquitectura de microservicios**, lo que significa que está compuesto por varios servicios más pequeños e independientes que trabajan juntos. Todos los servicios están containerizados con **Docker**, lo que facilita su despliegue y escalabilidad.
+El proyecto es una aplicación web integral para la **gestión del ciclo de venta de componentes de hardware y PCs personalizadas**. Sirve como una herramienta interna para un negocio, cubriendo desde la gestión de catálogos y proveedores hasta la creación de cotizaciones y el seguimiento de pedidos.
 
-**Componentes Principales:**
+---
 
-1.  **`portal-cotizador` (Frontend):**
-    *   **Tecnología:** Es una Single Page Application (SPA) desarrollada con **Vue.js 3**.
-    *   **UI/UX:** Utiliza **TailwindCSS** para un diseño moderno y responsivo. Una característica clave es su **sistema de loading centralizado**, que proporciona feedback visual consistente al usuario durante cualquier operación (ej. guardar, cargar datos), evitando acciones duplicadas y mejorando la experiencia.
-    *   **Gestión de Estado:** Usa **Pinia** para manejar el estado de la aplicación de forma centralizada (datos de usuario, listas de componentes, etc.).
+## 2. Arquitectura del Sistema
 
-2.  **`ms-cotizador` (Microservicio de Negocio):**
-    *   **Tecnología:** Es el cerebro de la aplicación, desarrollado en **Java 21** con el framework **Spring Boot**.
-    *   **Diseño:** Sigue los principios de **Domain-Driven Design (DDD)**, lo que organiza el código en capas claras (Dominio, Aplicación, Infraestructura) y lo alinea con la lógica del negocio.
-    *   **Funcionalidad:** Expone una **API REST** que maneja toda la lógica de negocio: gestión de componentes, armado de PCs, cotizaciones, pedidos, etc.
-    *   **Base de Datos:** Utiliza una base de datos **MySQL** dedicada para almacenar toda su información.
+El sistema sigue un patrón de **arquitectura de microservicios**, orquestado a través de **Docker**. Esta elección de diseño promueve la separación de responsabilidades, la escalabilidad y el despliegue independiente de cada componente.
 
-3.  **`ms-seguridad` (Microservicio de Seguridad):**
-    *   **Tecnología:** También es un servicio de **Spring Boot** y **Java 21**.
-    *   **Funcionalidad:** Su única responsabilidad es la seguridad. Gestiona la autenticación de usuarios, la validación de credenciales y la creación/validación de **Tokens JWT (JSON Web Tokens)**. Centralizar la seguridad en un microservicio es una práctica recomendada que mejora la robustez del sistema.
-    *   **Base de Datos:** Utiliza su propia base de datos **MySQL** para almacenar usuarios, roles y sesiones.
+### 2.1. Componentes Principales
 
-4.  **`nginx-gateway` (API Gateway):**
-    *   **Tecnología:** Es un servidor web **NGINX** que actúa como la única puerta de entrada a todo el sistema.
-    *   **Funcionalidad:** Recibe todas las peticiones del exterior y las redirige al servicio correspondiente:
-        *   Si la petición es para la interfaz web (ej. `http://localhost/`), la envía al `portal-cotizador`.
-        *   Si es una llamada a la API de negocio (ej. `/api/cotizador/...`), la envía a `ms-cotizador`.
-        *   Si es una llamada a la API de seguridad (ej. `/api/seguridad/login`), la envía a `ms-seguridad`.
-    *   **Beneficios:** Este enfoque simplifica la comunicación, mejora la seguridad al no exponer los microservicios directamente y centraliza la gestión de rutas.
+| Componente | Responsabilidad | Tecnologías Clave |
+| :--- | :--- | :--- |
+| **`portal-cotizador`** | Frontend (SPA) | Vue.js 3, Pinia, TailwindCSS, Vue Router |
+| **`ms-cotizador`** | Microservicio de Negocio | Java 21, Spring Boot, DDD, MySQL |
+| **`ms-seguridad`** | Microservicio de Seguridad | Java 21, Spring Boot, JWT, MySQL |
+| **`nginx-gateway`** | API Gateway | NGINX (Proxy Inverso) |
+| **`cotizador-mysql`** | Base de Datos | MySQL (Datos de negocio) |
+| **`seguridad-mysql`** | Base de Datos | MySQL (Usuarios, roles, sesiones) |
 
-5.  **Bases de Datos (`cotizador-mysql` y `seguridad-mysql`):**
-    *   Son dos instancias de **MySQL** independientes, una para cada microservicio. Esta separación asegura que los servicios sean autónomos y que un fallo en una base de datos no afecte directamente al otro.
+### 2.2. Patrones Arquitectónicos Clave
 
-**Flujo de Comunicación:**
+*   **API Gateway:** `nginx-gateway` actúa como el único punto de entrada, enrutando las peticiones al microservicio correspondiente y ocultando la topología de la red interna.
+*   **Aislamiento de Datos:** Cada microservicio (`ms-cotizador` y `ms-seguridad`) posee su propia base de datos, garantizando un bajo acoplamiento.
+*   **Diseño Orientado al Dominio (DDD):** `ms-cotizador` está estructurado en capas (Dominio, Aplicación, Infraestructura) para alinear el código con la lógica del negocio.
+*   **Infraestructura como Código (IaC):** El archivo `docker-compose.yml` define y configura todo el entorno de la aplicación, garantizando consistencia y facilidad de despliegue.
 
-1.  El **usuario** abre el portal web en su navegador.
-2.  El **API Gateway (NGINX)** sirve la aplicación Vue.js.
-3.  Para iniciar sesión, el portal envía las credenciales al Gateway, que las redirige al **`ms-seguridad`**.
-4.  `ms-seguridad` valida las credenciales contra su base de datos y, si son correctas, devuelve un **token JWT**.
-5.  A partir de ese momento, para cualquier otra operación (ej. "listar componentes"), el portal envía una petición al Gateway, incluyendo el token JWT.
-6.  El Gateway redirige la petición al **`ms-cotizador`**.
-7.  `ms-cotizador`, antes de procesar la petición, valida el token JWT (posiblemente comunicándose con `ms-seguridad`) para asegurar que el usuario tiene permiso.
-8.  Una vez validado, `ms-cotizador` ejecuta la lógica de negocio, consulta su base de datos y devuelve el resultado.
+---
 
-En resumen, es un sistema moderno, bien estructurado y robusto que separa claramente las responsabilidades en microservicios especializados, siguiendo las mejores prácticas de desarrollo de software actual.
+## 3. Catálogo de Módulos y Funcionalidades
+
+Este es el inventario completo de las capacidades del sistema, agrupadas por módulo funcional.
+
+#### Módulo 1: Autenticación y Gestión de Sesión
+*   **Iniciar Sesión:** Validación de credenciales (usuario/contraseña).
+*   **Cerrar Sesión:** Finalización de la sesión activa.
+*   **Ver Perfil Propio:** Visualización de la información de la cuenta del usuario.
+*   **Manejo de Sesión:** Persistencia de sesión y gestión de expiración de tokens.
+
+#### Módulo 2: Gestión de Catálogo (Componentes)
+*   CRUD completo (Crear, Leer, Actualizar, Eliminar) para componentes de hardware.
+*   Búsqueda y filtrado avanzado de componentes.
+
+#### Módulo 3: Ensamblaje de PCs (Constructor de PCs)
+*   Creación de nuevas configuraciones de PC.
+*   Selección de componentes compatibles por ranura.
+*   **Cálculo de Costo de Componentes:** Suma de los costos brutos de los componentes seleccionados (cálculo en el frontend).
+*   Guardado y carga de configuraciones de PC.
+
+#### Módulo 4: Gestión de Cotizaciones
+*   Creación de cotizaciones a partir de ensamblajes de PC.
+*   Asignación de clientes a cotizaciones.
+*   Listado, búsqueda y filtrado de cotizaciones.
+*   **Cálculo de Precio Final:** Lógica de negocio en el backend para aplicar promociones, márgenes e impuestos.
+*   Gestión de estados de la cotización (Borrador, Enviada, Aprobada, etc.).
+
+#### Módulo 5: Gestión de Pedidos
+*   Conversión de una cotización aprobada en un pedido formal.
+*   Listado, búsqueda y filtrado de pedidos.
+*   Gestión de estados del pedido (Recibido, En preparación, Enviado, etc.).
+
+#### Módulo 6: Gestión de Promociones
+*   CRUD completo para las promociones del sistema (ej. descuentos, 2x1).
+*   Activación y desactivación de promociones.
+
+#### Módulo 7: Gestión de Usuarios
+*   CRUD completo para las cuentas de usuario.
+*   Asignación y modificación de roles y permisos.
+*   Activación/desactivación de cuentas y reseteo de contraseñas.
+
+#### Módulo 8: Gestión de Proveedores
+*   CRUD completo para los proveedores.
+*   Búsqueda de proveedores por nombre comercial o razón social.
+
+---
+
+## 4. Manejo de Sesión en el Portal (Flujo Detallado)
+
+El portal utiliza un sistema de **autenticación stateless basado en JSON Web Tokens (JWT)**, orquestado por 5 componentes clave en el frontend:
+
+1.  **`services/authService.js` (El Comunicador):** Realiza las llamadas a la API de `ms-seguridad` para `login`.
+2.  **`stores/useAuthStore.js` (El Cerebro):** Mantiene el estado global de la sesión (token, datos de usuario) y lo persiste en `localStorage`.
+3.  **`services/apiClient.js` (El Guardaespaldas):** Intercepta todas las peticiones a la API y les adjunta automáticamente el token JWT en la cabecera `Authorization`.
+4.  **`router/index.js` (El Portero):** Utiliza "Navigation Guards" (`router.beforeEach`) para proteger las rutas que requieren autenticación, redirigiendo al login si el usuario no ha iniciado sesión.
+5.  **`composables/useTokenMonitor.js` (El Relojero):** Vigila la fecha de expiración del token para gestionar proactivamente el fin de la sesión.
+
+### Proceso Típico:
+1.  **Login:** El usuario introduce su **nombre de usuario** y contraseña. `authService` lo envía a `ms-seguridad`. Si es exitoso, `useAuthStore` guarda el token JWT recibido en `localStorage`.
+2.  **Navegación:** El usuario intenta acceder a una ruta protegida. El `router` verifica con `useAuthStore` si hay un token válido. Si no, redirige a `/login`.
+3.  **Petición a API:** Al solicitar datos (ej. lista de proveedores), `apiClient` intercepta la llamada y le inyecta el token antes de enviarla a `ms-cotizador`.
+4.  **Logout:** Al cerrar sesión, `useAuthStore` elimina el token de su estado y de `localStorage`, invalidando la sesión en el cliente.
