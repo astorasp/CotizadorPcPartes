@@ -165,7 +165,6 @@ export const authService = {
       if (response.data.successful) {
         // Actualizar tokens
         localStorage.setItem('accessToken', response.data.accessToken)
-        localStorage.setItem('refreshToken', response.data.refreshToken)
         localStorage.setItem('tokenType', response.data.tokenType)
         localStorage.setItem('expiresIn', response.data.expiresIn)
         localStorage.setItem('issuedAt', response.data.issuedAt)

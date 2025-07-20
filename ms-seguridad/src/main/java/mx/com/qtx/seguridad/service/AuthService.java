@@ -7,6 +7,9 @@ import mx.com.qtx.seguridad.repository.UsuarioRepository;
 import mx.com.qtx.seguridad.repository.RolAsignadoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +24,7 @@ public class AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    
+    private final long accessTokenExpiration;    
     private final UsuarioRepository usuarioRepository;
     private final RolAsignadoRepository rolAsignadoRepository;
     private final JwtService jwtService;
@@ -32,7 +35,9 @@ public class AuthService {
             UsuarioRepository usuarioRepository,
             RolAsignadoRepository rolAsignadoRepository,
             JwtService jwtService,
-            SessionService sessionService) {
+            SessionService sessionService,
+            @Value("${jwt.access-token.expiration:3600000}") long accessTokenExpiration) {
+        this.accessTokenExpiration = accessTokenExpiration;
         this.usuarioRepository = usuarioRepository;
         this.rolAsignadoRepository = rolAsignadoRepository;
         this.jwtService = jwtService;
@@ -111,7 +116,7 @@ public class AuthService {
             authResponse.setAccessToken(accessToken);
             authResponse.setRefreshToken(refreshToken);
             authResponse.setTokenType("Bearer");
-            authResponse.setExpiresIn(300L); // 5 minutos en segundos
+            authResponse.setExpiresIn(accessTokenExpiration); // 5 minutos en segundos
             
             logger.info("Autenticación exitosa para usuario: {} con roles: {}, sesión: {}", username, roles, idSesion);
             return authResponse;
@@ -172,17 +177,18 @@ public class AuthService {
             // Validar refresh token
             String username = jwtService.extractUsername(refreshToken);
             Integer userId = jwtService.extractUserId(refreshToken);
-            String idSesionAnterior = jwtService.extractSessionId(refreshToken);
-            
+            Date expiration = jwtService.extractExpiration(refreshToken);
+
             if (!jwtService.isRefreshToken(refreshToken)) {
                 logger.warn("Token no es de tipo refresh para usuario: {}", username);
                 throw new RuntimeException("Token no es de tipo refresh");
             }
-            
-            // Verificar que la sesión anterior sigue activa
-            if (idSesionAnterior != null && !sessionService.isSessionActive(idSesionAnterior)) {
-                logger.warn("Sesión {} no está activa durante renovación de token para usuario: {}", idSesionAnterior, username);
-                throw new RuntimeException("Sesión no activa");
+
+            // Verificar que el refresh token es válido
+            if (!jwtService.isTokenValid(refreshToken)) {
+                sessionService.closeAllUserSessions(userId);
+                logger.warn("Refresh token no es válido o ha expirado: {}", username);
+                throw new RuntimeException("Refresh token no es válido o ha expirado");
             }
             
             // Verificar que el usuario sigue activo
@@ -201,11 +207,20 @@ public class AuthService {
             }
             
             // Cerrar sesión anterior si existe
-            if (idSesionAnterior != null) {
-                logger.info("Cerrando sesión anterior {} durante renovación de token para usuario: {}", idSesionAnterior, username);
-                sessionService.closeSession(idSesionAnterior);
+            if(userId != null)
+            {
+                logger.info("Cerrando sesiones activas para usuario: {}", username);
+                sessionService.closeAllUserSessions(userId);
             }
-            
+
+            //expiration
+            Date newAccessExpirationDate = new Date(System.currentTimeMillis() + accessTokenExpiration);
+            logger.debug("Nueva fecha de expiración del access token: {}", newAccessExpirationDate);
+            if (expiration != null && expiration.before(newAccessExpirationDate)) {
+                logger.warn("El refresh token expiró antes de la renovación: {}", username);
+                throw new RuntimeException("El refresh token ha expirado");
+            }
+
             // Crear nueva sesión para el nuevo access token
             String ipAddress = getClientIpAddress(request);
             String userAgent = getUserAgent(request);
@@ -215,17 +230,14 @@ public class AuthService {
             // Generar nuevo access token con la nueva sesión
             String newAccessToken = jwtService.generateAccessToken(username, userId, roles, idSesionNueva);
             
-            // Generar nuevo refresh token también con la nueva sesión
-            String newRefreshToken = jwtService.generateRefreshToken(username, userId, idSesionNueva);
-            
             TokenResponse response = new TokenResponse();
             response.setAccessToken(newAccessToken);
-            response.setRefreshToken(newRefreshToken); // Nuevo refresh token con nueva sesión
+            response.setRefreshToken(null);
             response.setTokenType("Bearer");
-            response.setExpiresIn(300L); // 5 minutos
+            response.setExpiresIn(accessTokenExpiration);
             
-            logger.debug("Token renovado exitosamente para usuario: {}, sesión anterior: {}, sesión nueva: {}", 
-                username, idSesionAnterior, idSesionNueva);
+            logger.debug("Token renovado exitosamente para usuario: {}, sesión nueva: {}", 
+                username, idSesionNueva);
             return response;
             
         } catch (Exception e) {

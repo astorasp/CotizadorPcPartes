@@ -143,21 +143,11 @@ public class SessionService {
                 return 0;
             }
             
-            // Cerrar todas las sesiones
-            int sesionesTotales = sessionesActivas.size();
-            LocalDateTime ahora = LocalDateTime.now();
+            accesoRepository.closeAllActiveUserSessions(usuarioId);
             
-            for (Acceso session : sessionesActivas) {
-                session.setActivo(false);
-                session.setFechaFin(ahora);
-            }
+            logger.info("Se cerraron {} sesiones activas para usuario ID: {}", sessionesActivas.size(), usuarioId);
             
-            // Guardar cambios en lote
-            accesoRepository.saveAll(sessionesActivas);
-            
-            logger.info("Se cerraron {} sesiones activas para usuario ID: {}", sesionesTotales, usuarioId);
-            
-            return sesionesTotales;
+            return sessionesActivas.size();
             
         } catch (IllegalArgumentException e) {
             logger.error("Error de validación al cerrar sesiones de usuario {}: {}", usuarioId, e.getMessage());

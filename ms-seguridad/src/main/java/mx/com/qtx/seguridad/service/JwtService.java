@@ -143,6 +143,7 @@ public class JwtService {
     public String generateRefreshToken(String username, Integer userId, String idSesion) {
         try {
             Date now = new Date();
+            logger.debug("Configuración JWT - refreshTokenExpiration: {} ms", refreshTokenExpiration);
             Date expiration = new Date(now.getTime() + refreshTokenExpiration);
             
             RSAPrivateKey privateKey = rsaKeyProvider.getPrivateKey();

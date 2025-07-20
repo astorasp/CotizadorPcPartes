@@ -2,6 +2,7 @@ package mx.com.qtx.seguridad.repository;
 
 import mx.com.qtx.seguridad.entity.Acceso;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -161,4 +162,8 @@ public interface AccesoRepository extends JpaRepository<Acceso, Long> {
      * @return List<Acceso> con sesiones activas que iniciaron antes de la fecha límite
      */
     List<Acceso> findByActivoTrueAndFechaInicioBefore(java.time.LocalDateTime fechaLimite);
+
+    @Modifying
+    @Query("UPDATE Acceso a SET a.activo = false WHERE a.usuarioId = :usuarioId AND a.activo = true")
+    void closeAllActiveUserSessions(@Param("usuarioId") Integer usuarioId);
 }
