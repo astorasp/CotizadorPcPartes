@@ -146,7 +146,7 @@ export const useComponentesStore = defineStore('componentes', () => {
    */
   const fetchComponentes = async () => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Fetching componentes...')
+      // console.log('[ComponentesStore] Fetching componentes...')
     }
     
     const result = await crudOps.fetch(async () => {
@@ -157,7 +157,7 @@ export const useComponentesStore = defineStore('componentes', () => {
       applyFilters()
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[ComponentesStore] Loaded ${componentes.value.length} componentes`)
+        // console.log(`[ComponentesStore] Loaded ${componentes.value.length} componentes`)
       }
       
       return data
@@ -177,7 +177,7 @@ export const useComponentesStore = defineStore('componentes', () => {
    */
   const createComponente = async (componenteData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Creating componente:', componenteData)
+      // console.log('[ComponentesStore] Creating componente:', componenteData)
     }
     
     // Verificar permisos antes de proceder
@@ -216,7 +216,7 @@ export const useComponentesStore = defineStore('componentes', () => {
    */
   const updateComponente = async (id, componenteData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Updating componente:', id, componenteData)
+      // console.log('[ComponentesStore] Updating componente:', id, componenteData)
     }
     
     // Verificar permisos antes de proceder
@@ -255,7 +255,7 @@ export const useComponentesStore = defineStore('componentes', () => {
    */
   const deleteComponente = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Deleting componente:', id)
+      // console.log('[ComponentesStore] Deleting componente:', id)
     }
     
     // Verificar permisos antes de proceder
@@ -313,7 +313,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[ComponentesStore] Applied filters: ${filteredComponentes.value.length} results`)
+      // console.log(`[ComponentesStore] Applied filters: ${filteredComponentes.value.length} results`)
     }
   }
 
@@ -326,7 +326,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     applyFilters()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Filters cleared')
+      // console.log('[ComponentesStore] Filters cleared')
     }
   }
 
@@ -371,7 +371,7 @@ export const useComponentesStore = defineStore('componentes', () => {
       pagination.value.currentPage = pageNumber
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[ComponentesStore] Navigated to page ${pageNumber}`)
+        // console.log(`[ComponentesStore] Navigated to page ${pageNumber}`)
       }
     }
   }
@@ -385,7 +385,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[ComponentesStore] Page size changed to ${newPageSize}`)
+      // console.log(`[ComponentesStore] Page size changed to ${newPageSize}`)
     }
   }
 
@@ -420,7 +420,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     showCreateModal.value = true
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Opened create modal')
+      // console.log('[ComponentesStore] Opened create modal')
     }
   }
 
@@ -433,7 +433,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     showCreateModal.value = true
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Opened edit modal for:', componente.id)
+      // console.log('[ComponentesStore] Opened edit modal for:', componente.id)
     }
   }
 
@@ -447,7 +447,7 @@ export const useComponentesStore = defineStore('componentes', () => {
       showDetailModal.value = true
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log('[ComponentesStore] Opened detail modal for:', componente.id)
+        // console.log('[ComponentesStore] Opened detail modal for:', componente.id)
       }
     } catch (error) {
       console.error('[ComponentesStore] Error opening detail modal:', error)
@@ -466,7 +466,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     isEditMode.value = false
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Closed create modal')
+      // console.log('[ComponentesStore] Closed create modal')
     }
   }
 
@@ -478,7 +478,7 @@ export const useComponentesStore = defineStore('componentes', () => {
     currentComponente.value = null
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ComponentesStore] Closed detail modal')
+      // console.log('[ComponentesStore] Closed detail modal')
     }
   }
 

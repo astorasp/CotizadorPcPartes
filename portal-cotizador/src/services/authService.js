@@ -323,7 +323,7 @@ export const authService = {
         refreshTokenExpiresAt: refreshTokenExpiresAt
       }
 
-      console.log('[AuthService] canRenewToken check:', result)
+      // console.log('[AuthService] canRenewToken check:', result)
       return result
 
     } catch (error) {

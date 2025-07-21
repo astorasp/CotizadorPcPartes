@@ -32,7 +32,7 @@ class ApiClient {
         }
         
         if (DEBUG_CONFIG.ENABLED && DEBUG_CONFIG.LOG_API_CALLS) {
-          console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data)
+          // console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data)
         }
         return config
       },
@@ -46,7 +46,7 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => {
         if (DEBUG_CONFIG.ENABLED && DEBUG_CONFIG.LOG_API_CALLS) {
-          console.log(`[API Response] ${response.status}`, response.data)
+          // console.log(`[API Response] ${response.status}`, response.data)
         }
         return response
       },

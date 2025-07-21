@@ -157,7 +157,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    */
   const fetchCotizaciones = async () => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Fetching cotizaciones...')
+      // console.log('[CotizacionesStore] Fetching cotizaciones...')
     }
     
     const result = await crudOps.fetch(async () => {
@@ -173,7 +173,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       applyFilters()
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[CotizacionesStore] Loaded ${cotizaciones.value.length} cotizaciones`)
+        // console.log(`[CotizacionesStore] Loaded ${cotizaciones.value.length} cotizaciones`)
       }
       
       return data
@@ -193,7 +193,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    */
   const createCotizacion = async (cotizacionData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Creating cotización:', cotizacionData)
+      // console.log('[CotizacionesStore] Creating cotización:', cotizacionData)
     }
     
     // Verificar permisos antes de proceder
@@ -232,7 +232,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    */
   const updateCotizacion = async (id, cotizacionData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Updating cotización:', id, cotizacionData)
+      // console.log('[CotizacionesStore] Updating cotización:', id, cotizacionData)
     }
     
     // Verificar permisos antes de proceder
@@ -270,7 +270,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    */
   const deleteCotizacion = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Deleting cotización:', id)
+      // console.log('[CotizacionesStore] Deleting cotización:', id)
     }
     
     // Verificar permisos antes de proceder
@@ -307,7 +307,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    */
   const openCreateModal = async () => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Opening create modal')
+      // console.log('[CotizacionesStore] Opening create modal')
     }
     
     try {
@@ -352,7 +352,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
    */
   const openViewModal = async (cotizacionId) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Opening view modal for cotización:', cotizacionId)
+      // console.log('[CotizacionesStore] Opening view modal for cotización:', cotizacionId)
     }
     
     try {
@@ -399,7 +399,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     componentQuantity.value = 1
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Closed modal')
+      // console.log('[CotizacionesStore] Closed modal')
     }
   }
 
@@ -414,7 +414,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     // Verificar autenticación antes de hacer la llamada API
     if (!authService.isAuthenticated()) {
       if (DEBUG_CONFIG.ENABLED) {
-        console.log('[CotizacionesStore] Usuario no autenticado, omitiendo carga de componentes')
+        // console.log('[CotizacionesStore] Usuario no autenticado, omitiendo carga de componentes')
       }
       availableComponents.value = []
       return
@@ -426,7 +426,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       availableComponents.value = (allComponents || []).filter(comp => comp.tipoComponente !== 'PC')
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[CotizacionesStore] Loaded ${availableComponents.value.length} available components`)
+        // console.log(`[CotizacionesStore] Loaded ${availableComponents.value.length} available components`)
       }
       
     } catch (error) {
@@ -529,7 +529,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     }]
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Setup default tax (IVA 16%)')
+      // console.log('[CotizacionesStore] Setup default tax (IVA 16%)')
     }
   }
 
@@ -550,7 +550,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     })
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Added new tax item')
+      // console.log('[CotizacionesStore] Added new tax item')
     }
     
     return { success: true }
@@ -687,7 +687,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[CotizacionesStore] Applied filters: ${filteredCotizaciones.value.length} results`)
+      // console.log(`[CotizacionesStore] Applied filters: ${filteredCotizaciones.value.length} results`)
     }
   }
 
@@ -700,7 +700,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     applyFilters()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[CotizacionesStore] Filters cleared')
+      // console.log('[CotizacionesStore] Filters cleared')
     }
   }
 
@@ -745,7 +745,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       pagination.value.currentPage = pageNumber
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[CotizacionesStore] Navigated to page ${pageNumber}`)
+        // console.log(`[CotizacionesStore] Navigated to page ${pageNumber}`)
       }
     }
   }
@@ -759,7 +759,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[CotizacionesStore] Page size changed to ${newPageSize}`)
+      // console.log(`[CotizacionesStore] Page size changed to ${newPageSize}`)
     }
   }
 

@@ -149,7 +149,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth) {
     if (!authStore.isLoggedIn) {
       // Usuario no autenticado, redirigir al login
-      console.log('[Router] Usuario no autenticado, redirigiendo al login')
+      // console.log('[Router] Usuario no autenticado, redirigiendo al login')
       next({
         path: '/login',
         query: { redirect: to.fullPath }
@@ -160,7 +160,7 @@ router.beforeEach((to, from, next) => {
     // Verificar roles si es necesario
     if (to.meta.requiresRole) {
       if (!authStore.hasRole(to.meta.requiresRole)) {
-        console.log(`[Router] Usuario no tiene el rol requerido: ${to.meta.requiresRole}`)
+        // console.log(`[Router] Usuario no tiene el rol requerido: ${to.meta.requiresRole}`)
         next({
           path: '/dashboard',
           query: { error: 'access_denied' }
@@ -182,7 +182,7 @@ router.beforeEach((to, from, next) => {
 router.afterEach((to, from) => {
   // Logs para debugging en desarrollo
   if (import.meta.env.DEV) {
-    console.log(`[Router] Navegando de ${from.path} a ${to.path}`)
+    // console.log(`[Router] Navegando de ${from.path} a ${to.path}`)
   }
 })
 

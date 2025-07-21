@@ -415,21 +415,21 @@ const handleDelete = async (cotizacion) => {
 const handleEdit = (cotizacion) => {
   // TODO: Implementar edición de cotización
   const summary = getCotizacionSummary(cotizacion)
-  console.log('Editar cotización:', summary.id)
+  // console.log('Editar cotización:', summary.id)
   // Aquí se abriría el modal de edición
 }
 
 const handleConvertToOrder = (cotizacion) => {
   // TODO: Implementar conversión a pedido
   const summary = getCotizacionSummary(cotizacion)
-  console.log('Convertir a pedido:', summary.id)
+  // console.log('Convertir a pedido:', summary.id)
   // Aquí se realizaría la conversión a pedido
 }
 
 const handleExport = (cotizacion) => {
   // TODO: Implementar exportación
   const summary = getCotizacionSummary(cotizacion)
-  console.log('Exportar cotización:', summary.id)
+  // console.log('Exportar cotización:', summary.id)
   // Aquí se implementaría la exportación
 }
 

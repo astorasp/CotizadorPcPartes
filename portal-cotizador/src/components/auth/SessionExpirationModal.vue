@@ -96,13 +96,13 @@ const progressPercentage = computed(() => {
 
 // Debug - watch props changes
 watch(() => props.show, (newValue) => {
-  console.log('[SessionExpirationModal] Show prop changed:', newValue)
+  // console.log('[SessionExpirationModal] Show prop changed:', newValue)
 })
 
 watch(() => props.secondsUntilExpiry, (newValue) => {
   // Solo log cuando es relevante (cada 10 segundos o menos de 10)
   if (newValue <= 10 || newValue % 10 === 0) {
-    console.log('[SessionExpirationModal] Seconds until expiry:', newValue)
+    // console.log('[SessionExpirationModal] Seconds until expiry:', newValue)
   }
 })
 

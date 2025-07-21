@@ -166,7 +166,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
    */
   const fetchPedidos = async () => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Fetching pedidos...')
+      // console.log('[PedidosStore] Fetching pedidos...')
     }
     
     const result = await crudOps.fetch(async () => {
@@ -177,7 +177,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
       applyFilters()
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PedidosStore] Loaded ${pedidos.value.length} pedidos`)
+        // console.log(`[PedidosStore] Loaded ${pedidos.value.length} pedidos`)
       }
     })
     
@@ -197,7 +197,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
       cotizaciones.value = data || []
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PedidosStore] Loaded ${cotizaciones.value.length} cotizaciones`)
+        // console.log(`[PedidosStore] Loaded ${cotizaciones.value.length} cotizaciones`)
       }
     }, 'fetch-cotizaciones-for-pedidos')
     
@@ -216,7 +216,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
       proveedores.value = data || []
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PedidosStore] Loaded ${proveedores.value.length} proveedores`)
+        // console.log(`[PedidosStore] Loaded ${proveedores.value.length} proveedores`)
       }
     }, 'fetch-proveedores-for-pedidos')
     
@@ -247,7 +247,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
    */
   const generatePedido = async (pedidoData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Generating pedido:', pedidoData)
+      // console.log('[PedidosStore] Generating pedido:', pedidoData)
     }
     
     const result = await asyncOp.execute(async () => {
@@ -282,7 +282,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
    */
   const getPedidoDetails = async (numPedido) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Getting pedido details:', numPedido)
+      // console.log('[PedidosStore] Getting pedido details:', numPedido)
     }
     
     const result = await asyncOp.execute(async () => {
@@ -324,7 +324,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
     showCreateModal.value = true
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Opened create modal')
+      // console.log('[PedidosStore] Opened create modal')
     }
   }
 
@@ -333,7 +333,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
    */
   const openDetailModal = async (numPedido) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Opening detail modal for pedido:', numPedido)
+      // console.log('[PedidosStore] Opening detail modal for pedido:', numPedido)
     }
     
     const result = await getPedidoDetails(numPedido)
@@ -350,7 +350,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
     resetFormData()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Closed create modal')
+      // console.log('[PedidosStore] Closed create modal')
     }
   }
 
@@ -359,7 +359,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
     currentPedido.value = null
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Closed detail modal')
+      // console.log('[PedidosStore] Closed detail modal')
     }
   }
 
@@ -483,7 +483,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[PedidosStore] Applied filters: ${filteredPedidos.value.length} results`)
+      // console.log(`[PedidosStore] Applied filters: ${filteredPedidos.value.length} results`)
     }
   }
 
@@ -500,7 +500,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PedidosStore] Filters cleared')
+      // console.log('[PedidosStore] Filters cleared')
     }
   }
 
@@ -545,7 +545,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
       pagination.value.currentPage = pageNumber
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PedidosStore] Navigated to page ${pageNumber}`)
+        // console.log(`[PedidosStore] Navigated to page ${pageNumber}`)
       }
     }
   }
@@ -559,7 +559,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[PedidosStore] Page size changed to ${newPageSize}`)
+      // console.log(`[PedidosStore] Page size changed to ${newPageSize}`)
     }
   }
 

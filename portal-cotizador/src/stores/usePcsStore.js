@@ -184,7 +184,7 @@ export const usePcsStore = defineStore('pcs', () => {
    */
   const fetchPcs = async () => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Fetching PCs...')
+      // console.log('[PcsStore] Fetching PCs...')
     }
     
     const result = await crudOps.fetch(async () => {
@@ -195,7 +195,7 @@ export const usePcsStore = defineStore('pcs', () => {
       applyFilters()
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PcsStore] Loaded ${pcs.value.length} PCs`)
+        // console.log(`[PcsStore] Loaded ${pcs.value.length} PCs`)
       }
       
       return data
@@ -215,7 +215,7 @@ export const usePcsStore = defineStore('pcs', () => {
    */
   const createPc = async (pcData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Creating PC:', pcData)
+      // console.log('[PcsStore] Creating PC:', pcData)
     }
     
     // Verificar permisos antes de proceder
@@ -254,7 +254,7 @@ export const usePcsStore = defineStore('pcs', () => {
    */
   const updatePc = async (id, pcData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Updating PC:', id, pcData)
+      // console.log('[PcsStore] Updating PC:', id, pcData)
     }
     
     // Verificar permisos antes de proceder
@@ -293,7 +293,7 @@ export const usePcsStore = defineStore('pcs', () => {
    */
   const deletePc = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Deleting PC:', id)
+      // console.log('[PcsStore] Deleting PC:', id)
     }
     
     // Verificar permisos antes de proceder
@@ -330,7 +330,7 @@ export const usePcsStore = defineStore('pcs', () => {
    */
   const openManageModal = async (pcId) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Opening manage modal for PC:', pcId)
+      // console.log('[PcsStore] Opening manage modal for PC:', pcId)
     }
     
     try {
@@ -371,7 +371,7 @@ export const usePcsStore = defineStore('pcs', () => {
     componentQuantity.value = 1
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Closed manage modal')
+      // console.log('[PcsStore] Closed manage modal')
     }
   }
 
@@ -382,7 +382,7 @@ export const usePcsStore = defineStore('pcs', () => {
     // Verificar autenticación antes de hacer la llamada API
     if (!authService.isAuthenticated()) {
       if (DEBUG_CONFIG.ENABLED) {
-        console.log('[PcsStore] Usuario no autenticado, omitiendo carga de componentes')
+        // console.log('[PcsStore] Usuario no autenticado, omitiendo carga de componentes')
       }
       availableComponents.value = []
       return
@@ -394,7 +394,7 @@ export const usePcsStore = defineStore('pcs', () => {
       availableComponents.value = (allComponents || []).filter(comp => comp.tipoComponente !== COMPONENT_TYPES.PC)
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PcsStore] Loaded ${availableComponents.value.length} available components`)
+        // console.log(`[PcsStore] Loaded ${availableComponents.value.length} available components`)
       }
       
     } catch (error) {
@@ -411,7 +411,7 @@ export const usePcsStore = defineStore('pcs', () => {
       currentPcComponents.value = await pcsApi.getComponents(pcId)
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PcsStore] Loaded ${currentPcComponents.value.length} components for PC ${pcId}`)
+        // console.log(`[PcsStore] Loaded ${currentPcComponents.value.length} components for PC ${pcId}`)
       }
       
     } catch (error) {
@@ -543,7 +543,7 @@ export const usePcsStore = defineStore('pcs', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[PcsStore] Applied filters: ${filteredPcs.value.length} results`)
+      // console.log(`[PcsStore] Applied filters: ${filteredPcs.value.length} results`)
     }
   }
 
@@ -576,7 +576,7 @@ export const usePcsStore = defineStore('pcs', () => {
     applyFilters()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Filters cleared')
+      // console.log('[PcsStore] Filters cleared')
     }
   }
 
@@ -621,7 +621,7 @@ export const usePcsStore = defineStore('pcs', () => {
       pagination.value.currentPage = pageNumber
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PcsStore] Navigated to page ${pageNumber}`)
+        // console.log(`[PcsStore] Navigated to page ${pageNumber}`)
       }
     }
   }
@@ -635,7 +635,7 @@ export const usePcsStore = defineStore('pcs', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[PcsStore] Page size changed to ${newPageSize}`)
+      // console.log(`[PcsStore] Page size changed to ${newPageSize}`)
     }
   }
 
@@ -767,7 +767,7 @@ export const usePcsStore = defineStore('pcs', () => {
       showCreateModal.value = true
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log('[PcsStore] Opened create PC modal')
+        // console.log('[PcsStore] Opened create PC modal')
       }
     })
   }
@@ -777,7 +777,7 @@ export const usePcsStore = defineStore('pcs', () => {
    */
   const openViewModal = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Opening view modal for PC:', id)
+      // console.log('[PcsStore] Opening view modal for PC:', id)
     }
     
     try {
@@ -816,7 +816,7 @@ export const usePcsStore = defineStore('pcs', () => {
    */
   const openEditModal = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Opening edit modal for PC:', id)
+      // console.log('[PcsStore] Opening edit modal for PC:', id)
     }
     
     try {
@@ -871,7 +871,7 @@ export const usePcsStore = defineStore('pcs', () => {
     }
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PcsStore] Closed PC modal')
+      // console.log('[PcsStore] Closed PC modal')
     }
   }
 

@@ -72,7 +72,7 @@ export const useAsyncOperation = (defaultConfig = {}) => {
       // Mostrar notificación de éxito si está habilitada
       if (finalConfig.showNotification && finalConfig.successMessage) {
         // TODO: Integrar con sistema de notificaciones
-        console.log('Success:', finalConfig.successMessage)
+        // console.log('Success:', finalConfig.successMessage)
       }
       
       return {

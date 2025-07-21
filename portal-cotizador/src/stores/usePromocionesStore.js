@@ -186,7 +186,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
    */
   const fetchPromociones = async () => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Fetching promociones...')
+      // console.log('[PromocionesStore] Fetching promociones...')
     }
     
     const result = await crudOps.fetch(async () => {
@@ -197,7 +197,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
       await applyFilters()
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PromocionesStore] Loaded ${promociones.value.length} promociones`)
+        // console.log(`[PromocionesStore] Loaded ${promociones.value.length} promociones`)
       }
       
       return data
@@ -221,7 +221,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
    */
   const createPromocion = async (promocionData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Creating promocion:', promocionData)
+      // console.log('[PromocionesStore] Creating promocion:', promocionData)
     }
     
     // Verificar permisos antes de proceder
@@ -263,7 +263,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
    */
   const updatePromocion = async (id, promocionData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Updating promocion:', id, promocionData)
+      // console.log('[PromocionesStore] Updating promocion:', id, promocionData)
     }
     
     // Verificar permisos antes de proceder
@@ -305,7 +305,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
    */
   const deletePromocion = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Deleting promocion:', id)
+      // console.log('[PromocionesStore] Deleting promocion:', id)
     }
     
     // Verificar permisos antes de proceder
@@ -338,7 +338,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
    */
   const getPromocionDetails = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Getting promocion details:', id)
+      // console.log('[PromocionesStore] Getting promocion details:', id)
     }
     
     try {
@@ -392,7 +392,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     showCreateModal.value = true
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Opened create modal')
+      // console.log('[PromocionesStore] Opened create modal')
     }
   }
 
@@ -407,7 +407,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     }
 
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Opening edit modal for promocion:', id)
+      // console.log('[PromocionesStore] Opening edit modal for promocion:', id)
     }
     
     try {
@@ -438,7 +438,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
    */
   const openDetailModal = async (id) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Opening detail modal for promocion:', id)
+      // console.log('[PromocionesStore] Opening detail modal for promocion:', id)
     }
     
     const result = await getPromocionDetails(id)
@@ -456,7 +456,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     hidePreview()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Closed create modal')
+      // console.log('[PromocionesStore] Closed create modal')
     }
   }
 
@@ -465,7 +465,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     currentPromocion.value = null
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Closed detail modal')
+      // console.log('[PromocionesStore] Closed detail modal')
     }
   }
 
@@ -667,7 +667,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[PromocionesStore] Applied filters: ${filteredPromociones.value.length} results`)
+      // console.log(`[PromocionesStore] Applied filters: ${filteredPromociones.value.length} results`)
     }
   }
 
@@ -684,7 +684,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[PromocionesStore] Filters cleared')
+      // console.log('[PromocionesStore] Filters cleared')
     }
   }
 
@@ -729,7 +729,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
       pagination.value.currentPage = pageNumber
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[PromocionesStore] Navigated to page ${pageNumber}`)
+        // console.log(`[PromocionesStore] Navigated to page ${pageNumber}`)
       }
     }
   }
@@ -743,7 +743,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[PromocionesStore] Page size changed to ${newPageSize}`)
+      // console.log(`[PromocionesStore] Page size changed to ${newPageSize}`)
     }
   }
 

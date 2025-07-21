@@ -133,7 +133,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
    */
   const fetchProveedores = async () => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Fetching proveedores...')
+      // console.log('[ProveedoresStore] Fetching proveedores...')
     }
     
     const result = await crudOps.fetch(async () => {
@@ -144,7 +144,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       await applyFilters()
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[ProveedoresStore] Loaded ${proveedores.value.length} proveedores`)
+        // console.log(`[ProveedoresStore] Loaded ${proveedores.value.length} proveedores`)
       }
       
       return data
@@ -164,7 +164,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
    */
   const createProveedor = async (proveedorData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Creating proveedor:', proveedorData)
+      // console.log('[ProveedoresStore] Creating proveedor:', proveedorData)
     }
     
     // Verificar permisos antes de proceder
@@ -206,7 +206,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
    */
   const updateProveedor = async (cve, proveedorData) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Updating proveedor:', cve, proveedorData)
+      // console.log('[ProveedoresStore] Updating proveedor:', cve, proveedorData)
     }
     
     // Verificar permisos antes de proceder
@@ -251,7 +251,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
    */
   const deleteProveedor = async (cve) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Deleting proveedor:', cve)
+      // console.log('[ProveedoresStore] Deleting proveedor:', cve)
     }
     
     // Verificar permisos antes de proceder
@@ -308,7 +308,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
     showModal.value = true
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Opened create modal')
+      // console.log('[ProveedoresStore] Opened create modal')
     }
   }
 
@@ -317,7 +317,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
    */
   const openViewModal = async (cve) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Opening view modal for proveedor:', cve)
+      // console.log('[ProveedoresStore] Opening view modal for proveedor:', cve)
     }
     
     try {
@@ -353,7 +353,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
    */
   const openEditModal = async (cve) => {
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Opening edit modal for proveedor:', cve)
+      // console.log('[ProveedoresStore] Opening edit modal for proveedor:', cve)
     }
     
     try {
@@ -402,7 +402,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
     }
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Closed modal')
+      // console.log('[ProveedoresStore] Closed modal')
     }
   }
 
@@ -509,7 +509,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[ProveedoresStore] Applied filters: ${filteredProveedores.value.length} results`)
+      // console.log(`[ProveedoresStore] Applied filters: ${filteredProveedores.value.length} results`)
     }
   }
 
@@ -526,7 +526,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log('[ProveedoresStore] Filters cleared')
+      // console.log('[ProveedoresStore] Filters cleared')
     }
   }
 
@@ -571,7 +571,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
       pagination.value.currentPage = pageNumber
       
       if (DEBUG_CONFIG.ENABLED) {
-        console.log(`[ProveedoresStore] Navigated to page ${pageNumber}`)
+        // console.log(`[ProveedoresStore] Navigated to page ${pageNumber}`)
       }
     }
   }
@@ -585,7 +585,7 @@ export const useProveedoresStore = defineStore('proveedores', () => {
     updatePaginationInfo()
     
     if (DEBUG_CONFIG.ENABLED) {
-      console.log(`[ProveedoresStore] Page size changed to ${newPageSize}`)
+      // console.log(`[ProveedoresStore] Page size changed to ${newPageSize}`)
     }
   }
 

@@ -186,7 +186,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Mostrar mensaje de sesión expirada si está disponible
       if (event.detail?.message) {
-        console.warn('[Auth]', event.detail.message)
+        // console.warn('[Auth]', event.detail.message)
         // Aquí podrías mostrar una notificación toast si tienes un sistema de notificaciones
       }
       

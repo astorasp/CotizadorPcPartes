@@ -562,7 +562,7 @@ const handleConfirm = async () => {
         }
       } else {
         // Activar (implementar endpoint si es necesario)
-        console.log('Activar usuario no implementado')
+        // console.log('Activar usuario no implementado')
       }
     } catch (error) {
       console.error('Error al cambiar estado:', error)

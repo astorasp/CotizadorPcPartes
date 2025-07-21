@@ -40,7 +40,7 @@ export function useTokenMonitor() {
       const payload = JSON.parse(atob(accessToken.split('.')[1]))
       
       if (!payload.exp) {
-        console.warn('[TokenMonitor] Token no tiene campo exp')
+        // Token no tiene campo exp
         return 0
       }
       
@@ -52,7 +52,7 @@ export function useTokenMonitor() {
       
       // Debug solo cuando sea crítico
       if (secondsLeft <= 60 && (secondsLeft % 30 === 0 || secondsLeft <= 10)) {
-        console.log(`[TokenMonitor] Token expira en ${secondsLeft} segundos (usando JWT exp field)`)
+        // Token expira en ${secondsLeft} segundos
       }
       
       return secondsLeft
@@ -80,16 +80,16 @@ export function useTokenMonitor() {
    */
   const showWarning = async () => {
     if (!authStore.isLoggedIn) {
-      console.warn('[TokenMonitor] No se puede mostrar warning - usuario no autenticado')
+      // No se puede mostrar warning - usuario no autenticado
       return
     }
     
     // VERIFICACIÓN CRÍTICA: ¿Es posible renovar el token?
     const renewCheck = await authService.canRenewToken()
-    console.log('[TokenMonitor] Verificación de renovación:', renewCheck)
+    // Verificación de renovación
     
     if (!renewCheck.canRenew) {
-      console.log('[TokenMonitor] No es posible renovar - mostrando modal de sesión expirada directamente')
+      // No es posible renovar - mostrando modal de sesión expirada directamente
       
       // Mostrar directamente el modal de sesión expirada
       const message = renewCheck.reason === 'session_renewal_limit_reached' 
@@ -107,17 +107,13 @@ export function useTokenMonitor() {
     // Calcular segundos reales hasta la expiración
     const realSecondsLeft = getSecondsUntilExpiry()
     
-    console.log('[TokenMonitor] Mostrando advertencia de expiración')
-    console.log('[TokenMonitor] Segundos reales hasta expiración:', realSecondsLeft)
+    // Mostrando advertencia de expiración
+    // Segundos reales hasta expiración
     
     showExpirationWarning.value = true
     secondsUntilExpiry.value = realSecondsLeft
     
-    console.log('[TokenMonitor] Estado después de mostrar warning:', {
-      showExpirationWarning: showExpirationWarning.value,
-      secondsUntilExpiry: secondsUntilExpiry.value,
-      realSecondsLeft: realSecondsLeft
-    })
+    // Estado después de mostrar warning
     
     // Countdown para el modal usando tiempo real
     const countdownInterval = setInterval(() => {
@@ -126,11 +122,11 @@ export function useTokenMonitor() {
       
       // Solo log cuando queden menos de 10 segundos o cada 10 segundos
       if (currentSecondsLeft <= 10 || currentSecondsLeft % 10 === 0) {
-        console.log('[TokenMonitor] Countdown tiempo real:', currentSecondsLeft)
+        // Countdown tiempo real
       }
       
       if (currentSecondsLeft <= 0) {
-        console.log('[TokenMonitor] Token expirado - ejecutando auto logout')
+        // Token expirado - ejecutando auto logout
         clearInterval(countdownInterval)
         handleAutoLogout()
       }
@@ -138,7 +134,7 @@ export function useTokenMonitor() {
     
     // Auto logout después del tiempo límite (safety net)
     expirationTimeout = setTimeout(() => {
-      console.log('[TokenMonitor] Timeout de seguridad alcanzado - ejecutando auto logout')
+      // console.log('[TokenMonitor] Timeout de seguridad alcanzado - ejecutando auto logout')
       clearInterval(countdownInterval)
       handleAutoLogout()
     }, (realSecondsLeft + 5) * 1000) // Un poco más del tiempo real para safety
@@ -151,11 +147,11 @@ export function useTokenMonitor() {
     isRenewing.value = true
     
     try {
-      console.log('[TokenMonitor] Intentando renovar token...')
+      // console.log('[TokenMonitor] Intentando renovar token...')
       const result = await authService.refreshToken()
       
       if (result.success) {
-        console.log('[TokenMonitor] Token renovado exitosamente')
+        // console.log('[TokenMonitor] Token renovado exitosamente')
         
         // Actualizar estado del authStore
         authStore.checkAuthentication()
@@ -183,7 +179,7 @@ export function useTokenMonitor() {
    * Rechazar extensión y cerrar sesión
    */
   const rejectExtension = () => {
-    console.log('[TokenMonitor] Usuario rechazó extender sesión')
+    // console.log('[TokenMonitor] Usuario rechazó extender sesión')
     handleAutoLogout()
   }
   
@@ -205,7 +201,7 @@ export function useTokenMonitor() {
    * Manejar cuando el refresh token ha expirado completamente
    */
   const handleRefreshTokenExpired = (detail) => {
-    console.log('[TokenMonitor] Refresh token expirado detectado:', detail)
+    // console.log('[TokenMonitor] Refresh token expirado detectado:', detail)
     
     // Mostrar modal específico para refresh token expirado
     showRefreshTokenExpiredModal.value = true
@@ -235,7 +231,7 @@ export function useTokenMonitor() {
    * Manejar logout automático
    */
   const handleAutoLogout = async () => {
-    console.log('[TokenMonitor] Ejecutando logout automático por expiración')
+    // console.log('[TokenMonitor] Ejecutando logout automático por expiración')
     closeWarning()
     stopMonitoring()
     
@@ -251,11 +247,11 @@ export function useTokenMonitor() {
     stopMonitoring()
     
     if (!authStore.isLoggedIn) {
-      console.log('[TokenMonitor] Usuario no autenticado, no iniciando monitoreo')
+      // console.log('[TokenMonitor] Usuario no autenticado, no iniciando monitoreo')
       return
     }
     
-    console.log('[TokenMonitor] Iniciando monitoreo de token')
+    // console.log('[TokenMonitor] Iniciando monitoreo de token')
     
     // Verificar inmediatamente
     checkTokenExpiration()
@@ -286,7 +282,7 @@ export function useTokenMonitor() {
     }
     
     closeWarning()
-    console.log('[TokenMonitor] Monitoreo detenido')
+    // console.log('[TokenMonitor] Monitoreo detenido')
   }
   
   /**
@@ -307,23 +303,23 @@ export function useTokenMonitor() {
     
     // Si el token ya expiró
     if (secondsLeft <= 0) {
-      console.log('[TokenMonitor] Token ya expirado')
+      // console.log('[TokenMonitor] Token ya expirado')
       handleAutoLogout()
       return
     }
     
     // Si está próximo a expirar, mostrar warning
     if (secondsLeft <= WARNING_SECONDS) {
-      console.log(`[TokenMonitor] Token expira en ${secondsLeft} segundos, mostrando warning`)
+      // console.log(`[TokenMonitor] Token expira en ${secondsLeft} segundos, mostrando warning`)
       await showWarning()
       return
     }
     
     // Log periódico solo cuando sea relevante
     if (secondsLeft <= 120 && secondsLeft % 30 === 0) { // Solo cuando quedan 2 minutos o menos, cada 30s
-      console.log(`[TokenMonitor] Token expira en ${secondsLeft} segundos (${Math.floor(secondsLeft / 60)}m ${secondsLeft % 60}s)`)
+      // console.log(`[TokenMonitor] Token expira en ${secondsLeft} segundos (${Math.floor(secondsLeft / 60)}m ${secondsLeft % 60}s)`)
     } else if (secondsLeft > 120 && secondsLeft % 300 === 0) { // Cada 5 minutos cuando hay tiempo
-      console.log(`[TokenMonitor] Token expira en ${Math.floor(secondsLeft / 60)} minutos`)
+      // console.log(`[TokenMonitor] Token expira en ${Math.floor(secondsLeft / 60)} minutos`)
     }
   }
   
@@ -331,12 +327,12 @@ export function useTokenMonitor() {
    * Lifecycle hooks
    */
   onMounted(() => {
-    console.log('[TokenMonitor] Component mounted, checking auth status...')
+    // console.log('[TokenMonitor] Component mounted, checking auth status...')
     
     // Verificar inmediatamente si hay token válido
     const accessToken = localStorage.getItem('accessToken')
     if (accessToken) {
-      console.log('[TokenMonitor] Token found in localStorage, checking validity...')
+      // console.log('[TokenMonitor] Token found in localStorage, checking validity...')
       
       // Forzar verificación de autenticación
       authStore.checkAuthentication()
@@ -344,31 +340,31 @@ export function useTokenMonitor() {
       // Esperar un tick y verificar de nuevo
       setTimeout(() => {
         if (authStore.isLoggedIn) {
-          console.log('[TokenMonitor] User is authenticated, starting monitoring')
+          // console.log('[TokenMonitor] User is authenticated, starting monitoring')
           startMonitoring()
         } else {
-          console.log('[TokenMonitor] User not authenticated after check')
+          // console.log('[TokenMonitor] User not authenticated after check')
         }
       }, 100)
     } else {
-      console.log('[TokenMonitor] No token found in localStorage')
+      // console.log('[TokenMonitor] No token found in localStorage')
     }
     
     // Escuchar eventos de login exitoso para iniciar monitoreo
     window.addEventListener('auth-login-success', () => {
-      console.log('[TokenMonitor] Login exitoso detectado, iniciando monitoreo')
+      // console.log('[TokenMonitor] Login exitoso detectado, iniciando monitoreo')
       startMonitoring()
     })
     
     // Escuchar eventos de logout para detener monitoreo
     window.addEventListener('auth-logout', () => {
-      console.log('[TokenMonitor] Logout detectado, deteniendo monitoreo')
+      // console.log('[TokenMonitor] Logout detectado, deteniendo monitoreo')
       stopMonitoring()
     })
     
     // También escuchar cambios en el estado de autenticación
     window.addEventListener('auth-state-changed', () => {
-      console.log('[TokenMonitor] Auth state changed, rechecking...')
+      // console.log('[TokenMonitor] Auth state changed, rechecking...')
       if (authStore.isLoggedIn) {
         startMonitoring()
       } else {
@@ -378,7 +374,7 @@ export function useTokenMonitor() {
 
     // Escuchar evento de refresh token expirado
     window.addEventListener('refresh-token-expired', (event) => {
-      console.log('[TokenMonitor] Evento refresh-token-expired recibido')
+      // console.log('[TokenMonitor] Evento refresh-token-expired recibido')
       handleRefreshTokenExpired(event.detail)
     })
   })
@@ -411,20 +407,20 @@ export function useTokenMonitor() {
       currentTime: new Date().toISOString()
     }
     
-    console.log('[TokenMonitor] Debug Status:', status)
+    // console.log('[TokenMonitor] Debug Status:', status)
     
     if (issuedAt && expiresIn) {
       const issuedTime = new Date(issuedAt).getTime()
       const expiryTime = issuedTime + (parseInt(expiresIn) * 1000)
       const currentTime = new Date().getTime()
       
-      console.log('[TokenMonitor] Token timing details:')
-      console.log('  - Issued at:', new Date(issuedTime).toISOString())
-      console.log('  - Expires at:', new Date(expiryTime).toISOString())
-      console.log('  - Current time:', new Date(currentTime).toISOString())
-      console.log('  - Token age (seconds):', Math.floor((currentTime - issuedTime) / 1000))
-      console.log('  - Token duration (seconds):', parseInt(expiresIn))
-      console.log('  - Time left (seconds):', secondsLeft)
+      // console.log('[TokenMonitor] Token timing details:')
+      // console.log('  - Issued at:', new Date(issuedTime).toISOString())
+      // console.log('  - Expires at:', new Date(expiryTime).toISOString())
+      // console.log('  - Current time:', new Date(currentTime).toISOString())
+      // console.log('  - Token age (seconds):', Math.floor((currentTime - issuedTime) / 1000))
+      // console.log('  - Token duration (seconds):', parseInt(expiresIn))
+      // console.log('  - Time left (seconds):', secondsLeft)
     }
     
     return status
@@ -432,11 +428,11 @@ export function useTokenMonitor() {
   
   // Función para testing manual - simular token próximo a expirar
   const simulateExpiration = (seconds = 15) => {
-    console.log(`[TokenMonitor] Intentando simular expiración en ${seconds} segundos`)
-    console.log(`[TokenMonitor] Usuario autenticado: ${authStore.isLoggedIn}`)
+    // console.log(`[TokenMonitor] Intentando simular expiración en ${seconds} segundos`)
+    // console.log(`[TokenMonitor] Usuario autenticado: ${authStore.isLoggedIn}`)
     
     if (!authStore.isLoggedIn) {
-      console.warn('[TokenMonitor] No se puede simular - usuario no autenticado')
+      // console.warn('[TokenMonitor] No se puede simular - usuario no autenticado')
       return false
     }
     
@@ -448,10 +444,10 @@ export function useTokenMonitor() {
   
   // Función para forzar mostrar el modal inmediatamente (para testing)
   const forceShowModal = (seconds = 15) => {
-    console.log(`[TokenMonitor] Forzando mostrar modal con ${seconds} segundos`)
+    // console.log(`[TokenMonitor] Forzando mostrar modal con ${seconds} segundos`)
     
     if (!authStore.isLoggedIn) {
-      console.warn('[TokenMonitor] No se puede mostrar modal - usuario no autenticado')
+      // console.warn('[TokenMonitor] No se puede mostrar modal - usuario no autenticado')
       return false
     }
     
@@ -459,10 +455,7 @@ export function useTokenMonitor() {
     showExpirationWarning.value = true
     secondsUntilExpiry.value = seconds
     
-    console.log('[TokenMonitor] Modal forzado - estado:', {
-      showExpirationWarning: showExpirationWarning.value,
-      secondsUntilExpiry: secondsUntilExpiry.value
-    })
+    // Modal forzado - estado actualizado
     
     // Iniciar countdown manual
     const countdownInterval = setInterval(() => {
@@ -470,12 +463,12 @@ export function useTokenMonitor() {
       
       // Solo log cuando sea relevante
       if (secondsUntilExpiry.value <= 5 || secondsUntilExpiry.value % 5 === 0) {
-        console.log('[TokenMonitor] Countdown forzado:', secondsUntilExpiry.value)
+        // console.log('[TokenMonitor] Countdown forzado:', secondsUntilExpiry.value)
       }
       
       if (secondsUntilExpiry.value <= 0) {
         clearInterval(countdownInterval)
-        console.log('[TokenMonitor] Countdown terminado')
+        // console.log('[TokenMonitor] Countdown terminado')
         // No hacer logout automático en testing
       }
     }, 1000)
@@ -485,7 +478,7 @@ export function useTokenMonitor() {
   
   // Función para limpiar manualmente el estado (para debugging)
   const clearWarning = () => {
-    console.log('[TokenMonitor] Limpiando warning manualmente')
+    // console.log('[TokenMonitor] Limpiando warning manualmente')
     closeWarning()
     stopMonitoring()
   }
@@ -493,22 +486,22 @@ export function useTokenMonitor() {
   // Función para crear un token que expire en X segundos (para testing real)
   const createTestTokenExpiring = (secondsFromNow = 45) => {
     if (!authStore.isLoggedIn) {
-      console.warn('[TokenMonitor] No se puede crear token de prueba - usuario no autenticado')
+      // console.warn('[TokenMonitor] No se puede crear token de prueba - usuario no autenticado')
       return false
     }
     
     const currentTime = Date.now()
     const expiryTime = currentTime + (secondsFromNow * 1000)
     
-    console.log(`[TokenMonitor] Creando token de prueba que expira en ${secondsFromNow} segundos`)
-    console.log(`[TokenMonitor] Modal aparecerá cuando falten ${WARNING_SECONDS} segundos`)
+    // console.log(`[TokenMonitor] Creando token de prueba que expira en ${secondsFromNow} segundos`)
+    // console.log(`[TokenMonitor] Modal aparecerá cuando falten ${WARNING_SECONDS} segundos`)
     
     // Modificar el localStorage para simular un token que expira pronto
     localStorage.setItem('issuedAt', new Date(currentTime).toISOString())
     localStorage.setItem('expiresIn', secondsFromNow.toString())
     
-    console.log(`[TokenMonitor] Tiempo actual: ${new Date(currentTime).toISOString()}`)
-    console.log(`[TokenMonitor] Expira en: ${new Date(expiryTime).toISOString()}`)
+    // console.log(`[TokenMonitor] Tiempo actual: ${new Date(currentTime).toISOString()}`)
+    // console.log(`[TokenMonitor] Expira en: ${new Date(expiryTime).toISOString()}`)
     
     // Forzar actualización del authStore
     authStore.checkAuthentication()
@@ -517,7 +510,7 @@ export function useTokenMonitor() {
     stopMonitoring()
     startMonitoring()
     
-    console.log(`[TokenMonitor] Monitoreo reiniciado, esperando ${secondsFromNow - WARNING_SECONDS} segundos para mostrar modal`)
+    // console.log(`[TokenMonitor] Monitoreo reiniciado, esperando ${secondsFromNow - WARNING_SECONDS} segundos para mostrar modal`)
     
     return true
   }
