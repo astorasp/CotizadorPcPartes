@@ -10,6 +10,7 @@
 
 ## 📋 Tabla de Contenidos
 
+- [⚙️ Variables de Entorno](#️-variables-de-entorno)
 - [🚀 Inicio Rápido](#-inicio-rápido)
 - [🎯 ¿Qué es el Sistema Cotizador de PC Partes?](#-qué-es-el-sistema-cotizador-de-pc-partes)
 - [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
@@ -347,6 +348,142 @@ CotizadorPcPartes/
 ├── CLAUDE.md                        # AI Assistant Instructions
 └── README.md                        # This file
 ```
+
+## ⚙️ Variables de Entorno
+
+El sistema utiliza variables de entorno definidas en el archivo `.env` para configurar todos los aspectos del despliegue con Docker Compose. A continuación se documentan todas las variables disponibles:
+
+### 🗄️ Base de Datos MySQL
+
+#### Microservicio Cotizador
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `MYSQL_ROOT_PASSWORD` | Contraseña del usuario root de MySQL | `vQMMbMs6fViYMNtMr5tJ` |
+| `MYSQL_COTIZADOR_DATABASE` | Nombre de la base de datos | `cotizador` |
+| `MYSQL_COTIZADOR_USER` | Usuario de la base de datos | `cotizador_user` |
+| `MYSQL_COTIZADOR_PASSWORD` | Contraseña del usuario | `VhtM4dMIc0zVSZiI` |
+
+#### Microservicio Seguridad
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `MYSQL_SEGURIDAD_ROOT_PASSWORD` | Contraseña del usuario root de MySQL | `L5dQjxX6LcbufSshuiBs` |
+| `MYSQL_SEGURIDAD_DATABASE` | Nombre de la base de datos | `seguridad` |
+| `MYSQL_SEGURIDAD_USER` | Usuario de la base de datos | `seguridad_user` |
+| `MYSQL_SEGURIDAD_PASSWORD` | Contraseña del usuario | `05Ssg9zC7BT0Gmsb` |
+
+### 🔐 Configuración de Seguridad
+
+#### Credenciales de Microservicios
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `SECURITY_USERNAME` | Usuario para autenticación básica | `admin` |
+| `SECURITY_PASSWORD` | Contraseña para autenticación básica | `4pwUWIbr3oOFVc2W` |
+
+#### Configuración JWT
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `JWT_ACCESS_TOKEN_DURATION` | Duración del access token (ms) | `300000` (5 min) |
+| `JWT_REFRESH_TOKEN_DURATION` | Duración del refresh token (ms) | `900000` (15 min) |
+| `JWT_ISSUER` | Emisor de los tokens JWT | `ms-seguridad` |
+| `JWT_CACHE_TIMEOUT_MS` | Timeout del caché JWKS (ms) | `300000` |
+| `JWT_JWKS_REFRESH_INTERVAL_MS` | Intervalo de actualización JWKS (ms) | `300000` |
+| `JWT_JWKS_MAX_RETRIES` | Máximo número de reintentos | `5` |
+| `JWT_JWKS_INITIAL_DELAY_MS` | Delay inicial para JWKS (ms) | `15000` |
+| `JWT_MS_SEGURIDAD_TIMEOUT` | Timeout de conexión (ms) | `15000` |
+| `JWT_MS_SEGURIDAD_CONNECT_TIMEOUT` | Timeout de establecimiento (ms) | `10000` |
+
+#### Rotación de Llaves JWT
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `JWT_KEY_ROTATION_ENABLED` | Habilitar rotación reactiva | `true` |
+| `JWT_SECURITY_ALERT_THRESHOLD` | Umbral de alertas de seguridad | `3` |
+| `JWT_LOG_ROTATION_EVENTS` | Registrar eventos de rotación | `true` |
+| `JWT_CLEANUP_OLD_KEYS` | Limpiar llaves antiguas | `true` |
+
+#### Rate Limiting JWKS
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `JWT_RATE_LIMITING_ENABLED` | Habilitar rate limiting | `true` |
+| `JWT_MAX_REQUESTS_PER_MINUTE` | Máximo requests por minuto | `60` |
+| `JWT_MAX_REQUESTS_PER_HOUR` | Máximo requests por hora | `1000` |
+
+### 🔄 Configuración de Sesiones
+
+#### Validación de Sesiones
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `JWT_SESSION_VALIDATION_ENABLED` | Habilitar validación de sesiones | `true` |
+| `SESSION_CACHE_TTL_MS` | TTL del caché de sesiones (ms) | `30000` |
+| `SESSION_CACHE_MAX_SIZE` | Tamaño máximo del caché | `1000` |
+| `SESSION_CACHE_ENABLED` | Habilitar caché de sesiones | `true` |
+| `SESSION_VALIDATION_TIMEOUT_MS` | Timeout de validación (ms) | `10000` |
+| `SESSION_VALIDATION_MAX_RETRIES` | Máximo número de reintentos | `5` |
+| `SESSION_VALIDATION_RETRY_DELAY_MS` | Delay entre reintentos (ms) | `2000` |
+
+#### Limpieza de Sesiones
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `SESSION_CLEANUP_ENABLED` | Habilitar limpieza automática | `true` |
+| `SESSION_CLEANUP_INTERVAL_SECONDS` | Intervalo de limpieza (segundos) | `15` |
+
+### 🌐 Configuración de Red y Puertos
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `COTIZADOR_PORT` | Puerto externo del cotizador | `8080` |
+| `SEGURIDAD_PORT` | Puerto externo del seguridad | `8081` |
+| `SEGURIDAD_MANAGEMENT_PORT` | Puerto de management | `8091` |
+| `MYSQL_COTIZADOR_PORT` | Puerto externo MySQL cotizador | `3306` |
+| `MYSQL_SEGURIDAD_PORT` | Puerto externo MySQL seguridad | `3307` |
+
+### ☕ Configuración JVM
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `COTIZADOR_JAVA_OPTS` | Opciones JVM para ms-cotizador | `-Xmx1g -Xms512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200` |
+| `SEGURIDAD_JAVA_OPTS` | Opciones JVM para ms-seguridad | `-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseStringDeduplication` |
+
+### 🔧 Configuración de Desarrollo
+
+| Variable | Descripción | Valor por Defecto |
+|----------|-------------|-------------------|
+| `SPRING_PROFILES_ACTIVE` | Perfil Spring Boot activo | `docker` |
+| `TIMEZONE` | Zona horaria para contenedores | `America/Mazatlan` |
+| `LOG_LEVEL_ROOT` | Nivel de log raíz | `INFO` |
+| `LOG_LEVEL_SECURITY` | Nivel de log del microservicio de seguridad | `DEBUG` |
+| `LOG_LEVEL_COTIZADOR` | Nivel de log del microservicio cotizador | `INFO` |
+
+### 🚨 Notas de Seguridad
+
+> ⚠️ **IMPORTANTE:**
+> 1. **NUNCA** commitees el archivo `.env` al repositorio
+> 2. Cambia **TODAS** las contraseñas por defecto antes de usar en producción
+> 3. Usa contraseñas fuertes (mínimo 12 caracteres, mayúsculas, minúsculas, números, símbolos)
+> 4. En producción, considera usar secrets de Docker Swarm o Kubernetes
+> 5. Rota las credenciales regularmente
+
+### 📋 Configuración Inicial
+
+1. **Copia el archivo de configuración:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Modifica las variables según tu entorno:**
+   - Cambia todas las contraseñas por defecto
+   - Ajusta los puertos si hay conflictos
+   - Configura los timeouts según tu infraestructura
+
+3. **Para generar contraseñas seguras automáticamente:**
+   ```bash
+   # Linux/macOS
+   ./init-env.sh
+   
+   # Windows PowerShell
+   ./init-env.ps1 -AutoGeneratePasswords
+   ```
+
+---
 
 ## 🚀 Inicio Rápido
 
@@ -928,46 +1065,6 @@ docker-compose ps
 - **Factory Pattern**: Creación de componentes
 
 ---
-
-## 🚀 Próximos Pasos
-
-### 📋 **Roadmap de Desarrollo**
-
-#### **🔧 Mejoras Técnicas**
-- [ ] **Autenticación JWT** - Reemplazar Basic Auth
-- [ ] **Microservicios** - Separar dominio en servicios
-- [ ] **Cache Redis** - Mejorar performance de consultas
-- [ ] **WebSockets** - Actualizaciones en tiempo real
-- [ ] **GraphQL** - API más eficiente para frontend
-
-#### **🌟 Nuevas Funcionalidades**
-- [ ] **Exportación PDF** - Cotizaciones y pedidos
-- [ ] **Sistema de Notificaciones** - Email y push notifications
-- [ ] **Dashboard Analytics** - Reportes y métricas
-- [ ] **Inventario Avanzado** - Stock y reposición
-- [ ] **API Mobile** - Aplicación móvil
-
-#### **🔒 Seguridad y Monitoreo**
-- [ ] **Audit Logging** - Trazabilidad completa
-- [ ] **Rate Limiting** - Control de tráfico
-- [ ] **Monitoring** - Prometheus + Grafana
-- [ ] **Security Headers** - Protección adicional
-- [ ] **API Versioning** - Versionado de endpoints
-
-#### **⚡ Performance y Escalabilidad**
-- [ ] **Database Optimization** - Índices y queries
-- [ ] **CDN Integration** - Assets estáticos
-- [ ] **Load Balancing** - Múltiples instancias
-- [ ] **Caching Strategy** - Multi-nivel
-- [ ] **Async Processing** - Operaciones pesadas
-
-#### **🧪 Testing y Calidad**
-- [ ] **E2E Testing** - Pruebas de extremo a extremo
-- [ ] **Performance Testing** - Pruebas de carga
-- [ ] **Security Testing** - Análisis de vulnerabilidades
-- [ ] **Code Quality** - SonarQube integration
-- [ ] **CI/CD Pipeline** - GitHub Actions
-
 ### 🤝 **Contribuciones**
 
 1. Fork el repositorio
