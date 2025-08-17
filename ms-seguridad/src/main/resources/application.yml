@@ -1,0 +1,76 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /seguridad/v1/api
+
+spring:
+  application:
+    name: ms-seguridad
+  
+  datasource:
+    url: jdbc:mysql://192.168.200.5:3306/seguridad
+    username: ${DB_USERNAME:usuario}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      leak-detection-threshold: 60000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  
+  security:
+    user:
+      name: ${SECURITY_USERNAME:admin}
+      password: ${SECURITY_PASSWORD:admin123}
+      roles: ADMIN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    mx.com.qtx.seguridad: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# JWT Configuration
+jwt:
+  access-token:
+    expiration: 300000  # 5 minutos en milisegundos
+  refresh-token:
+    expiration: 900000  # 15 minutos en milisegundos
+  algorithm: RS256
+  # Configuración de Rate Limiting para endpoints JWKS
+  rate-limiting:
+    enabled: ${JWT_RATE_LIMITING_ENABLED:true}              # Habilitar rate limiting
+    max-requests-per-minute: ${JWT_MAX_REQUESTS_PER_MINUTE:60}   # Máximo 60 requests por minuto por IP
+    max-requests-per-hour: ${JWT_MAX_REQUESTS_PER_HOUR:1000}     # Máximo 1000 requests por hora por IP
+
+# Configuración de limpieza de sesiones
+session:
+  cleanup:
+    enabled: true
+    interval:
+      seconds: 15  # Ejecutar cada 15 segundos

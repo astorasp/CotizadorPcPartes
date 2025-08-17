@@ -1,0 +1,222 @@
+services:
+  # Base de datos MySQL para Cotizador
+  mysql:
+    image: mysql:8.4.4
+    container_name: cotizador-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_COTIZADOR_DATABASE}
+      MYSQL_USER: ${MYSQL_COTIZADOR_USER}
+      MYSQL_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+      TZ: America/Mazatlan
+      # Forzar UTF-8 durante inicialización
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # PUERTO NO EXPUESTO - Solo acceso interno
+    volumes:
+      - ./ms-cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
+      - ./ms-cotizador/sql/dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
+    networks:
+      - cotizador-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "cotizador_user", "-pcotizador_pass"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Base de datos MySQL para Seguridad
+  mysql-seguridad:
+    image: mysql:8.4.4
+    container_name: seguridad-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_SEGURIDAD_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_SEGURIDAD_DATABASE}
+      MYSQL_USER: ${MYSQL_SEGURIDAD_USER}
+      MYSQL_PASSWORD: ${MYSQL_SEGURIDAD_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+      TZ: America/Mazatlan
+      # Forzar UTF-8 durante inicialización
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # PUERTO NO EXPUESTO - Solo acceso interno
+    volumes:
+      - ./ms-seguridad/scripts/seguridad_ddl.sql:/docker-entrypoint-initdb.d/01-seguridad-ddl.sql
+    networks:
+      - cotizador-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "seguridad_user", "-pseguridad_pass"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Microservicio de Seguridad
+  ms-seguridad:
+    build:
+      context: ./ms-seguridad
+      dockerfile: Dockerfile
+    container_name: ms-seguridad
+    restart: unless-stopped
+    environment:
+      # Base de datos
+      DB_HOST: mysql-seguridad
+      DB_PORT: 3306
+      DB_USERNAME: ${MYSQL_SEGURIDAD_USER}
+      DB_PASSWORD: ${MYSQL_SEGURIDAD_PASSWORD}
+      # JWT Configuration
+      JWT_ACCESS_TOKEN_DURATION: ${JWT_ACCESS_TOKEN_DURATION}
+      JWT_REFRESH_TOKEN_DURATION: ${JWT_REFRESH_TOKEN_DURATION}
+      JWT_ISSUER: ${JWT_ISSUER}
+      # JWT Rate Limiting Configuration
+      JWT_RATE_LIMITING_ENABLED: ${JWT_RATE_LIMITING_ENABLED}
+      JWT_MAX_REQUESTS_PER_MINUTE: ${JWT_MAX_REQUESTS_PER_MINUTE}
+      JWT_MAX_REQUESTS_PER_HOUR: ${JWT_MAX_REQUESTS_PER_HOUR}
+      # Seguridad
+      SECURITY_USERNAME: ${SECURITY_USERNAME}
+      SECURITY_PASSWORD: ${SECURITY_PASSWORD}
+      # Session Cleanup Configuration
+      SESSION_CLEANUP_ENABLED: ${SESSION_CLEANUP_ENABLED}
+      SESSION_CLEANUP_INTERVAL_SECONDS: ${SESSION_CLEANUP_INTERVAL_SECONDS}
+      # Java
+      JAVA_OPTS: "${SEGURIDAD_JAVA_OPTS}"
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      # Timezone
+      TZ: America/Mazatlan
+    # PUERTOS NO EXPUESTOS - Solo acceso a través del gateway
+    networks:
+      - cotizador-network
+    depends_on:
+      mysql-seguridad:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8081/actuator/health || nc -z localhost 8081"]
+      timeout: 15s
+      retries: 8
+      interval: 30s
+      start_period: 120s
+
+  # Backend Spring Boot
+  backend:
+    build: 
+      context: ./ms-cotizador
+      dockerfile: Dockerfile
+    container_name: cotizador-backend
+    restart: unless-stopped
+    environment:
+      # Base de datos
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: ${MYSQL_COTIZADOR_USER}
+      DB_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
+      # Seguridad
+      SECURITY_USERNAME: ${SECURITY_USERNAME}
+      SECURITY_PASSWORD: ${SECURITY_PASSWORD}
+      # JWT Configuration
+      JWT_MS_SEGURIDAD_BASE_URL: http://ms-seguridad:8081
+      JWT_MS_SEGURIDAD_CONTEXT_PATH: /seguridad/v1/api
+      JWT_EXPECTED_ISSUER: ${JWT_ISSUER}
+      JWT_CACHE_TIMEOUT_MS: ${JWT_CACHE_TIMEOUT_MS}
+      JWT_JWKS_REFRESH_INTERVAL_MS: ${JWT_JWKS_REFRESH_INTERVAL_MS}
+      JWT_JWKS_MAX_RETRIES: ${JWT_JWKS_MAX_RETRIES}
+      JWT_JWKS_INITIAL_DELAY_MS: ${JWT_JWKS_INITIAL_DELAY_MS}
+      JWT_MS_SEGURIDAD_TIMEOUT: ${JWT_MS_SEGURIDAD_TIMEOUT}
+      JWT_MS_SEGURIDAD_CONNECT_TIMEOUT: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT}
+      # JWT Key Rotation Configuration
+      JWT_KEY_ROTATION_ENABLED: ${JWT_KEY_ROTATION_ENABLED}
+      JWT_SECURITY_ALERT_THRESHOLD: ${JWT_SECURITY_ALERT_THRESHOLD}
+      JWT_LOG_ROTATION_EVENTS: ${JWT_LOG_ROTATION_EVENTS}
+      JWT_CLEANUP_OLD_KEYS: ${JWT_CLEANUP_OLD_KEYS}
+      # JWT Session Validation Configuration
+      JWT_SESSION_VALIDATION_ENABLED: ${JWT_SESSION_VALIDATION_ENABLED}
+      # Session Cache Configuration
+      SESSION_CACHE_TTL_MS: ${SESSION_CACHE_TTL_MS}
+      SESSION_CACHE_MAX_SIZE: ${SESSION_CACHE_MAX_SIZE}
+      SESSION_CACHE_ENABLED: ${SESSION_CACHE_ENABLED}
+      # Session Validation Configuration
+      SESSION_VALIDATION_TIMEOUT_MS: ${SESSION_VALIDATION_TIMEOUT_MS}
+      SESSION_VALIDATION_MAX_RETRIES: ${SESSION_VALIDATION_MAX_RETRIES}
+      SESSION_VALIDATION_RETRY_DELAY_MS: ${SESSION_VALIDATION_RETRY_DELAY_MS}
+      # Java
+      JAVA_OPTS: "${COTIZADOR_JAVA_OPTS}"
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      # Timezone
+      TZ: America/Mazatlan
+    # PUERTO NO EXPUESTO - Solo acceso a través del gateway
+    networks:
+      - cotizador-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ms-seguridad:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8080/actuator/health || nc -z localhost 8080"]
+      timeout: 15s
+      retries: 8
+      interval: 30s
+      start_period: 120s
+
+  # Frontend Vue.js
+  frontend:
+    build:
+      context: ./portal-cotizador
+      dockerfile: Dockerfile
+    container_name: cotizador-frontend-vue
+    restart: unless-stopped
+    environment:
+      # Timezone
+      TZ: America/Mazatlan
+    # PUERTO NO EXPUESTO - Solo acceso a través del gateway
+    networks:
+      - cotizador-network
+    depends_on:
+      backend:
+        condition: service_healthy
+      ms-seguridad:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 10s
+
+  # API Gateway con Nginx
+  gateway:
+    build:
+      context: ./nginx-gateway
+      dockerfile: Dockerfile
+    container_name: cotizador-gateway
+    restart: unless-stopped
+    environment:
+      # Timezone
+      TZ: America/Mazatlan
+    ports:
+      - "80:80"  # ÚNICO PUERTO EXPUESTO
+    networks:
+      - cotizador-network
+    depends_on:
+      backend:
+        condition: service_healthy
+      ms-seguridad:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 10s
+
+# Red personalizada
+networks:
+  cotizador-network:
+    driver: bridge
+    name: cotizador-network

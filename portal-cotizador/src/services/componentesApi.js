@@ -1,0 +1,73 @@
+import apiClient from './apiClient'
+import { API_ENDPOINTS } from '@/utils/constants'
+
+/**
+ * API service para componentes (migración exacta de PortalApi.componentes)
+ */
+export const componentesApi = {
+  /**
+   * Obtener todos los componentes
+   */
+  async getAll() {
+    const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.BASE)
+    return response.datos || []
+  },
+
+  /**
+   * Obtener componente por ID
+   */
+  async getById(id) {
+    const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.BY_ID(id))
+    return response.datos
+  },
+
+  /**
+   * Crear nuevo componente
+   */
+  async create(componenteData) {
+    const response = await apiClient.post(API_ENDPOINTS.COMPONENTES.BASE, componenteData)
+    return response
+  },
+
+  /**
+   * Actualizar componente existente
+   */
+  async update(id, componenteData) {
+    const response = await apiClient.put(API_ENDPOINTS.COMPONENTES.BY_ID(id), componenteData)
+    return response
+  },
+
+  /**
+   * Eliminar componente
+   */
+  async delete(id) {
+    const response = await apiClient.delete(API_ENDPOINTS.COMPONENTES.BY_ID(id))
+    return response
+  },
+
+  /**
+   * Obtener componentes por tipo
+   */
+  async getByType(tipo) {
+    const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.BY_TYPE(tipo))
+    return response.datos || []
+  },
+
+  /**
+   * Verificar si existe un componente con el ID
+   */
+  async exists(id) {
+    try {
+      const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.EXISTS(id))
+      return response.datos || false
+    } catch (error) {
+      // Si da 404, significa que no existe
+      if (error.message.includes('404') || error.message.includes('no encontrado')) {
+        return false
+      }
+      throw error
+    }
+  }
+}
+
+export default componentesApi
