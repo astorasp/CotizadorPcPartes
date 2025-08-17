@@ -16,7 +16,7 @@
     <groupId>mx.com.qtx.cotizadorv1ds</groupId>
     <artifactId>cotizador</artifactId>
     <version>2.0.0</version>
-    <name>Cotizador</name>
+    <name>ms-cotizador</name>
     <description>Sistema Cotizador de Componentes de Hardware con distintos patrones de diseño</description>
 
     <!-- Propiedades del proyecto -->

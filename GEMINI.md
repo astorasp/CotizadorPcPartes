@@ -1,100 +1,107 @@
-# Análisis del Proyecto: Sistema de Cotización de Partes de PC
+# Project Overview
 
-*Última actualización: 2024-07-19*
+This is a comprehensive PC parts quoting system built with a microservices architecture. It consists of two Spring Boot backend services, a Vue.js 3 frontend, and an Nginx gateway, all containerized with Docker.
 
-Este documento es la fuente de verdad consolidada sobre la arquitectura, funcionalidades y mecanismos internos del proyecto, basado en un análisis exhaustivo del código fuente.
+## Backend
 
----
+The backend is split into two microservices:
 
-## 1. Descripción General del Proyecto
+*   **`ms-cotizador`**: The core business logic for managing PC components, quotes, orders, and more. It follows a layered architecture inspired by **Domain-Driven Design (DDD)**, with distinct packages for domain, application, and infrastructure layers.
+*   **`ms-seguridad`**: Handles security, authentication, and authorization using **JWT**. It also uses a **Quartz Scheduler** for tasks like session cleanup.
 
-El proyecto es una aplicación web integral para la **gestión del ciclo de venta de componentes de hardware y PCs personalizadas**. Sirve como una herramienta interna para un negocio, cubriendo desde la gestión de catálogos y proveedores hasta la creación de cotizaciones y el seguimiento de pedidos.
+Both microservices are built with **Java 21** and **Spring Boot 3**. They use **Spring Data JPA** for database interaction with **MySQL**, and **OpenAPI** for API documentation.
 
----
+## Frontend
 
-## 2. Arquitectura del Sistema
+The frontend is a single-page application built with **Vue.js 3**. It uses:
 
-El sistema sigue un patrón de **arquitectura de microservicios**, orquestado a través de **Docker**. Esta elección de diseño promueve la separación de responsabilidades, la escalabilidad y el despliegue independiente de cada componente.
+*   **Pinia** for state management.
+*   **Vue Router** for client-side routing.
+*   **Axios** for making HTTP requests to the backend.
+*   **Tailwind CSS** for styling.
+*   **Vite** as the build tool.
 
-### 2.1. Componentes Principales
+# Building and Running
 
-| Componente | Responsabilidad | Tecnologías Clave |
-| :--- | :--- | :--- |
-| **`portal-cotizador`** | Frontend (SPA) | Vue.js 3, Pinia, TailwindCSS, Vue Router |
-| **`ms-cotizador`** | Microservicio de Negocio | Java 21, Spring Boot, DDD, MySQL |
-| **`ms-seguridad`** | Microservicio de Seguridad | Java 21, Spring Boot, JWT, MySQL |
-| **`nginx-gateway`** | API Gateway | NGINX (Proxy Inverso) |
-| **`cotizador-mysql`** | Base de Datos | MySQL (Datos de negocio) |
-| **`seguridad-mysql`** | Base de Datos | MySQL (Usuarios, roles, sesiones) |
+The recommended way to build and run the project is with Docker Compose.
 
-### 2.2. Patrones Arquitectónicos Clave
+## Prerequisites
 
-*   **API Gateway:** `nginx-gateway` actúa como el único punto de entrada, enrutando las peticiones al microservicio correspondiente y ocultando la topología de la red interna.
-*   **Aislamiento de Datos:** Cada microservicio (`ms-cotizador` y `ms-seguridad`) posee su propia base de datos, garantizando un bajo acoplamiento.
-*   **Diseño Orientado al Dominio (DDD):** `ms-cotizador` está estructurado en capas (Dominio, Aplicación, Infraestructura) para alinear el código con la lógica del negocio.
-*   **Infraestructura como Código (IaC):** El archivo `docker-compose.yml` define y configura todo el entorno de la aplicación, garantizando consistencia y facilidad de despliegue.
+*   Docker
+*   Docker Compose
 
----
+## Running the Application
 
-## 3. Catálogo de Módulos y Funcionalidades
+1.  **Initialize the environment:**
+    *   For Linux/macOS: `./init-env.sh`
+    *   For Windows PowerShell: `./init-env.ps1`
 
-Este es el inventario completo de las capacidades del sistema, agrupadas por módulo funcional.
+2.  **Start the services:**
+    ```bash
+    docker-compose up -d
+    ```
 
-#### Módulo 1: Autenticación y Gestión de Sesión
-*   **Iniciar Sesión:** Validación de credenciales (usuario/contraseña).
-*   **Cerrar Sesión:** Finalización de la sesión activa.
-*   **Ver Perfil Propio:** Visualización de la información de la cuenta del usuario.
-*   **Manejo de Sesión:** Persistencia de sesión y gestión de expiración de tokens.
+3.  **Access the application:**
+    *   **Portal Web:** http://localhost
+    *   **API Gateway:** http://localhost:8080
+    *   **Swagger UI:** http://localhost:8080/swagger-ui.html
 
-#### Módulo 2: Gestión de Catálogo (Componentes)
-*   CRUD completo (Crear, Leer, Actualizar, Eliminar) para componentes de hardware.
-*   Búsqueda y filtrado avanzado de componentes.
+## Development
 
-#### Módulo 3: Ensamblaje de PCs (Constructor de PCs)
-*   Creación de nuevas configuraciones de PC.
-*   Selección de componentes compatibles por ranura.
-*   **Cálculo de Costo de Componentes:** Suma de los costos brutos de los componentes seleccionados (cálculo en el frontend).
-*   Guardado y carga de configuraciones de PC.
+### Backend
 
-#### Módulo 4: Gestión de Cotizaciones
-*   Creación de cotizaciones a partir de ensamblajes de PC.
-*   Asignación de clientes a cotizaciones.
-*   Listado, búsqueda y filtrado de cotizaciones.
-*   **Cálculo de Precio Final:** Lógica de negocio en el backend para aplicar promociones, márgenes e impuestos.
-*   Gestión de estados de la cotización (Borrador, Enviada, Aprobada, etc.).
+To run the backend services locally without Docker, you'll need:
 
-#### Módulo 5: Gestión de Pedidos
-*   Conversión de una cotización aprobada en un pedido formal.
-*   Listado, búsqueda y filtrado de pedidos.
-*   Gestión de estados del pedido (Recibido, En preparación, Enviado, etc.).
+*   Java 21
+*   Maven
+*   MySQL
 
-#### Módulo 6: Gestión de Promociones
-*   CRUD completo para las promociones del sistema (ej. descuentos, 2x1).
-*   Activación y desactivación de promociones.
+1.  **Set up the database:** Create the necessary databases and users, and run the SQL scripts in the `sql` and `scripts` directories.
+2.  **Configure environment variables:** Set the database connection details and other required variables.
+3.  **Run the application:**
+    ```bash
+    mvn spring-boot:run
+    ```
 
-#### Módulo 7: Gestión de Usuarios
-*   CRUD completo para las cuentas de usuario.
-*   Asignación y modificación de roles y permisos.
-*   Activación/desactivación de cuentas y reseteo de contraseñas.
+### Frontend
 
-#### Módulo 8: Gestión de Proveedores
-*   CRUD completo para los proveedores.
-*   Búsqueda de proveedores por nombre comercial o razón social.
+To run the frontend locally, you'll need:
 
----
+*   Node.js
+*   npm
 
-## 4. Manejo de Sesión en el Portal (Flujo Detallado)
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
 
-El portal utiliza un sistema de **autenticación stateless basado en JSON Web Tokens (JWT)**, orquestado por 5 componentes clave en el frontend:
+# Testing
 
-1.  **`services/authService.js` (El Comunicador):** Realiza las llamadas a la API de `ms-seguridad` para `login`.
-2.  **`stores/useAuthStore.js` (El Cerebro):** Mantiene el estado global de la sesión (token, datos de usuario) y lo persiste en `localStorage`.
-3.  **`services/apiClient.js` (El Guardaespaldas):** Intercepta todas las peticiones a la API y les adjunta automáticamente el token JWT en la cabecera `Authorization`.
-4.  **`router/index.js` (El Portero):** Utiliza "Navigation Guards" (`router.beforeEach`) para proteger las rutas que requieren autenticación, redirigiendo al login si el usuario no ha iniciado sesión.
-5.  **`composables/useTokenMonitor.js` (El Relojero):** Vigila la fecha de expiración del token para gestionar proactivamente el fin de la sesión.
+## Backend
 
-### Proceso Típico:
-1.  **Login:** El usuario introduce su **nombre de usuario** y contraseña. `authService` lo envía a `ms-seguridad`. Si es exitoso, `useAuthStore` guarda el token JWT recibido en `localStorage`.
-2.  **Navegación:** El usuario intenta acceder a una ruta protegida. El `router` verifica con `useAuthStore` si hay un token válido. Si no, redirige a `/login`.
-3.  **Petición a API:** Al solicitar datos (ej. lista de proveedores), `apiClient` intercepta la llamada y le inyecta el token antes de enviarla a `ms-cotizador`.
-4.  **Logout:** Al cerrar sesión, `useAuthStore` elimina el token de su estado y de `localStorage`, invalidando la sesión en el cliente.
+To run the backend tests, use the following Maven command:
+
+```bash
+mvn test
+```
+
+The project uses **JUnit 5**, **Testcontainers**, and **REST Assured** for testing.
+
+## Frontend
+
+The frontend uses **ESLint** for linting and **Prettier** for formatting.
+
+```bash
+npm run lint
+npm run format
+```
+
+# Development Conventions
+
+*   **Backend**: The backend follows the principles of Domain-Driven Design (DDD) and uses design patterns like Strategy, Builder, and Decorator. The code is organized into layers: domain, application (services), and infrastructure (controllers, repositories).
+*   **Frontend**: The frontend uses the Composition API and a store pattern with Pinia for state management. The structure is feature-oriented, with dedicated directories for components, views, stores, and services.
+*   **Code Style**: The project uses ESLint and Prettier to enforce a consistent code style.
