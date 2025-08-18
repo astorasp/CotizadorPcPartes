@@ -10,15 +10,15 @@ public class Pc extends Componente {
 
 	protected Pc(String id, String descripcion, String marca, String modelo, 
 			List<ComponenteSimple> subComponentes) {
-		super(id, descripcion, new BigDecimal(0), marca, modelo);
+		super(id, descripcion, marca, modelo, new BigDecimal(0), new BigDecimal(0));
 		this.subComponentes = subComponentes;
 		this.setPrecioBase(this.calcularPrecioComponenteAgregado(0));
 		this.setCosto(this.calcularCostoComponenteAgregado(0));
 	}
 	
 	protected Pc(PcBuilder config) {
-		super(config.getIdPc(), config.getDescripcionPc(), new BigDecimal(0), 
-			  config.getMarcaPc(), config.getModeloPc());
+		super(config.getIdPc(), config.getDescripcionPc(), 
+			  config.getMarcaPc(), config.getModeloPc(), new BigDecimal(0), new BigDecimal(0));
 		
 		List<ComponenteSimple> lstDispositivosPc = new ArrayList<>();
 		lstDispositivosPc.addAll(config.getDiscos());
@@ -75,4 +75,24 @@ public class Pc extends Componente {
 		return subComponentes;
 	}
 	
+	@Override
+	public void mostrarCaracteristicas() {
+		super.mostrarCaracteristicas();
+		System.out.println("\n==== Disco(s) ====");
+		this.subComponentes.stream()
+		                   .filter(scI->scI instanceof DiscoDuro)
+		                   .forEach(dscI-> { dscI.mostrarCaracteristicas(); 
+		                   		             System.out.println();
+		                   		             });
+		System.out.println("==== Monitor(es) ====");
+		this.subComponentes.stream()
+		                   .filter(scI->scI instanceof Monitor)
+		                   .forEach(monI-> { monI.mostrarCaracteristicas(); 
+		                   		             System.out.println();});
+		System.out.println("==== Tarjeta(s) de Video ====");
+		this.subComponentes.stream()
+		                   .filter(scI->scI instanceof Monitor)
+		                   .forEach(tarI-> { tarI.mostrarCaracteristicas(); 
+		                   		             System.out.println();});
+	}
 }

@@ -35,6 +35,9 @@ import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
  */
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public class CotizacionIntegrationTest extends BaseIntegrationTest {
+
+    // Base path para el API de cotizaciones
+    private static final String COTIZACIONES_API_PATH = "/cotizaciones/v1/api";
     
     // Sin mocks HTTP - usando datos locales precargados via DDL/DML
 
@@ -49,7 +52,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/cotizaciones")
+            .get(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -63,7 +66,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .auth().none()
             .contentType(ContentType.JSON)
         .when()
-            .get("/cotizaciones")
+            .get(COTIZACIONES_API_PATH)
         .then()
             .statusCode(401);
     }
@@ -97,7 +100,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionRequest)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -130,7 +133,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionRequest)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -160,7 +163,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionRequest)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -188,7 +191,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionRequest)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("24")) // Código para componente no encontrado en cotización
@@ -210,7 +213,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionInvalida)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Código para error de validación
@@ -225,7 +228,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body("{}")
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Código para error de validación
@@ -259,7 +262,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionRequest)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -271,7 +274,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/cotizaciones/{id}", cotizacionId)
+            .get(COTIZACIONES_API_PATH + "/{id}", cotizacionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -286,7 +289,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/cotizaciones/999999")
+            .get(COTIZACIONES_API_PATH + "/999999")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("20")) // Código para cotización no encontrada
@@ -300,7 +303,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/cotizaciones/0")
+            .get(COTIZACIONES_API_PATH + "/0")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("6")) // Código para valor inválido
@@ -333,7 +336,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionRequest)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200);
             
@@ -345,7 +348,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .queryParam("fecha", fechaHoy)
         .when()
-            .get("/cotizaciones/buscar/fecha")
+            .get(COTIZACIONES_API_PATH + "/buscar/fecha")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -360,7 +363,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .queryParam("fecha", "")
         .when()
-            .get("/cotizaciones/buscar/fecha")
+            .get(COTIZACIONES_API_PATH + "/buscar/fecha")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("6")) // Código para valor inválido
@@ -402,7 +405,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(cotizacionRequest)
         .when()
-            .post("/cotizaciones")
+            .post(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -421,7 +424,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/cotizaciones/{id}", cotizacionId)
+            .get(COTIZACIONES_API_PATH + "/{id}", cotizacionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -435,7 +438,7 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/cotizaciones")
+            .get(COTIZACIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -464,22 +467,22 @@ public class CotizacionIntegrationTest extends BaseIntegrationTest {
         
         // GET sin auth - listar cotizaciones
         given().auth().none().contentType(ContentType.JSON)
-        .when().get("/cotizaciones")
+        .when().get(COTIZACIONES_API_PATH)
         .then().statusCode(401);
         
         // GET sin auth - cotización por ID
         given().auth().none().contentType(ContentType.JSON)
-        .when().get("/cotizaciones/1")
+        .when().get(COTIZACIONES_API_PATH + "/1")
         .then().statusCode(401);
         
         // POST sin auth - crear cotización
         given().auth().none().contentType(ContentType.JSON).body(cotizacion)
-        .when().post("/cotizaciones")
+        .when().post(COTIZACIONES_API_PATH)
         .then().statusCode(401);
         
         // GET sin auth - buscar por fecha
         given().auth().none().contentType(ContentType.JSON).queryParam("fecha", "2024-01-01")
-        .when().get("/cotizaciones/buscar/fecha")
+        .when().get(COTIZACIONES_API_PATH + "/buscar/fecha")
         .then().statusCode(401);
     }
 

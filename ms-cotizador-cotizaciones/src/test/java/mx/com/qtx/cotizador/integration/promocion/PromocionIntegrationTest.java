@@ -33,6 +33,9 @@ import static org.hamcrest.Matchers.*;
 @DisplayName("Integration Tests - Gestión de Promociones")
 class PromocionIntegrationTest extends BaseIntegrationTest {
 
+    // Base path para el API de promociones
+    private static final String PROMOCIONES_API_PATH = "/promociones/v1/api";
+
     // ✅ Configuración heredada de BaseIntegrationTest:
     // - Base de datos MySQL compartida
     // - RestAssured configurado automáticamente  
@@ -65,7 +68,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -103,7 +106,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", not(equalTo("0")))
@@ -129,7 +132,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Error de validación
@@ -163,7 +166,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(createRequest)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -189,7 +192,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(updateRequest)
         .when()
-            .put("/promociones/" + promocionId)
+            .put(PROMOCIONES_API_PATH + "/" + promocionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -204,7 +207,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/promociones/" + promocionId)
+            .delete(PROMOCIONES_API_PATH + "/" + promocionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -233,7 +236,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .put("/promociones/99999")
+            .put(PROMOCIONES_API_PATH + "/99999")
         .then()
             .statusCode(400)
             .body("codigo", not(equalTo("0")))
@@ -251,7 +254,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/promociones/1")
+            .get(PROMOCIONES_API_PATH + "/1")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -273,7 +276,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/promociones/99999")
+            .get(PROMOCIONES_API_PATH + "/99999")
         .then()
             .statusCode(400)
             .body("codigo", not(equalTo("0")))
@@ -289,7 +292,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/promociones")
+            .get(PROMOCIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -327,7 +330,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(createRequest)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(200)
             .extract()
@@ -337,7 +340,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/promociones/" + promocionId)
+            .delete(PROMOCIONES_API_PATH + "/" + promocionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -348,7 +351,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/promociones/" + promocionId)
+            .get(PROMOCIONES_API_PATH + "/" + promocionId)
         .then()
             .statusCode(400)
             .body("codigo", not(equalTo("0")));
@@ -369,7 +372,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/promociones/2")
+            .get(PROMOCIONES_API_PATH + "/2")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -394,7 +397,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(createRequest)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -405,7 +408,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/promociones/" + promocionEliminable)
+            .delete(PROMOCIONES_API_PATH + "/" + promocionEliminable)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -415,7 +418,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/promociones/" + promocionEliminable)
+            .get(PROMOCIONES_API_PATH + "/" + promocionEliminable)
         .then()
             .statusCode(400)
             .body("codigo", not(equalTo("0")));
@@ -434,7 +437,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/promociones/99999")
+            .delete(PROMOCIONES_API_PATH + "/99999")
         .then()
             .statusCode(400)
             .body("codigo", not(equalTo("0")))
@@ -467,7 +470,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(request)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(401);
     }
@@ -480,7 +483,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().none()
         .when()
-            .get("/promociones/1")
+            .get(PROMOCIONES_API_PATH + "/1")
         .then()
             .statusCode(401);
     }
@@ -508,7 +511,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(request)
         .when()
-            .put("/promociones/1")
+            .put(PROMOCIONES_API_PATH + "/1")
         .then()
             .statusCode(401);
     }
@@ -521,7 +524,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().none()
         .when()
-            .delete("/promociones/1")
+            .delete(PROMOCIONES_API_PATH + "/1")
         .then()
             .statusCode(401);
     }
@@ -550,7 +553,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(createRequest)
         .when()
-            .post("/promociones")
+            .post(PROMOCIONES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -561,7 +564,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
         .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/promociones/" + promocionId)
+            .get(PROMOCIONES_API_PATH + "/" + promocionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -586,7 +589,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(updateRequest)
         .when()
-            .put("/promociones/" + promocionId)
+            .put(PROMOCIONES_API_PATH + "/" + promocionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -596,7 +599,7 @@ class PromocionIntegrationTest extends BaseIntegrationTest {
         given()
         .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/promociones/" + promocionId)
+            .delete(PROMOCIONES_API_PATH + "/" + promocionId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));

@@ -19,8 +19,6 @@ spring:
   
 server:
   port: 8082
-  servlet:
-    context-path: /componentes/v1/api
 
 # Configuración de Seguridad
 security:

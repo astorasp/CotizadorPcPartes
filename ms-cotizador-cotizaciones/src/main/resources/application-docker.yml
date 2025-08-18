@@ -34,8 +34,6 @@ spring:
 # Configuración específica para contenedor
 server:
   port: 8083
-  servlet:
-    context-path: /cotizador-cotizaciones/v1/api
   tomcat:
     max-threads: 200
     min-spare-threads: 10

@@ -5,13 +5,9 @@ import java.math.BigDecimal;
 public class DiscoDuro extends ComponenteSimple {
 	private String capacidadAlm;
 
-	protected DiscoDuro(String id, String descripcion, BigDecimal precioBase, String marca, String modelo, String capacidadAlm) {
-		super(id, descripcion, precioBase, marca, modelo);
-		this.capacidadAlm = capacidadAlm;
-	}
-	
-	protected DiscoDuro(String id, String descripcion, BigDecimal precioBase, String marca, String modelo, String capacidadAlm, IPromocion promocion) {
-		super(id, descripcion, precioBase, marca, modelo, promocion);
+	protected DiscoDuro(String id, String descripcion, String marca, String modelo, BigDecimal costo,
+			BigDecimal precioBase, String capacidadAlm) {
+		super(id, descripcion, marca, modelo, costo, precioBase);
 		this.capacidadAlm = capacidadAlm;
 	}
 
@@ -23,6 +19,12 @@ public class DiscoDuro extends ComponenteSimple {
 		this.capacidadAlm = capacidadAlm;
 	}
 
+	@Override
+	public void mostrarCaracteristicas() {
+		super.mostrarCaracteristicas();
+        System.out.println("Capacidad almacenamiento: " + this.capacidadAlm);
+		
+	}
 
 	@Override
 	public String getCategoria() {

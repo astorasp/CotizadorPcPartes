@@ -31,6 +31,9 @@ import io.restassured.response.ValidatableResponse;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 class PcIntegrationTest extends BaseIntegrationTest {
 
+    // Base path para el API de PCs
+    private static final String PCS_API_PATH = "/pcs/v1/api";
+
     private static final String USER_ADMIN = "test";
     private static final String PASSWORD_ADMIN = "test123";
 
@@ -57,7 +60,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().none()
             .contentType(ContentType.JSON)
         .when()
-            .get("/pcs")
+            .get(PCS_API_PATH)
         .then()
             .statusCode(401);
     }
@@ -116,7 +119,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcParaConsultar)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -129,7 +132,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/pcs/{pcId}", pcId)
+            .get(PCS_API_PATH + "/{pcId}", pcId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -147,7 +150,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/pcs/PC-INEXISTENTE")
+            .get(PCS_API_PATH + "/PC-INEXISTENTE")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // Recurso no encontrado
@@ -207,7 +210,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(nuevaPc)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -236,7 +239,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcInvalida)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Error de validación
@@ -293,7 +296,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcOriginal)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200);
 
@@ -344,7 +347,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcDuplicada)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("5")) // Recurso ya existe
@@ -408,7 +411,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcBase)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .log().all(); // Debugging de creación
             
@@ -439,7 +442,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(nuevoComponente)
         .when()
-            .post("/pcs/{pcId}/componentes", pcBaseId)
+            .post(PCS_API_PATH + "/{pcId}/componentes", pcBaseId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -522,7 +525,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcTarget)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -545,7 +548,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteExistente)
         .when()
-            .post("/pcs/{pcId}/componentes", pcTargetId)
+            .post(PCS_API_PATH + "/{pcId}/componentes", pcTargetId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -572,7 +575,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(nuevoComponente)
         .when()
-            .post("/pcs/PC-INEXISTENTE/componentes")
+            .post(PCS_API_PATH + "/PC-INEXISTENTE/componentes")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // PC no encontrada
@@ -636,7 +639,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcConComponentes)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -648,7 +651,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/pcs/{pcId}/componentes/{componenteId}", pcId, componenteIdQuitar)
+            .delete(PCS_API_PATH + "/{pcId}/componentes/{componenteId}", pcId, componenteIdQuitar)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -708,7 +711,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcBase)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -732,7 +735,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteAdicional)
         .when()
-            .post("/pcs/{pcId}/componentes", pcId)
+            .post(PCS_API_PATH + "/{pcId}/componentes", pcId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -742,7 +745,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/pcs/{pcId}/componentes/{compId}", pcId, componenteIdAdicional)
+            .delete(PCS_API_PATH + "/{pcId}/componentes/{compId}", pcId, componenteIdAdicional)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -756,7 +759,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/pcs/PC-INEXISTENTE/componentes/HDD001")
+            .delete(PCS_API_PATH + "/PC-INEXISTENTE/componentes/HDD001")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // PC no encontrada
@@ -770,7 +773,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/pcs/PC002/componentes/COMP-INEXISTENTE")
+            .delete(PCS_API_PATH + "/PC002/componentes/COMP-INEXISTENTE")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // Componente no encontrado
@@ -909,7 +912,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcCompleta)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -920,7 +923,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/pcs/{pcId}", PC_MODIFICAR_ID)
+            .get(PCS_API_PATH + "/{pcId}", PC_MODIFICAR_ID)
         .then()
             .statusCode(200)
             .body("datos.subComponentes.size()", equalTo(3))
@@ -944,7 +947,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componentePrecargado)
         .when()
-            .post("/pcs/{pcId}/componentes", PC_MODIFICAR_ID)
+            .post(PCS_API_PATH + "/{pcId}/componentes", PC_MODIFICAR_ID)
         .then()
             .statusCode(200);
 
@@ -953,7 +956,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/pcs/{pcId}", PC_MODIFICAR_ID)
+            .get(PCS_API_PATH + "/{pcId}", PC_MODIFICAR_ID)
         .then()
             .statusCode(200)
             .body("datos.subComponentes.size()", equalTo(4))
@@ -964,7 +967,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/pcs/{pcId}/componentes/{componenteId}", PC_MODIFICAR_ID, hddPcId)
+            .delete(PCS_API_PATH + "/{pcId}/componentes/{componenteId}", PC_MODIFICAR_ID, hddPcId)
         .then()
             .statusCode(200);
 
@@ -973,7 +976,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/pcs/{pcId}", PC_MODIFICAR_ID)
+            .get(PCS_API_PATH + "/{pcId}", PC_MODIFICAR_ID)
         .then()
             .log().all(); // Imprimir response completo para debugging
             
@@ -1039,7 +1042,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(pcEliminar)
         .when()
-            .post("/pcs")
+            .post(PCS_API_PATH)
         .then()
             .statusCode(200);
             
@@ -1048,7 +1051,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/pcs/{id}", PC_ELIMINAR_ID)
+            .delete(PCS_API_PATH + "/{id}", PC_ELIMINAR_ID)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -1059,7 +1062,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/pcs/{id}", PC_ELIMINAR_ID)
+            .get(PCS_API_PATH + "/{id}", PC_ELIMINAR_ID)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")); // PC no encontrada
@@ -1099,37 +1102,37 @@ class PcIntegrationTest extends BaseIntegrationTest {
         
         // GET sin auth - todas las PCs
         given().auth().none().contentType(ContentType.JSON)
-        .when().get("/pcs")
+        .when().get(PCS_API_PATH)
         .then().statusCode(401);
         
         // GET sin auth - PC por ID
         given().auth().none().contentType(ContentType.JSON)
-        .when().get("/pcs/PC001")
+        .when().get(PCS_API_PATH + "/PC001")
         .then().statusCode(401);
         
         // POST sin auth - crear PC
         given().auth().none().contentType(ContentType.JSON).body(pc)
-        .when().post("/pcs")
+        .when().post(PCS_API_PATH)
         .then().statusCode(401);
         
         // PUT sin auth - actualizar PC
         given().auth().none().contentType(ContentType.JSON).body(pc)
-        .when().put("/pcs/PC001")
+        .when().put(PCS_API_PATH + "/PC001")
         .then().statusCode(401);
         
         // DELETE sin auth - eliminar PC
         given().auth().none().contentType(ContentType.JSON)
-        .when().delete("/pcs/PC001")
+        .when().delete(PCS_API_PATH + "/PC001")
         .then().statusCode(401);
         
         // POST sin auth - agregar componente
         given().auth().none().contentType(ContentType.JSON).body(componente)
-        .when().post("/pcs/PC001/componentes")
+        .when().post(PCS_API_PATH + "/PC001/componentes")
         .then().statusCode(401);
         
         // DELETE sin auth - quitar componente
         given().auth().none().contentType(ContentType.JSON)
-        .when().delete("/pcs/PC001/componentes/COMP001")
+        .when().delete(PCS_API_PATH + "/PC001/componentes/COMP001")
         .then().statusCode(401);
     }
 

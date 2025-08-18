@@ -78,10 +78,6 @@ CREATE TABLE copc_parte (
 -- MICROSERVICIO: ms-cotizador-componentes
 -- RESPONSABILIDAD: Gestión de componentes, tipos, promociones y PCs
 -- ===================================================================
--- TABLAS ELIMINADAS (transferidas a otros microservicios):
--- - cocotizacion, codetalle_cotizacion → ms-cotizador-cotizaciones
--- - coproveedor, copedido, codetalle_pedido → ms-cotizador-pedidos
--- ===================================================================
 
 -- Crear índices para mejorar el rendimiento
 CREATE INDEX idx_componente_tipo ON cocomponente (id_tipo_componente);

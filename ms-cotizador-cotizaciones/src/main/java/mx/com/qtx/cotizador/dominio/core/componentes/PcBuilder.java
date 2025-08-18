@@ -79,24 +79,29 @@ public class PcBuilder {
 		this.monitores = new ArrayList<>();
 	}
 	
-	public PcBuilder agregarDisco(String id, String descripcion, String marca, String modelo, BigDecimal precioBase, String capacidadAlm) {
+	public PcBuilder agregarDisco(String id, String descripcion, String marca, String modelo, BigDecimal costo,
+			BigDecimal precioBase, String capacidadAlm) {
 		if(this.discos.size() == PcBuilder.MAX_DISCOS) //Si excede el max, lo ignora
 			return this;
-		this.discos.add(new DiscoDuro(id, descripcion, precioBase, marca, modelo, capacidadAlm));
+		this.discos.add(new DiscoDuro(id, descripcion, marca, modelo, costo,
+				precioBase, capacidadAlm));
 		return this;
 	}
 	
-	public PcBuilder agregarMonitor(String id, String descripcion, String marca, String modelo, BigDecimal precioBase) {
+	public PcBuilder agregarMonitor(String id, String descripcion, String marca, String modelo, BigDecimal costo,
+			BigDecimal precioBase) {
 		if(this.monitores.size() == PcBuilder.MAX_MONITORES) //
 			return this;
-		this.monitores.add(new Monitor(id, descripcion, precioBase, marca, modelo));
+		this.monitores.add(new Monitor(id, descripcion, marca, modelo, costo,precioBase));
 		return this;
 	}
 
-	public PcBuilder agregarTarjetaVideo(String id, String descripcion, String marca, String modelo, BigDecimal precioBase, String memoria) {
+	public PcBuilder agregarTarjetaVideo(String id, String descripcion, String marca, String modelo, BigDecimal costo,
+			BigDecimal precioBase, String memoria) {
 		if(this.tarjetas.size() == PcBuilder.MAX_TARJETAS) //
 			return this;
-		this.tarjetas.add(new TarjetaVideo(id, descripcion, precioBase, marca, modelo, memoria));
+		this.tarjetas.add(new TarjetaVideo(id, descripcion, marca, modelo, costo,
+				precioBase, memoria));
 		return this;
 	}
 	

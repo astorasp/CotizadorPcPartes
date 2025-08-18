@@ -34,7 +34,7 @@ import java.math.BigDecimal;
 public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
 
     private ComponenteCreateRequest componenteRequest;
-    private final String BASE_URL = "/componentes";
+    private final String BASE_URL = "/componentes/v1/api";
 
     @BeforeEach
     protected void setUp() {

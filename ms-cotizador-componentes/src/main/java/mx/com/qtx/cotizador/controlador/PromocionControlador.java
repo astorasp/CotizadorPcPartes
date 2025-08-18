@@ -47,7 +47,7 @@ import mx.com.qtx.cotizador.util.HttpStatusMapper;
  * - CONSULTOR: Solo lectura para análisis de efectividad
  */
 @RestController
-@RequestMapping("/promociones")
+@RequestMapping("/promociones/v1/api")
 @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class PromocionControlador {
     

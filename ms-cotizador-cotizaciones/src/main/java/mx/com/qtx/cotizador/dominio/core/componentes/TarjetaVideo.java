@@ -5,13 +5,9 @@ import java.math.BigDecimal;
 public class TarjetaVideo extends ComponenteSimple {
 	private String memoria;
 
-	protected TarjetaVideo(String id, String descripcion, BigDecimal precioBase, String marca, String modelo, String memoria) {
-		super(id, descripcion, precioBase, marca, modelo);
-		this.memoria = memoria;
-	}
-	
-	protected TarjetaVideo(String id, String descripcion, BigDecimal precioBase, String marca, String modelo, String memoria, IPromocion promocion) {
-		super(id, descripcion, precioBase, marca, modelo, promocion);
+	protected TarjetaVideo(String id, String descripcion, String marca, String modelo, BigDecimal costo,
+			BigDecimal precioBase, String memoria) {
+		super(id, descripcion, marca, modelo, costo, precioBase);
 		this.memoria = memoria;
 	}
 

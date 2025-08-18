@@ -1,83 +1,101 @@
 package mx.com.qtx.cotizador.dominio.promos;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Map;
+
 import mx.com.qtx.cotizador.dominio.core.componentes.IPromocion;
 
 /**
- * Clase abstracta base para todas las promociones del sistema.
- * Implementa el patrón Template Method para el cálculo de promociones.
+ * @author hp835
+ * @version 1.0
+ * @created 24-mar.-2025 11:16:12 p. m.
  */
-public abstract class Promocion implements IPromocion {
-    
-    protected Integer idPromocion;
-    protected String nombre;
-    protected String descripcion;
-    protected LocalDate vigenciaDesde;
-    protected LocalDate vigenciaHasta;
-    
-    /**
-     * Constructor base para promociones
-     */
-    protected Promocion(Integer idPromocion, String nombre, String descripcion, 
-                       LocalDate vigenciaDesde, LocalDate vigenciaHasta) {
-        this.idPromocion = idPromocion;
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.vigenciaDesde = vigenciaDesde;
-        this.vigenciaHasta = vigenciaHasta;
-    }
-    
-    /**
-     * Template method que implementa el algoritmo base de cálculo de promociones.
-     * Valida vigencia antes de calcular el descuento específico.
-     */
-    @Override
-    public final BigDecimal calcularImportePromocion(int cantidad, BigDecimal precioBase) {
-        if (!esVigente()) {
-            return precioBase.multiply(BigDecimal.valueOf(cantidad));
-        }
-        
-        if (cantidad <= 0 || precioBase == null || precioBase.compareTo(BigDecimal.ZERO) < 0) {
-            return BigDecimal.ZERO;
-        }
-        
-        return calcularDescuentoEspecifico(cantidad, precioBase);
-    }
-    
-    /**
-     * Método abstracto que debe implementar cada tipo de promoción específica.
-     * Define el algoritmo particular de cálculo de descuento.
-     */
-    protected abstract BigDecimal calcularDescuentoEspecifico(int cantidad, BigDecimal precioBase);
-    
-    /**
-     * Verifica si la promoción está vigente en la fecha actual.
-     */
-    protected boolean esVigente() {
-        LocalDate hoy = LocalDate.now();
-        return (vigenciaDesde == null || !hoy.isBefore(vigenciaDesde)) &&
-               (vigenciaHasta == null || !hoy.isAfter(vigenciaHasta));
-    }
-    
-    // Getters para subclases
-    public Integer getIdPromocion() {
-        return idPromocion;
-    }
-    
-    public String getNombre() {
-        return nombre;
-    }
-    
-    public String getDescripcion() {
-        return descripcion;
-    }
-    
-    public LocalDate getVigenciaDesde() {
-        return vigenciaDesde;
-    }
-    
-    public LocalDate getVigenciaHasta() {
-        return vigenciaHasta;
-    }
+public abstract class Promocion implements IPromocion{
+
+	private String descripcion;
+	private String nombre;
+
+ 
+	public Promocion(String descripcion, String nombre) {
+		super();
+		this.descripcion = descripcion;
+		this.nombre = nombre;
+	}
+
+	public String getDescripcion() {
+		return descripcion;
+	}
+
+	public void setDescripcion(String descripcion) {
+		this.descripcion = descripcion;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+	/**
+	 * 
+	 * @param cant
+	 * @param precioBase
+	 */
+	public abstract BigDecimal calcularImportePromocion(int cant, BigDecimal precioBase);
+
+	/**
+	 * 
+	 * @param builder
+	 */
+	public static Promocion crearPromocion(PromocionBuilder builder){
+//		System.out.println("crearPromocion(" + builder + ")");
+		
+		Promocion promoBase = null;
+		int tipoPromBase = builder.getTipoPromocionBase();
+		switch(tipoPromBase) {
+			case PromocionBuilder.PROM_BASE_SIN_DSCTO: 
+				promoBase = new PromSinDescto();
+				break;
+			case PromocionBuilder.PROM_BASE_NXM: 
+				promoBase = new PromNXM(builder.getN(), builder.getM());
+				break;
+			default:
+				promoBase = new PromSinDescto();
+		}
+		
+		Promocion promoAcum = promoBase;
+		for(Float dsctoPlanoI:builder.getLstDsctosPlanos()) {
+			Promocion promDeco = new PromDsctoPlano(promoAcum,dsctoPlanoI);
+			promoAcum = promDeco;
+		}
+		for(Map<Integer,Double> mapDsctosI:builder.getLstMapsCantVsDscto()) {
+			Promocion promDeco = new PromDsctoXcantidad(promoAcum, mapDsctosI);
+			promoAcum = promDeco;
+		}
+			
+		return promoAcum;
+	}
+
+	public static PromocionBuilder getBuilder() {
+		return new PromocionBuilder();
+	}
+	public static void mostrarEstructuraPromocion(Promocion prom) {
+		System.out.println("\n---------------------------------------------------------------------------------------------");
+		mostrarElemEstructuraPromocion(prom);
+		System.out.println("---------------------------------------------------------------------------------------------\n");		
+	}
+	
+	private static void mostrarElemEstructuraPromocion(Promocion prom) {
+		if(prom instanceof PromBase) {
+			System.out.println(prom.getClass().getSimpleName() + ": " + prom.getDescripcion());
+		}
+		else 
+		if(prom instanceof PromAcumulable promAcum) {
+			mostrarElemEstructuraPromocion(promAcum.promoBase);
+			System.out.println(prom.getClass().getSimpleName() + ": " + prom.getDescripcion());
+		}
+	}
+
 }

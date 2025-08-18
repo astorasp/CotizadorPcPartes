@@ -15,6 +15,7 @@ import mx.com.qtx.cotizador.dto.promocion.response.PromocionResponse;
 import mx.com.qtx.cotizador.entidad.DetallePromDsctoXCant;
 import mx.com.qtx.cotizador.entidad.DetallePromocion;
 import mx.com.qtx.cotizador.entidad.Promocion;
+import mx.com.qtx.cotizador.servicio.wrapper.PromocionEntityConverter;
 
 /**
  * Mapper ultra-complejo para conversiones de promociones.
@@ -335,50 +336,30 @@ public class PromocionMapper {
         return new EscalaDescuentoResponse(entidad.getCantidad(), entidad.getDscto());
     }
     
-    // =================================================================
-    // MÉTODOS DE CONVERSIÓN A DOMINIO DE PROMOCIONES
-    // =================================================================
-    
     /**
-     * Convierte una entidad JPA Promocion a objeto de dominio IPromocion.
-     * Utiliza PromocionBuilder para crear el tipo específico de promoción.
+     * Integración con PromocionEntityConverter para objetos de dominio
      * 
-     * @param entidad Entidad JPA de promoción
-     * @return Objeto de dominio que implementa IPromocion
+     * @param entidad Entidad JPA
+     * @return Objeto de dominio usando PromocionBuilder
      */
-    public static mx.com.qtx.cotizador.dominio.core.componentes.IPromocion toDominio(Promocion entidad) {
-        return mx.com.qtx.cotizador.servicio.wrapper.PromocionEntityConverter.convertirADominio(entidad);
+    public static mx.com.qtx.cotizador.dominio.promos.Promocion toDominio(Promocion entidad) {
+        return PromocionEntityConverter.convertToPromocion(entidad);
     }
     
     /**
-     * Convierte una entidad JPA Promocion a objeto de dominio con información de debugging.
+     * Convierte DTO request directamente a objeto de dominio
+     * (Útil para operaciones que no requieren persistencia inmediata)
      * 
-     * @param entidad Entidad JPA de promoción
-     * @param debug Si debe imprimir información de debugging
-     * @return Objeto de dominio que implementa IPromocion
+     * @param request DTO de creación
+     * @return Objeto de dominio
      */
-    public static mx.com.qtx.cotizador.dominio.core.componentes.IPromocion toDominioConDebug(Promocion entidad, boolean debug) {
-        return mx.com.qtx.cotizador.servicio.wrapper.PromocionEntityConverter.convertirADominioConDebug(entidad, debug);
-    }
-    
-    /**
-     * Método helper para obtener información sobre el tipo de promoción
-     * sin hacer la conversión completa.
-     * 
-     * @param entidad Entidad a analizar
-     * @return String con información sobre el tipo de promoción
-     */
-    public static String analizarTipoPromocion(Promocion entidad) {
-        return mx.com.qtx.cotizador.servicio.wrapper.PromocionEntityConverter.obtenerInfoTipoPromocion(entidad);
-    }
-    
-    /**
-     * Verifica si una entidad de promoción puede ser convertida exitosamente a dominio.
-     * 
-     * @param entidad Entidad a validar
-     * @return true si la conversión será exitosa
-     */
-    public static boolean puedeConvertirADominio(Promocion entidad) {
-        return mx.com.qtx.cotizador.servicio.wrapper.PromocionEntityConverter.puedeConvertir(entidad);
+    public static mx.com.qtx.cotizador.dominio.promos.Promocion toDominio(PromocionCreateRequest request) {
+        if (request == null) {
+            return null;
+        }
+        
+        // Convertir primero a entidad, luego a dominio
+        Promocion entidad = toEntity(request);
+        return toDominio(entidad);
     }
 } 

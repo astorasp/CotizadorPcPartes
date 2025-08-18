@@ -1,86 +1,97 @@
 package mx.com.qtx.cotizador.servicio.wrapper;
 
-import mx.com.qtx.cotizador.dominio.core.componentes.IPromocion;
-import mx.com.qtx.cotizador.dominio.promos.PromocionBuilder;
-import mx.com.qtx.cotizador.dominio.promos.PromSinDescto;
-import mx.com.qtx.cotizador.entidad.Promocion;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * Converter para transformar entidades JPA de promociones a objetos de dominio.
- * Se encarga de la conversión compleja de promociones usando el PromocionBuilder.
- */
+import mx.com.qtx.cotizador.entidad.DetallePromocion;
+import mx.com.qtx.cotizador.dominio.promos.Promocion;
+import mx.com.qtx.cotizador.dominio.promos.PromocionBuilder;
+
 public class PromocionEntityConverter {
-    
+
     /**
-     * Convierte una entidad JPA Promocion a un objeto de dominio IPromocion.
-     * Utiliza PromocionBuilder para determinar el tipo específico de promoción.
-     * 
-     * @param entidadPromocion Entidad JPA de promoción (puede ser null)
-     * @return Objeto de dominio que implementa IPromocion
+     * Convierte una entidad de promoción de la base de datos 
+     * al objeto de dominio correspondiente
      */
-    public static IPromocion convertirADominio(Promocion entidadPromocion) {
-        if (entidadPromocion == null) {
-            return PromSinDescto.crearPorDefecto();
+    public static Promocion convertToPromocion(mx.com.qtx.cotizador.entidad.Promocion entidad) {
+        if (entidad == null || entidad.getDetalles().isEmpty()) {
+            return null;
         }
+
+        PromocionBuilder builder = Promocion.getBuilder();
         
-        try {
-            return PromocionBuilder.construirDesdeEntidad(entidadPromocion);
-        } catch (Exception e) {
-            // Si hay cualquier error en la conversión, retornar promoción sin descuento
-            // esto asegura que el sistema siga funcionando aunque haya datos corruptos
-            return new PromSinDescto(entidadPromocion.getIdPromocion(),
-                                   entidadPromocion.getNombre() != null ? entidadPromocion.getNombre() : "Promoción inválida",
-                                   "Error en conversión: " + e.getMessage(),
-                                   entidadPromocion.getVigenciaDesde(),
-                                   entidadPromocion.getVigenciaHasta());
+        // Ordenar detalles: primero el base, luego los acumulables
+        var detallesOrdenados = entidad.getDetalles().stream()
+            .sorted((d1, d2) -> {
+                if (d1.getEsBase() && !d2.getEsBase()) return -1;
+                if (!d1.getEsBase() && d2.getEsBase()) return 1;
+                return d1.getIdDetallePromocion().compareTo(d2.getIdDetallePromocion());
+            })
+            .toList();
+
+        // 1. Configurar promoción base
+        DetallePromocion detalleBase = detallesOrdenados.stream()
+            .filter(DetallePromocion::getEsBase)
+            .findFirst()
+            .orElse(null);
+
+        if (detalleBase != null) {
+            configurarPromocionBase(builder, detalleBase);
+        } else {
+            builder.conPromocionBaseSinDscto();
         }
-    }
-    
-    /**
-     * Método de conveniencia para conversión con logging de debugging.
-     * Útil para desarrollo y debugging.
-     * 
-     * @param entidadPromocion Entidad JPA de promoción
-     * @param debug Si debe imprimir información de debugging
-     * @return Objeto de dominio que implementa IPromocion
-     */
-    public static IPromocion convertirADominioConDebug(Promocion entidadPromocion, boolean debug) {
-        if (debug && entidadPromocion != null) {
-            String analisis = PromocionBuilder.analizarTipoPromocion(entidadPromocion);
-            System.out.println("DEBUG PromocionEntityConverter: " + analisis);
-        }
+
+        // 2. Agregar promociones acumulables
+        detallesOrdenados.stream()
+            .filter(detalle -> !detalle.getEsBase())
+            .forEach(detalle -> configurarPromocionAcumulable(builder, detalle));
+
+        Promocion promocion = builder.build();
+        promocion.setNombre(entidad.getNombre());
+        promocion.setDescripcion(entidad.getDescripcion());
         
-        return convertirADominio(entidadPromocion);
+        return promocion;
     }
-    
-    /**
-     * Verifica si una entidad de promoción puede ser convertida exitosamente.
-     * Útil para validación antes de conversión.
-     * 
-     * @param entidadPromocion Entidad a validar
-     * @return true si la conversión será exitosa, false si fallará
-     */
-    public static boolean puedeConvertir(Promocion entidadPromocion) {
-        if (entidadPromocion == null) {
-            return true; // Se puede convertir a PromSinDescto por defecto
-        }
+
+    private static void configurarPromocionBase(PromocionBuilder builder, DetallePromocion detalle) {
+        String tipoBase = detalle.getTipoPromBase();
         
-        try {
-            PromocionBuilder.construirDesdeEntidad(entidadPromocion);
-            return true;
-        } catch (Exception e) {
-            return false;
+        if ("NXM".equals(tipoBase)) {
+            builder.conPromocionBaseNXM(detalle.getLlevent(), detalle.getPaguen());
+        } else {
+            builder.conPromocionBaseSinDscto();
         }
     }
-    
-    /**
-     * Obtiene información detallada sobre el tipo de promoción sin hacer la conversión completa.
-     * Útil para logging y debugging.
-     * 
-     * @param entidadPromocion Entidad a analizar
-     * @return String con información sobre el tipo de promoción
-     */
-    public static String obtenerInfoTipoPromocion(Promocion entidadPromocion) {
-        return PromocionBuilder.analizarTipoPromocion(entidadPromocion);
+
+    private static void configurarPromocionAcumulable(PromocionBuilder builder, DetallePromocion detalle) {
+        String tipoAcumulable = detalle.getTipoPromAcumulable();
+        
+        switch (tipoAcumulable) {
+            case "DESCUENTO_PLANO":
+                builder.agregarDsctoPlano(detalle.getPorcDctoPlano().floatValue());
+                break;
+                
+            case "DESCUENTO_POR_CANTIDAD":
+                Map<Integer, Double> mapCantVsDscto = detalle.getDescuentosPorCantidad().stream()
+                    .collect(Collectors.toMap(
+                        d -> d.getCantidad(),
+                        d -> d.getDscto()
+                    ));
+                builder.agregarDsctoXcantidad(mapCantVsDscto);
+                break;
+                
+            default:
+                // Log warning sobre tipo desconocido
+                break;
+        }
     }
-}
+
+    /**
+     * Convierte un objeto de dominio Promocion a entidad de persistencia
+     * (Para operaciones de guardado)
+     */
+    public static mx.com.qtx.cotizador.entidad.Promocion convertToEntity(Promocion promocion) {
+        // TODO: Implementar si necesitas guardar promociones desde el dominio
+        throw new UnsupportedOperationException("Conversión de dominio a entidad no implementada aún");
+    }
+} 

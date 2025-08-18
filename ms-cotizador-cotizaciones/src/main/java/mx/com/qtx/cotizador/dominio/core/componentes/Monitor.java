@@ -9,12 +9,9 @@ public class Monitor extends ComponenteSimple {
 //														   6, 10.0,
 //														   9, 12.0);
 
-	protected Monitor(String id, String descripcion, BigDecimal precioBase, String marca, String modelo) {
-		super(id, descripcion, precioBase, marca, modelo);
-	}
-	
-	protected Monitor(String id, String descripcion, BigDecimal precioBase, String marca, String modelo, IPromocion promocion) {
-		super(id, descripcion, precioBase, marca, modelo, promocion);
+	protected Monitor(String id, String descripcion, String marca, String modelo, BigDecimal costo,
+			BigDecimal precioBase) {
+		super(id, descripcion, marca, modelo, costo, precioBase);
 	}
 	
 //	public BigDecimal cotizar(int cantidadI) {

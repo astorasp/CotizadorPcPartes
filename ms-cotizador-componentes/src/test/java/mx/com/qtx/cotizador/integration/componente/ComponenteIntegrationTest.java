@@ -31,6 +31,9 @@ import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
  */
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public class ComponenteIntegrationTest extends BaseIntegrationTest {
+
+    // Base path para el API de componentes
+    private static final String COMPONENTES_API_PATH = "/componentes/v1/api";
     
     // IDs de componentes para tests (usaremos estos para mantener consistencia)
     private static final String COMPONENTE_TEST_ID = "TEST001";
@@ -50,7 +53,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/componentes")
+            .get(COMPONENTES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -66,7 +69,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().none()
             .contentType(ContentType.JSON)
         .when()
-            .get("/componentes")
+            .get(COMPONENTES_API_PATH)
         .then()
             .statusCode(401);
     }
@@ -81,7 +84,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/componentes/{id}", componenteId)
+            .get(COMPONENTES_API_PATH + "/{id}", componenteId)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -96,7 +99,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/componentes/INEXISTENTE-999")
+            .get(COMPONENTES_API_PATH + "/INEXISTENTE-999")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // Código de error para "recurso no encontrado"
@@ -127,7 +130,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(nuevoComponente)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -155,7 +158,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteDuplicado)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("5")) // Código de error para "recurso ya existe"
@@ -182,7 +185,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteInvalido)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Código de error para "error de validación"
@@ -214,7 +217,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteOriginal)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(200);
             
@@ -235,7 +238,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteModificado)
         .when()
-            .put("/componentes/{id}", COMPONENTE_MODIFICAR_ID)
+            .put(COMPONENTES_API_PATH + "/{id}", COMPONENTE_MODIFICAR_ID)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -263,7 +266,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteModificar)
         .when()
-            .put("/componentes/INEXISTENTE-999")
+            .put(COMPONENTES_API_PATH + "/INEXISTENTE-999")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // Código de error para "recurso no encontrado"
@@ -295,7 +298,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteEliminar)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(200);
             
@@ -304,7 +307,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/componentes/{id}", COMPONENTE_ELIMINAR_ID)
+            .delete(COMPONENTES_API_PATH + "/{id}", COMPONENTE_ELIMINAR_ID)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -315,7 +318,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .get("/componentes/{id}", COMPONENTE_ELIMINAR_ID)
+            .get(COMPONENTES_API_PATH + "/{id}", COMPONENTE_ELIMINAR_ID)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")); // Recurso no encontrado
@@ -328,7 +331,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/componentes/COMPONENTE-NO-EXISTE")
+            .delete(COMPONENTES_API_PATH + "/COMPONENTE-NO-EXISTE")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // Código de error para "recurso no encontrado"
@@ -345,7 +348,7 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
         .when()
-            .delete("/componentes/MON-LG-24MK430H") // Componente precargado
+            .delete(COMPONENTES_API_PATH + "/MON-LG-24MK430H") // Componente precargado
         .then()
             .statusCode(400)
             .body("codigo", equalTo("4")) // Por ahora retorna "recurso no encontrado" hasta implementar verificación de referencias
@@ -373,22 +376,22 @@ public class ComponenteIntegrationTest extends BaseIntegrationTest {
         
         // GET sin auth
         given().auth().none().contentType(ContentType.JSON)
-        .when().get("/componentes")
+        .when().get(COMPONENTES_API_PATH)
         .then().statusCode(401);
         
         // POST sin auth
         given().auth().none().contentType(ContentType.JSON).body(componente)
-        .when().post("/componentes")
+        .when().post(COMPONENTES_API_PATH)
         .then().statusCode(401);
         
         // PUT sin auth
         given().auth().none().contentType(ContentType.JSON).body(componente)
-        .when().put("/componentes/TEST-AUTH")
+        .when().put(COMPONENTES_API_PATH + "/TEST-AUTH")
         .then().statusCode(401);
         
         // DELETE sin auth
         given().auth().none().contentType(ContentType.JSON)
-        .when().delete("/componentes/TEST-AUTH")
+        .when().delete(COMPONENTES_API_PATH + "/TEST-AUTH")
         .then().statusCode(401);
     }
 

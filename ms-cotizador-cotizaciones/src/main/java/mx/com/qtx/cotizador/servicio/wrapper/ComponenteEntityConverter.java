@@ -1,149 +1,181 @@
 package mx.com.qtx.cotizador.servicio.wrapper;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
-import mx.com.qtx.cotizador.dominio.core.componentes.IPromocion;
-import mx.com.qtx.cotizador.dominio.core.componentes.ComponenteCpu;
-import mx.com.qtx.cotizador.dominio.core.componentes.ComponenteGpu;
-import mx.com.qtx.cotizador.dominio.core.componentes.ComponenteHdd;
-import mx.com.qtx.cotizador.dominio.core.componentes.ComponenteMonitor;
-import mx.com.qtx.cotizador.dominio.core.componentes.ComponenteRam;
-import mx.com.qtx.cotizador.dominio.core.componentes.ComponenteSsd;
+import mx.com.qtx.cotizador.dominio.core.componentes.DiscoDuro;
+import mx.com.qtx.cotizador.dominio.core.componentes.Monitor;
+import mx.com.qtx.cotizador.dominio.core.componentes.PcBuilder;
+import mx.com.qtx.cotizador.dominio.core.componentes.TarjetaVideo;
+import mx.com.qtx.cotizador.util.TipoComponenteEnum;
 
 /**
- * Converter para transformar entidades JPA de componentes a objetos de dominio.
- * Se encarga de crear el tipo específico de componente e incluir su promoción.
+ * Clase utilitaria para convertir objetos Componente del dominio a entidades Componente de persistencia
+ * y viceversa.
+ * <p>
+ * Proporciona métodos estáticos para facilitar la conversión bidireccional entre los objetos de dominio
+ * y las entidades de persistencia, respetando sus respectivas estructuras y asegurando la consistencia
+ * de los datos durante el proceso de conversión.
+ * </p>
  */
 public class ComponenteEntityConverter {
     
     /**
-     * Convierte una entidad JPA Componente a un objeto de dominio.
-     * Determina el tipo específico de componente basado en el tipo y crea la instancia correcta.
+     * Convierte un objeto Componente del dominio (core) a una entidad Componente para persistencia.
+     * <p>
+     * Este método copia las propiedades básicas del objeto de dominio a una nueva instancia de la entidad,
+     * incluyendo identificador, descripción, marca, modelo, costo y precio base.
+     * </p>
      * 
-     * @param entidadComponente Entidad JPA de componente
-     * @return Objeto de dominio del tipo específico de componente
+     * @param compCore Objeto Componente del dominio a convertir
+     * @return Objeto Componente de persistencia con los datos del objeto de dominio, o null si el parámetro de entrada es null
      */
-    public static Componente convertirADominio(mx.com.qtx.cotizador.entidad.Componente entidadComponente) {
-        if (entidadComponente == null) {
-            throw new IllegalArgumentException("La entidad componente no puede ser null");
+    public static mx.com.qtx.cotizador.entidad.Componente convertToEntity(
+            mx.com.qtx.cotizador.dominio.core.componentes.Componente compCore) {
+        
+        if (compCore == null) {
+            return null;
         }
         
-        // Convertir promoción si existe
-        IPromocion promocion = null;
-        if (entidadComponente.getPromocion() != null) {
-            promocion = PromocionEntityConverter.convertirADominio(entidadComponente.getPromocion());
+        mx.com.qtx.cotizador.entidad.Componente compEntity = 
+                new mx.com.qtx.cotizador.entidad.Componente();
+        
+        // Copiar propiedades básicas
+        compEntity.setId(compCore.getId());
+        compEntity.setDescripcion(compCore.getDescripcion());
+        compEntity.setMarca(compCore.getMarca());
+        compEntity.setModelo(compCore.getModelo());
+        compEntity.setCosto(compCore.getCosto());
+        compEntity.setPrecioBase(compCore.getPrecioBase());
+        if(compCore instanceof DiscoDuro) {
+            DiscoDuro disco = (DiscoDuro) compCore;
+            compEntity.setCapacidadAlm(disco.getCapacidadAlm());
+        }
+        if(compCore instanceof TarjetaVideo) {
+            TarjetaVideo tarjeta = (TarjetaVideo) compCore;
+            compEntity.setMemoria(tarjeta.getMemoria());
         }
         
-        // Determinar el tipo de componente y crear la instancia específica
-        String tipoComponente = obtenerTipoComponente(entidadComponente);
+        // El tipo de componente deberá ser asignado si es necesario en la lógica de negocio específica
         
-        return crearComponenteEspecifico(
-            tipoComponente,
-            entidadComponente.getId(),
-            entidadComponente.getDescripcion(),
-            entidadComponente.getPrecioBase(),
-            entidadComponente.getMarca(),
-            entidadComponente.getModelo(),
-            promocion
-        );
+        return compEntity;
     }
-    
+
     /**
-     * Obtiene el tipo de componente desde la entidad.
-     * Si no tiene tipo específico, asume CPU por defecto.
+     * Convierte una entidad Componente de persistencia a un objeto Componente del dominio (core)
+     * según su tipo específico (Monitor, DiscoDuro, TarjetaVideo o Pc).
+     * <p>
+     * Este método determina el tipo específico de la entidad mediante comprobaciones de instancia
+     * y crea el objeto de dominio correspondiente utilizando los métodos factory apropiados.
+     * Maneja tipos especiales como DiscoDuro y TarjetaVideo que requieren parámetros adicionales,
+     * y utiliza una implementación por defecto (Monitor) para otros tipos de componentes.
+     * </p>
+     * 
+     * @param compEntity Entidad de persistencia Componente a convertir
+     * @return Objeto Componente del dominio correspondiente al tipo de la entidad, o null si el parámetro de entrada es null
      */
-    private static String obtenerTipoComponente(mx.com.qtx.cotizador.entidad.Componente entidad) {
-        if (entidad.getTipoComponente() != null && entidad.getTipoComponente().getNombre() != null) {
-            return entidad.getTipoComponente().getNombre().toUpperCase();
+    public static Componente convertToComponente(
+            mx.com.qtx.cotizador.entidad.Componente compEntity,
+            List<mx.com.qtx.cotizador.entidad.Componente> subCompEntity) {
+        
+        if (compEntity == null) {
+            return null;
         }
         
-        // Si no hay tipo específico, inferir del ID o descripción
-        String id = entidad.getId().toLowerCase();
-        String descripcion = entidad.getDescripcion().toLowerCase();
-        
-        if (id.contains("cpu") || descripcion.contains("procesador") || descripcion.contains("cpu")) {
-            return "CPU";
-        } else if (id.contains("gpu") || id.contains("vga") || descripcion.contains("grafica") || descripcion.contains("video")) {
-            return "GPU";
-        } else if (id.contains("ram") || id.contains("memoria") || descripcion.contains("memoria")) {
-            return "RAM";
-        } else if (id.contains("ssd") || descripcion.contains("ssd")) {
-            return "SSD";
-        } else if (id.contains("hdd") || descripcion.contains("disco duro") || descripcion.contains("hdd")) {
-            return "HDD";
-        } else if (id.contains("monitor") || descripcion.contains("monitor") || descripcion.contains("pantalla")) {
-            return "MONITOR";
+        // Extraer propiedades comunes
+        String id = compEntity.getId();
+        String descripcion = compEntity.getDescripcion();
+        String marca = compEntity.getMarca();
+        String modelo = compEntity.getModelo();
+        BigDecimal costo = compEntity.getCosto();
+        BigDecimal precioBase = compEntity.getPrecioBase();
+        Componente componente = null;
+
+        /*
+        // Convertir la promoción de entidad a objeto de dominio
+        mx.com.qtx.cotizadorv1ds.promos.Promocion promocionDominio = null;
+        if (compEntity.getPromocion() != null) {
+            promocionDominio = PromocionEntityConverter.convertToPromocion(compEntity.getPromocion());
         }
+         */
         
-        // Por defecto, asumir CPU
-        return "CPU";
-    }
-    
-    /**
-     * Crea la instancia específica del tipo de componente.
-     */
-    private static Componente crearComponenteEspecifico(String tipo, String id, String descripcion, 
-            java.math.BigDecimal precio, String marca, String modelo, IPromocion promocion) {
+        // Determinar el tipo de componente y crear la instancia adecuada
+        if (compEntity.getTipoComponente().getNombre()
+                .equals(TipoComponenteEnum.DISCO_DURO.name())) {
+            // Es un disco duro
+            String capacidad = compEntity.getCapacidadAlm();
+            // Usar el método factory para crear el objeto
+            componente = Componente.crearDiscoDuro(id, descripcion, marca, modelo, costo, precioBase, capacidad);
+            
+        } else if (compEntity.getTipoComponente().getNombre()
+                .equals(TipoComponenteEnum.TARJETA_VIDEO.name())) {
+            // Es una tarjeta de video
+            String memoria = compEntity.getMemoria();
+            // Usar el método factory para crear el objeto
+            componente = Componente
+                .crearTarjetaVideo(id, descripcion, marca, modelo, costo, precioBase, memoria);
+            
+        } else if (compEntity.getTipoComponente().getNombre()
+                .equals(TipoComponenteEnum.MONITOR.name())) {
+            // Para otros tipos (Monitor o componentes genéricos)
+            // Usar el método factory para crear un Monitor por defecto como tipo más simple
+            componente = Componente.crearMonitor(id, descripcion, marca, modelo, costo, precioBase);
+        }
+        else if (compEntity.getTipoComponente().getNombre()
+                .equals(TipoComponenteEnum.PC.name())) {
+            // Es una PC - verificar si tiene sub-componentes
+            if (subCompEntity != null && !subCompEntity.isEmpty()) {
+                // PC con componentes - usar el builder completo
+                PcBuilder pcBuilder = Componente.getPcBuilder();
+                pcBuilder.definirId(id)
+                    .definirDescripcion(descripcion)
+                    .definirMarcaYmodelo(marca, modelo);
+                    
+                for(mx.com.qtx.cotizador.entidad.Componente subComp : subCompEntity) {
+                    Componente subCompCore = convertToComponente(subComp, null);
+                    switch(subCompCore.getCategoria()) {
+                        case "Disco Duro" -> {
+                            DiscoDuro disco = (DiscoDuro) subCompCore;
+                            pcBuilder.agregarDisco(disco.getId(), disco.getDescripcion(), disco.getMarca(), 
+                                disco.getModelo(), disco.getCosto(), disco.getPrecioBase(), disco.getCapacidadAlm());
+                        }
+                        case "Tarjeta de Video" -> {
+                            TarjetaVideo tarjeta = (TarjetaVideo) subCompCore;
+                            pcBuilder.agregarTarjetaVideo(tarjeta.getId(), tarjeta.getDescripcion(), tarjeta.getMarca(), 
+                                tarjeta.getModelo(), tarjeta.getCosto(), tarjeta.getPrecioBase(), tarjeta.getMemoria());
+                        }
+                        case "Monitor" -> {
+                            Monitor monitor = (Monitor) subCompCore;
+                            pcBuilder.agregarMonitor(monitor.getId(), monitor.getDescripcion(), monitor.getMarca(), 
+                                monitor.getModelo(), monitor.getCosto(), monitor.getPrecioBase());
+                        }
+                    }
+                }
+                componente = pcBuilder.build();
+            } else {
+                // PC sin componentes - crear una PC vacía usando el builder
+                PcBuilder pcBuilder = Componente.getPcBuilder();
+                pcBuilder.definirId(id)
+                    .definirDescripcion(descripcion)
+                    .definirMarcaYmodelo(marca, modelo);
+                    
+                componente = pcBuilder.build();
+            }
+        } else {
+            // Tipo desconocido - crear como Monitor por defecto
+            componente = Componente.crearMonitor(id, descripcion, marca, modelo, costo, precioBase);
+        }
+
+        if(componente != null) {
+            mx.com.qtx.cotizador.dominio.promos.Promocion promocionDominio = null;
+            if (compEntity.getPromocion() != null) {
+                promocionDominio = PromocionEntityConverter.convertToPromocion(compEntity.getPromocion());
+            }
+            componente.setPromo(promocionDominio);
+        }
+
+        return componente;
         
-        switch (tipo) {
-            case "CPU":
-            case "PROCESADOR":
-                return new ComponenteCpu(id, descripcion, precio, marca, modelo, promocion);
-                
-            case "GPU":
-            case "VGA":
-            case "TARJETA_GRAFICA":
-                return new ComponenteGpu(id, descripcion, precio, marca, modelo, promocion);
-                
-            case "RAM":
-            case "MEMORIA":
-                return new ComponenteRam(id, descripcion, precio, marca, modelo, promocion);
-                
-            case "SSD":
-                return new ComponenteSsd(id, descripcion, precio, marca, modelo, promocion);
-                
-            case "HDD":
-            case "DISCO_DURO":
-                return new ComponenteHdd(id, descripcion, precio, marca, modelo, promocion);
-                
-            case "MONITOR":
-            case "PANTALLA":
-                return new ComponenteMonitor(id, descripcion, precio, marca, modelo, promocion);
-                
-            default:
-                // Para tipos no reconocidos, crear un CPU genérico
-                return new ComponenteCpu(id, descripcion, precio, marca, modelo, promocion);
-        }
-    }
-    
-    /**
-     * Método de conveniencia para conversión con logging de debugging.
-     */
-    public static Componente convertirADominioConDebug(mx.com.qtx.cotizador.entidad.Componente entidadComponente, boolean debug) {
-        if (debug && entidadComponente != null) {
-            String tipo = obtenerTipoComponente(entidadComponente);
-            String promocionInfo = entidadComponente.getPromocion() != null ? 
-                PromocionEntityConverter.obtenerInfoTipoPromocion(entidadComponente.getPromocion()) : 
-                "Sin promoción";
-            System.out.println(String.format("DEBUG ComponenteEntityConverter: %s [%s] -> %s, Promoción: %s", 
-                entidadComponente.getId(), entidadComponente.getDescripcion(), tipo, promocionInfo));
-        }
-        
-        return convertirADominio(entidadComponente);
-    }
-    
-    /**
-     * Verifica si una entidad de componente puede ser convertida exitosamente.
-     */
-    public static boolean puedeConvertir(mx.com.qtx.cotizador.entidad.Componente entidadComponente) {
-        if (entidadComponente == null) {
-            return false;
-        }
-        
-        try {
-            convertirADominio(entidadComponente);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

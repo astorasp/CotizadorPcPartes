@@ -42,7 +42,7 @@ import java.util.List;
  * - CONSULTOR: Solo lectura para análisis y reportes
  */
 @RestController
-@RequestMapping("/pedidos/v1/api/pedidos")
+@RequestMapping("/pedidos/v1/api")
 @CrossOrigin
 @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 @Tag(name = "Pedidos", description = "Gestión de pedidos del sistema")
