@@ -128,7 +128,7 @@ public class ProveedorChangeListener {
             eventSyncService.syncProveedorCreated(event);
             
             // Evaluar oportunidades de pedidos con el nuevo proveedor
-            eventSyncService.evaluateOrderOpportunitiesWithNewProvider(event.getEntityId());
+            eventSyncService.evaluateOrderOpportunitiesWithNewProvider(Long.parseLong(event.getEntityId()));
             
             logger.debug("Proveedor creado registrado: id={}, activo={}, pais={}", 
                         event.getEntityId(), event.getActivo(), event.getPais());
@@ -150,18 +150,18 @@ public class ProveedorChangeListener {
             eventSyncService.syncProveedorUpdated(event);
             
             // Verificar impacto en pedidos existentes
-            eventSyncService.validatePendingOrdersWithUpdatedProvider(event.getEntityId());
+            eventSyncService.validatePendingOrdersWithUpdatedProvider(Long.parseLong(event.getEntityId()));
             
             // Verificar cambios en estado activo
             if (Boolean.FALSE.equals(event.getActivo())) {
-                eventSyncService.handleProviderDeactivation(event.getEntityId());
+                eventSyncService.handleProviderDeactivation(Long.parseLong(event.getEntityId()));
             } else if (Boolean.TRUE.equals(event.getActivo())) {
-                eventSyncService.handleProviderActivation(event.getEntityId());
+                eventSyncService.handleProviderActivation(Long.parseLong(event.getEntityId()));
             }
             
             // Verificar cambios en información de contacto que afecten pedidos
             if (event.getEmail() != null || event.getTelefono() != null) {
-                eventSyncService.updateProviderContactInOrders(event.getEntityId(), event.getEmail(), event.getTelefono());
+                eventSyncService.updateProviderContactInOrders(Long.parseLong(event.getEntityId()), event.getEmail(), event.getTelefono());
             }
             
             logger.debug("Proveedor actualizado registrado: id={}, activo={}, pais={}", 
@@ -183,10 +183,10 @@ public class ProveedorChangeListener {
             eventSyncService.syncProveedorDeleted(event);
             
             // Verificar pedidos afectados por la eliminación del proveedor
-            eventSyncService.handleOrdersWithDeletedProvider(event.getEntityId());
+            eventSyncService.handleOrdersWithDeletedProvider(Long.parseLong(event.getEntityId()));
             
             // Notificar sobre componentes huérfanos (sin proveedor)
-            eventSyncService.handleOrphanedComponentsFromDeletedProvider(event.getEntityId());
+            eventSyncService.handleOrphanedComponentsFromDeletedProvider(Long.parseLong(event.getEntityId()));
             
             logger.debug("Proveedor eliminado registrado: id={}", event.getEntityId());
         } catch (Exception e) {

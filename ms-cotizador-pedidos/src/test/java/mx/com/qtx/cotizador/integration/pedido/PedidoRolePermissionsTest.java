@@ -35,6 +35,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
     private GenerarPedidoRequest validGenerarPedidoRequest;
     private static final Integer TEST_COTIZACION_ID = 1;
     private static final String TEST_PROVEEDOR_CVE = "PROV-001";
+    private static final String URL_PEDIDOS = "/pedidos/v1/api";
 
     @BeforeEach
     protected void setUp() {
@@ -58,7 +59,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -70,7 +71,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("admin", "admin123")
         .when()
-            .get("/pedidos/1")
+            .get(URL_PEDIDOS+"/1")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -82,7 +83,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("admin", "admin123")
         .when()
-            .get("/pedidos")
+            .get(URL_PEDIDOS+"/pedidos")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -100,7 +101,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -112,7 +113,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("gerente", "gerente123")
         .when()
-            .get("/pedidos")
+            .get(URL_PEDIDOS+"/pedidos")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -130,7 +131,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -142,7 +143,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("vendedor", "vendedor123")
         .when()
-            .get("/pedidos")
+            .get(URL_PEDIDOS+"/pedidos")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -154,7 +155,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("vendedor", "vendedor123")
         .when()
-            .get("/pedidos/1")
+            .get(URL_PEDIDOS+"/1")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -172,7 +173,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -184,7 +185,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("inventario", "inventario123")
         .when()
-            .get("/pedidos")
+            .get(URL_PEDIDOS+"/pedidos")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -196,7 +197,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("inventario", "inventario123")
         .when()
-            .get("/pedidos/1")
+            .get(URL_PEDIDOS+"/1")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -212,7 +213,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("consultor", "consultor123")
         .when()
-            .get("/pedidos")
+            .get(URL_PEDIDOS+"/pedidos")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -224,7 +225,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("consultor", "consultor123")
         .when()
-            .get("/pedidos/1")
+            .get(URL_PEDIDOS+"/1")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -238,7 +239,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(403); // Forbidden
     }
@@ -256,7 +257,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200);
 
@@ -266,7 +267,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200);
 
@@ -276,7 +277,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200);
     }
@@ -291,7 +292,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             given()
                 .auth().basic(users[i], passwords[i])
             .when()
-                .get("/pedidos")
+                .get(URL_PEDIDOS+"/pedidos")
             .then()
                 .statusCode(200)
                 .body("codigo", equalTo("0"));
@@ -308,7 +309,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
         given()
             .contentType(ContentType.JSON)
         .when()
-            .get("/pedidos")
+            .get(URL_PEDIDOS+"/pedidos")
         .then()
             .statusCode(401); // Unauthorized
     }
@@ -320,7 +321,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validGenerarPedidoRequest)
         .when()
-            .post("/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(401); // Unauthorized
     }
@@ -346,7 +347,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
                 .contentType(ContentType.JSON)
                 .body(request)
             .when()
-                .post("/pedidos/generar")
+                .post(URL_PEDIDOS+"/generar")
             .then()
                 .statusCode(200);
         }
@@ -362,7 +363,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
             given()
                 .auth().basic(users[i], passwords[i])
             .when()
-                .get("/pedidos/1")
+                .get(URL_PEDIDOS+"/1")
             .then()
                 .statusCode(200);
         }

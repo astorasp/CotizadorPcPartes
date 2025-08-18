@@ -120,15 +120,15 @@ public class ComponenteChangeListener {
      * Procesa la creación de un nuevo componente.
      */
     private void handleComponenteCreated(ComponenteChangeEvent event) {
-        logger.info("Procesando creación de componente: id={}, nombre={}, precio={}", 
-                   event.getEntityId(), event.getNombre(), event.getPrecio());
+        logger.info("Procesando creación de componente: id={}, descripcion={}, precio={}", 
+                   event.getEntityId(), event.getDescripcion(), event.getPrecioBase());
         
         try {
             // Sincronizar componente localmente si es necesario
             eventSyncService.syncComponenteCreated(event);
             
             // Verificar impacto en pedidos existentes
-            eventSyncService.validatePendingOrdersWithNewComponent(event.getEntityId());
+            eventSyncService.validatePendingOrdersWithNewComponent(Long.parseLong(event.getEntityId()));
             
             logger.debug("Componente creado registrado: id={}, tipo={}, activo={}", 
                         event.getEntityId(), event.getTipoComponente(), event.getActivo());
@@ -143,18 +143,18 @@ public class ComponenteChangeListener {
      */
     private void handleComponenteUpdated(ComponenteChangeEvent event) {
         logger.info("Procesando actualización de componente: id={}, nombre={}, precio={}", 
-                   event.getEntityId(), event.getNombre(), event.getPrecio());
+                   event.getEntityId(), event.getDescripcion(), event.getPrecioBase());
         
         try {
             // Sincronizar cambios del componente
             eventSyncService.syncComponenteUpdated(event);
             
             // Verificar impacto en pedidos pendientes
-            eventSyncService.validatePendingOrdersWithUpdatedComponent(event.getEntityId(), event.getPrecio());
+            eventSyncService.validatePendingOrdersWithUpdatedComponent(Long.parseLong(event.getEntityId()), event.getPrecioBase());
             
             // Notificar cambios de precio si es relevante
-            if (event.getPrecio() != null) {
-                eventSyncService.notifyPriceChangeToOrders(event.getEntityId(), event.getPrecio());
+            if (event.getPrecioBase() != null) {
+                eventSyncService.notifyPriceChangeToOrders(Long.parseLong(event.getEntityId()), event.getPrecioBase());
             }
             
             logger.debug("Componente actualizado registrado: id={}, tipo={}, activo={}", 
@@ -176,7 +176,7 @@ public class ComponenteChangeListener {
             eventSyncService.syncComponenteDeleted(event);
             
             // Verificar pedidos afectados por la eliminación
-            eventSyncService.handleOrdersWithDeletedComponent(event.getEntityId());
+            eventSyncService.handleOrdersWithDeletedComponent(Long.parseLong(event.getEntityId()));
             
             logger.debug("Componente eliminado registrado: id={}", event.getEntityId());
         } catch (Exception e) {

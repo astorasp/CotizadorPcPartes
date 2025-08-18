@@ -33,7 +33,7 @@ public class ProveedorChangeEvent extends BaseChangeEvent {
      * Constructor con parámetros básicos
      */
     public ProveedorChangeEvent(OperationType operationType, Long entityId) {
-        super(EventType.PROVEEDOR_CHANGE, operationType, entityId);
+        super(EventType.PROVEEDOR_CHANGE, operationType, String.valueOf(entityId));
     }
     
     /**

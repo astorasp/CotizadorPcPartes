@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
-
 /**
  * Representa una cotización de venta con sus detalles y cálculos totales.
  * <p>

@@ -10,7 +10,7 @@
 log-bin=mysql-bin
 binlog-format=ROW
 binlog-row-image=FULL
-expire-logs-days=7
+binlog_expire_logs_seconds=604800
 sync-binlog=1
 
 # Server ID único para cada instancia
@@ -27,8 +27,7 @@ enforce-gtid-consistency=ON
 # Optimización para operaciones de CDC
 max_connections=200
 innodb_buffer_pool_size=256M
-innodb_log_file_size=64M
-innodb_log_files_in_group=2
+innodb_redo_log_capacity=134217728
 
 # CONFIGURACIÓN DE REPLICACIÓN
 # ============================
@@ -61,7 +60,7 @@ net_write_timeout=60
 # ===============================
 # Permitir captura de cambios en tablas sin primary key
 binlog_rows_query_log_events=ON
-log_slave_updates=ON
+log_replica_updates=ON
 
 # CONFIGURACIÓN DE SEGURIDAD
 # ==========================

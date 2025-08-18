@@ -33,6 +33,9 @@ class PcIntegrationTest extends BaseIntegrationTest {
 
     // Base path para el API de PCs
     private static final String PCS_API_PATH = "/pcs/v1/api";
+    
+    // Base path para el API de Componentes (usado para crear componentes en tests de PC)
+    private static final String COMPONENTES_API_PATH = "/componentes/v1/api";
 
     private static final String USER_ADMIN = "test";
     private static final String PASSWORD_ADMIN = "test123";
@@ -471,7 +474,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componentePrecargado)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -817,7 +820,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteMon)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(200);
             
@@ -839,7 +842,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteGpu)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(200);
             
@@ -861,7 +864,7 @@ class PcIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(componenteHdd)
         .when()
-            .post("/componentes")
+            .post(COMPONENTES_API_PATH)
         .then()
             .statusCode(200);
         

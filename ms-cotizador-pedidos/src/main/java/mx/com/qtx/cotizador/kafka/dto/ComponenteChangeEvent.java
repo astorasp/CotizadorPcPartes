@@ -5,19 +5,17 @@ package mx.com.qtx.cotizador.kafka.dto;
  * 
  * Se envía cuando se crea, actualiza o elimina un componente en el sistema.
  * Contiene información del componente afectado para sincronización con el microservicio de pedidos.
- * 
- * @author Subagente4E - [2025-08-17 10:40:00 MST] - Evento de cambio para componentes en ms-cotizador-pedidos
  */
 public class ComponenteChangeEvent extends BaseChangeEvent {
     
-    private String nombre;
     private String descripcion;
-    private Double precio;
+    private Double precioBase;
     private String marca;
     private String modelo;
     private String tipoComponente;
-    private Long proveedorId;
-    private String especificaciones;
+    private Long promocionId;
+    private String capacidadAlm;
+    private String memoria;
     private Boolean activo;
     
     /**
@@ -31,37 +29,30 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     /**
      * Constructor con parámetros básicos
      */
-    public ComponenteChangeEvent(OperationType operationType, Long entityId) {
+    public ComponenteChangeEvent(OperationType operationType, String entityId) {
         super(EventType.COMPONENTE_CHANGE, operationType, entityId);
     }
     
     /**
      * Constructor completo para creación/actualización
      */
-    public ComponenteChangeEvent(OperationType operationType, Long entityId, String nombre, 
-                                String descripcion, Double precio, String marca, String modelo, 
-                                String tipoComponente, Long proveedorId, String especificaciones, Boolean activo) {
+    public ComponenteChangeEvent(OperationType operationType, String entityId, String descripcion, 
+                                Double precioBase, String marca, String modelo, 
+                                String tipoComponente, Long promocionId, String capacidadAlm, 
+                                String memoria, Boolean activo) {
         this(operationType, entityId);
-        this.nombre = nombre;
         this.descripcion = descripcion;
-        this.precio = precio;
+        this.precioBase = precioBase;
         this.marca = marca;
         this.modelo = modelo;
         this.tipoComponente = tipoComponente;
-        this.proveedorId = proveedorId;
-        this.especificaciones = especificaciones;
+        this.promocionId = promocionId;
+        this.capacidadAlm = capacidadAlm;
+        this.memoria = memoria;
         this.activo = activo;
     }
     
     // Getters y Setters
-    public String getNombre() {
-        return nombre;
-    }
-    
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-    
     public String getDescripcion() {
         return descripcion;
     }
@@ -70,12 +61,12 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
         this.descripcion = descripcion;
     }
     
-    public Double getPrecio() {
-        return precio;
+    public Double getPrecioBase() {
+        return precioBase;
     }
     
-    public void setPrecio(Double precio) {
-        this.precio = precio;
+    public void setPrecioBase(Double precioBase) {
+        this.precioBase = precioBase;
     }
     
     public String getMarca() {
@@ -102,20 +93,28 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
         this.tipoComponente = tipoComponente;
     }
     
-    public Long getProveedorId() {
-        return proveedorId;
+    public Long getPromocionId() {
+        return promocionId;
     }
     
-    public void setProveedorId(Long proveedorId) {
-        this.proveedorId = proveedorId;
+    public void setPromocionId(Long promocionId) {
+        this.promocionId = promocionId;
     }
     
-    public String getEspecificaciones() {
-        return especificaciones;
+    public String getCapacidadAlm() {
+        return capacidadAlm;
     }
     
-    public void setEspecificaciones(String especificaciones) {
-        this.especificaciones = especificaciones;
+    public void setCapacidadAlm(String capacidadAlm) {
+        this.capacidadAlm = capacidadAlm;
+    }
+    
+    public String getMemoria() {
+        return memoria;
+    }
+    
+    public void setMemoria(String memoria) {
+        this.memoria = memoria;
     }
     
     public Boolean getActivo() {

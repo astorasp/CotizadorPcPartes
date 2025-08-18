@@ -1,17 +1,17 @@
 package mx.com.qtx.cotizador.kafka.listener;
 
 import mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent;
-import mx.com.qtx.cotizador.kafka.service.EventSyncService;
 import mx.com.qtx.cotizador.kafka.service.KafkaMonitorService;
+import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
+import mx.com.qtx.cotizador.entidad.Cotizacion;
+import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEventConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -21,18 +21,19 @@ import org.springframework.stereotype.Component;
  * Listener para eventos de cambio de cotizaciones desde ms-cotizador-cotizaciones.
  * 
  * Procesa eventos de creación, actualización y eliminación de cotizaciones
- * para mantener sincronizada la información necesaria para gestión de pedidos.
+ * para mantener sincronizada la información local en la base de datos del microservicio.
+ * Siguiendo el mismo patrón que ComponenteChangeListener con persistencia directa en BD.
  * 
- * @author Subagente4E - [2025-08-17 11:15:00 MST] - Listener de eventos de cotizaciones para ms-cotizador-pedidos
+ * Se desactiva automáticamente en tests cuando kafka.consumer.enabled=false.
  */
 @Component
-@Profile("!test")
+@ConditionalOnProperty(value = "kafka.consumer.enabled", havingValue = "true", matchIfMissing = true)
 public class CotizacionChangeListener {
 
     private static final Logger logger = LoggerFactory.getLogger(CotizacionChangeListener.class);
     
     @Autowired
-    private EventSyncService eventSyncService;
+    private CotizacionRepositorio cotizacionRepositorio;
     
     @Autowired
     private KafkaMonitorService monitorService;
@@ -44,9 +45,6 @@ public class CotizacionChangeListener {
      * Procesa eventos de cambio de cotizaciones.
      * 
      * @param event Evento de cambio de cotización
-     * @param partition Partición del mensaje
-     * @param offset Offset del mensaje
-     * @param key Clave del mensaje
      * @param acknowledgment Acknowledgment para confirmar procesamiento
      */
     @KafkaListener(
@@ -61,18 +59,16 @@ public class CotizacionChangeListener {
     )
     public void handleCotizacionChangeEvent(
             @Payload CotizacionChangeEvent event,
-            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
-            @Header(KafkaHeaders.OFFSET) long offset,
-            @Header(KafkaHeaders.RECEIVED_KEY) String key,
             Acknowledgment acknowledgment) {
         
         try {
-            logger.info("Procesando evento de cotización: eventId={}, operationType={}, entityId={}, partition={}, offset={}", 
-                       event.getEventId(), event.getOperationType(), event.getEntityId(), partition, offset);
+            logger.info("Procesando evento de cotización: eventId={}, operationType={}, entityId={}", 
+                       event.getEventId(), event.getOperationType(), event.getEntityId());
             
-            // Verificar si el evento ya fue procesado (manejo de duplicados)
-            if (eventSyncService.isEventProcessed(event.getEventId())) {
-                logger.info("Evento ya procesado anteriormente: eventId={}, saltando procesamiento", event.getEventId());
+            // Validar evento antes de procesarlo
+            if (!CotizacionEventConverter.isValidEvent(event)) {
+                logger.warn("Evento de cotización inválido recibido: eventId={}, entityId={}", 
+                           event.getEventId(), event.getEntityId());
                 acknowledgment.acknowledge();
                 return;
             }
@@ -91,9 +87,6 @@ public class CotizacionChangeListener {
                 default:
                     logger.warn("Tipo de operación no reconocido: {}", event.getOperationType());
             }
-            
-            // Marcar evento como procesado
-            eventSyncService.markEventAsProcessed(event.getEventId(), event.getSource());
             
             // Confirmar procesamiento exitoso
             acknowledgment.acknowledge();
@@ -118,76 +111,74 @@ public class CotizacionChangeListener {
     
     /**
      * Procesa la creación de una nueva cotización.
+     * Persistir la nueva cotización en la base de datos local.
      */
     private void handleCotizacionCreated(CotizacionChangeEvent event) {
         logger.info("Procesando creación de cotización: id={}, cliente={}, montoTotal={}", 
                    event.getEntityId(), event.getCliente(), event.getMontoTotal());
         
         try {
-            // Sincronizar cotización localmente
-            eventSyncService.syncCotizacionCreated(event);
+            // Convertir evento a entidad y persistir
+            Cotizacion cotizacion = CotizacionEventConverter.toEntity(event);
+            cotizacionRepositorio.save(cotizacion);
             
-            // Verificar si la cotización está lista para convertir a pedido
-            if ("APROBADA".equals(event.getEstado())) {
-                eventSyncService.evaluateQuotationForOrder(event.getEntityId());
-            }
-            
-            logger.debug("Cotización creada registrada: id={}, estado={}, algoritmo={}", 
-                        event.getEntityId(), event.getEstado(), event.getAlgoritmo());
+            String additionalInfo = CotizacionEventConverter.extractAdditionalInfo(event);
+            logger.info("Cotización creada y persistida localmente: id={}, info=[{}]", 
+                       event.getEntityId(), additionalInfo);
+                       
         } catch (Exception e) {
-            logger.error("Error procesando creación de cotización: {}", e.getMessage(), e);
-            throw e;
+            logger.error("Error persistiendo cotización creada: id={}, error={}", 
+                        event.getEntityId(), e.getMessage(), e);
+            throw e; // Re-lanzar para trigger retry
         }
     }
     
     /**
      * Procesa la actualización de una cotización existente.
+     * Actualiza la cotización en la base de datos local.
      */
     private void handleCotizacionUpdated(CotizacionChangeEvent event) {
         logger.info("Procesando actualización de cotización: id={}, cliente={}, estado={}, montoTotal={}", 
                    event.getEntityId(), event.getCliente(), event.getEstado(), event.getMontoTotal());
         
         try {
-            // Sincronizar cambios de la cotización
-            eventSyncService.syncCotizacionUpdated(event);
+            // Convertir evento a entidad y persistir (save hace upsert por ID)  
+            Cotizacion cotizacion = CotizacionEventConverter.toEntity(event);
+            cotizacionRepositorio.save(cotizacion);
             
-            // Verificar cambios de estado que afecten pedidos
-            if ("APROBADA".equals(event.getEstado())) {
-                eventSyncService.handleQuotationApproved(event.getEntityId());
-            } else if ("RECHAZADA".equals(event.getEstado()) || "CANCELADA".equals(event.getEstado())) {
-                eventSyncService.handleQuotationCancelled(event.getEntityId());
-            }
-            
-            // Verificar cambios en montos que afecten pedidos existentes
-            if (event.getMontoTotal() != null) {
-                eventSyncService.validateOrderAmountChanges(event.getEntityId(), event.getMontoTotal());
-            }
-            
-            logger.debug("Cotización actualizada registrada: id={}, estado={}, montoTotal={}", 
-                        event.getEntityId(), event.getEstado(), event.getMontoTotal());
+            String additionalInfo = CotizacionEventConverter.extractAdditionalInfo(event);
+            logger.info("Cotización actualizada y persistida localmente: id={}, info=[{}]", 
+                       event.getEntityId(), additionalInfo);
+                       
         } catch (Exception e) {
-            logger.error("Error procesando actualización de cotización: {}", e.getMessage(), e);
-            throw e;
+            logger.error("Error persistiendo cotización actualizada: id={}, error={}", 
+                        event.getEntityId(), e.getMessage(), e);
+            throw e; // Re-lanzar para trigger retry
         }
     }
     
     /**
      * Procesa la eliminación de una cotización.
+     * Elimina la cotización de la base de datos local.
      */
     private void handleCotizacionDeleted(CotizacionChangeEvent event) {
         logger.info("Procesando eliminación de cotización: id={}", event.getEntityId());
         
         try {
-            // Marcar cotización como eliminada localmente
-            eventSyncService.syncCotizacionDeleted(event);
+            Integer cotizacionId = Integer.parseInt(event.getEntityId());
             
-            // Verificar pedidos relacionados con esta cotización
-            eventSyncService.handleOrdersWithDeletedQuotation(event.getEntityId());
+            // Verificar si la cotización existe antes de eliminarla
+            if (cotizacionRepositorio.existsById(cotizacionId)) {
+                cotizacionRepositorio.deleteById(cotizacionId);
+                logger.info("Cotización eliminada de la base de datos local: id={}", cotizacionId);
+            } else {
+                logger.warn("Cotización a eliminar no encontrada en BD local: id={}", cotizacionId);
+            }
             
-            logger.debug("Cotización eliminada registrada: id={}", event.getEntityId());
         } catch (Exception e) {
-            logger.error("Error procesando eliminación de cotización: {}", e.getMessage(), e);
-            throw e;
+            logger.error("Error eliminando cotización: id={}, error={}", 
+                        event.getEntityId(), e.getMessage(), e);
+            throw e; // Re-lanzar para trigger retry
         }
     }
 }

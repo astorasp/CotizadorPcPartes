@@ -7,8 +7,6 @@ import java.time.LocalDateTime;
  * 
  * Se envía cuando se crea, actualiza o elimina una promoción en el sistema.
  * Contiene información de la promoción afectada para sincronización con otros microservicios.
- * 
- * @author Subagente3E - [2025-01-17 18:40:00 MST] - Evento de cambio para promociones en consumidor
  */
 public class PromocionChangeEvent extends BaseChangeEvent {
     

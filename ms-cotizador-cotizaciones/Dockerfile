@@ -64,7 +64,7 @@ ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseContainerSupport -XX:MaxRAMPercentage=7
     SPRING_PROFILES_ACTIVE=docker
 
 # Comando para ejecutar la aplicación
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar cotizador-cotizaciones.jar"]
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS} -jar cotizador-cotizaciones.jar"]
 
 # Health check usando Spring Boot Actuator
 HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=5 \

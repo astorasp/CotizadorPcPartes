@@ -11,7 +11,7 @@ import mx.com.qtx.cotizador.entidad.Componente;
  * para referencias locales. Los datos reales se obtienen del microservicio de componentes.
  */
 @Repository
-public interface ComponenteRepositorio extends JpaRepository<Componente, Integer> {
+public interface ComponenteRepositorio extends JpaRepository<Componente, String> {
     
     // Métodos de consulta básicos heredados de JpaRepository
 }

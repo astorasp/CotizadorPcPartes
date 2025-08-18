@@ -14,72 +14,99 @@
 CREATE TABLE coproveedor (
     cve VARCHAR(50) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    razon_social VARCHAR(255) NOT NULL,
-    -- Campos adicionales para gestión de proveedores
-    telefono VARCHAR(20),
-    email VARCHAR(100),
-    direccion TEXT,
-    activo BOOLEAN DEFAULT TRUE,
-    -- Campos de auditoria
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    razon_social VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB;
 
--- Tabla de tipos de componente
+-- Tabla para tipos de componentes
 CREATE TABLE cotipo_componente (
-    id_tipo_componente INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    tipo VARCHAR(50) NOT NULL,
-    descripcion VARCHAR(255),
-    -- Campos de auditoria
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE
 ) ENGINE=InnoDB;
 
+
+-- Tabla de promociones
+CREATE TABLE copromocion (
+    id_promocion INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    descripcion VARCHAR(255) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    vigencia_desde DATE NOT NULL,
+    vigencia_hasta DATE NOT NULL
+) ENGINE=InnoDB;
+
+-- Tabla de detalles de promoción
+CREATE TABLE codetalle_promocion (
+    id_detalle_promocion INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    es_base BOOLEAN NOT NULL DEFAULT FALSE,
+    llevent INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    paguen INT NOT NULL,
+    porc_dcto_plano DOUBLE NOT NULL,
+    tipo_prom_acumulable VARCHAR(50),
+    tipo_prom_base VARCHAR(50),
+    id_promocion INT UNSIGNED NOT NULL,
+    FOREIGN KEY (id_promocion) REFERENCES copromocion(id_promocion) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Tabla de detalles de promoción por documento y cantidad
+CREATE TABLE codetalle_prom_dscto_x_cant (
+    num_dscto INT UNSIGNED NOT NULL,
+    cantidad INT NOT NULL,
+    dscto DOUBLE NOT NULL,
+    num_det_promocion INT UNSIGNED NOT NULL,
+    num_promocion INT UNSIGNED NOT NULL,
+    PRIMARY KEY (num_dscto,num_det_promocion, num_promocion),
+    FOREIGN KEY (num_det_promocion) REFERENCES codetalle_promocion(id_detalle_promocion) ON DELETE CASCADE
+) ENGINE=InnoDB;
 -- =================================================================
 -- TABLAS CON DEPENDENCIAS DE PRIMER NIVEL
 -- =================================================================
 
--- Tabla de componentes locales
+-- Tabla principal de componentes
 CREATE TABLE cocomponente (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_componente VARCHAR(50) PRIMARY KEY,
+    capacidad_alm VARCHAR(50),
+    costo DECIMAL(20,2) NOT NULL,
+    descripcion VARCHAR(255) NOT NULL,
     marca VARCHAR(100) NOT NULL,
+    memoria VARCHAR(50),
     modelo VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    precio DECIMAL(20,2) NOT NULL,
-    descuento DECIMAL(20,2) DEFAULT 0.00,
-    id_tipo_componente INT UNSIGNED NOT NULL,
-    -- Campos de auditoria
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_tipo_componente) REFERENCES cotipo_componente(id_tipo_componente)
+    precio_base DECIMAL(20,2) NOT NULL,
+    id_tipo_componente SMALLINT UNSIGNED NOT NULL,
+    id_promocion INT UNSIGNED NOT NULL,
+    FOREIGN KEY (id_tipo_componente) REFERENCES cotipo_componente(id),
+    FOREIGN KEY (id_promocion) REFERENCES copromocion(id_promocion)
 ) ENGINE=InnoDB;
 
--- Tabla de cotizaciones locales
+-- Tabla para la relación composite (PC -> componentes)
+CREATE TABLE copc_parte (
+    id_pc VARCHAR(50) NOT NULL,
+    id_componente VARCHAR(50) NOT NULL,
+    PRIMARY KEY (id_pc, id_componente),
+    FOREIGN KEY (id_pc) REFERENCES cocomponente(id_componente),
+    FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Tabla de cotizaciones
 CREATE TABLE cocotizacion (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    fecha_creacion DATE NOT NULL,
-    subtotal DECIMAL(20,2) NOT NULL,
+    folio INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fecha VARCHAR(20) NOT NULL,    
     impuestos DECIMAL(20,2) NOT NULL,
-    total DECIMAL(20,2) NOT NULL,
-    pais VARCHAR(10) NOT NULL,
-    -- Campos de auditoria
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    subtotal DECIMAL(20,2) NOT NULL,
+    total DECIMAL(20,2) NOT NULL
 ) ENGINE=InnoDB;
 
--- Tabla de detalles de cotización locales
+
+-- Tabla de detalles de cotización
 CREATE TABLE codetalle_cotizacion (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    folio INT UNSIGNED NOT NULL,
+    num_detalle INT UNSIGNED NOT NULL,
     cantidad INT UNSIGNED NOT NULL,
-    precio_unitario DECIMAL(20,2) NOT NULL,
-    subtotal DECIMAL(20,2) NOT NULL,
-    cotizacion_id INT UNSIGNED NOT NULL,
-    componente_id INT UNSIGNED NOT NULL,
-    -- Campos de auditoria
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (cotizacion_id) REFERENCES cocotizacion(id) ON DELETE CASCADE,
-    FOREIGN KEY (componente_id) REFERENCES cocomponente(id)
+    descripcion VARCHAR(255) NOT NULL,
+    id_componente VARCHAR(50) NOT NULL,
+    precio_base DECIMAL(20,2) NOT NULL,
+    PRIMARY KEY (folio, num_detalle),
+    FOREIGN KEY (folio) REFERENCES cocotizacion(folio) ON DELETE CASCADE,
+    FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente)
 ) ENGINE=InnoDB;
 
 -- =================================================================
@@ -94,15 +121,9 @@ CREATE TABLE copedido (
     fecha_entrega DATE NOT NULL,
     nivel_surtido INT NOT NULL,
     total DECIMAL(20,2) NOT NULL,
-    -- Campos adicionales para gestión de pedidos
-    estado_pedido ENUM('CREADO', 'ENVIADO', 'PARCIAL', 'COMPLETO', 'CANCELADO') DEFAULT 'CREADO',
-    observaciones TEXT,
-    folio_cotizacion INT UNSIGNED, -- Referencia a la cotización origen
-    -- Campos de auditoria
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (cve_proveedor) REFERENCES coproveedor(cve)
 ) ENGINE=InnoDB;
+
 
 -- Tabla de detalles de pedido
 CREATE TABLE codetalle_pedido (
@@ -111,15 +132,13 @@ CREATE TABLE codetalle_pedido (
     cantidad INT UNSIGNED NOT NULL,
     precio_unitario DECIMAL(20,2) NOT NULL,
     total_cotizado DECIMAL(20,2) NOT NULL,
-    id_componente INT UNSIGNED NOT NULL,
-    -- Campos adicionales para control de surtido
-    cantidad_surtida INT UNSIGNED DEFAULT 0,
-    cantidad_pendiente INT UNSIGNED GENERATED ALWAYS AS (cantidad - cantidad_surtida) STORED,
-    fecha_surtido DATE NULL,
+    id_componente VARCHAR(50) NOT NULL,
     PRIMARY KEY (num_pedido, num_detalle),
     FOREIGN KEY (num_pedido) REFERENCES copedido(num_pedido) ON DELETE CASCADE,
-    FOREIGN KEY (id_componente) REFERENCES cocomponente(id)
+    FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente)
 ) ENGINE=InnoDB;
+
+-- Crear índices par
 
 
 
@@ -127,37 +146,8 @@ CREATE TABLE codetalle_pedido (
 -- ÍNDICES PARA OPTIMIZACIÓN
 -- =================================================================
 
--- Índices para tablas principales
-CREATE INDEX idx_proveedor_nombre ON coproveedor (nombre);
-CREATE INDEX idx_proveedor_activo ON coproveedor (activo);
-CREATE INDEX idx_pedido_proveedor ON copedido (cve_proveedor);
-CREATE INDEX idx_pedido_fecha_emision ON copedido (fecha_emision);
-CREATE INDEX idx_pedido_fecha_entrega ON copedido (fecha_entrega);
-CREATE INDEX idx_pedido_estado ON copedido (estado_pedido);
-CREATE INDEX idx_pedido_cotizacion ON copedido (folio_cotizacion);
-CREATE INDEX idx_detalle_pedido_componente ON codetalle_pedido (id_componente);
-CREATE INDEX idx_detalle_pedido_fecha_surtido ON codetalle_pedido (fecha_surtido);
-
--- Índices para tablas locales de datos
-CREATE INDEX idx_tipo_componente_tipo ON cotipo_componente (tipo);
-CREATE INDEX idx_componente_marca ON cocomponente (marca);
+-- Crear índices para mejorar el rendimiento
 CREATE INDEX idx_componente_tipo ON cocomponente (id_tipo_componente);
-CREATE INDEX idx_cotizacion_fecha ON cocotizacion (fecha_creacion);
-CREATE INDEX idx_cotizacion_pais ON cocotizacion (pais);
-CREATE INDEX idx_detalle_cotizacion_componente ON codetalle_cotizacion (componente_id);
-CREATE INDEX idx_detalle_cotizacion_cotizacion ON codetalle_cotizacion (cotizacion_id);
-
-
-
--- =================================================================
--- TRIGGERS PARA MANTENIMIENTO
--- =================================================================
-
--- Los triggers no se incluyen en tests de integración
--- para simplificar la configuración de TestContainers
--- Los triggers se configuran en el DDL de producción
-
--- =================================================================
--- CONFIGURACIÓN INICIAL COMPLETADA
--- Los datos iniciales están en dml.sql
--- =================================================================
+CREATE INDEX idx_promocion ON cocomponente (id_promocion);
+CREATE INDEX idx_detalle_cotizacion_cotizacion ON codetalle_cotizacion (folio, num_detalle);
+CREATE INDEX idx_detalle_pedido_pedido ON codetalle_pedido (num_pedido);

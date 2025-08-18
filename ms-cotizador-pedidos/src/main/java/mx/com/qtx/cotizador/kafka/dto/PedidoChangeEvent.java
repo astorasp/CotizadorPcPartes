@@ -34,7 +34,7 @@ public class PedidoChangeEvent extends BaseChangeEvent {
      * Constructor con parámetros básicos
      */
     public PedidoChangeEvent(OperationType operationType, Long entityId) {
-        super(EventType.PEDIDO_CHANGE, operationType, entityId);
+        super(EventType.PEDIDO_CHANGE, operationType, String.valueOf(entityId));
     }
     
     /**

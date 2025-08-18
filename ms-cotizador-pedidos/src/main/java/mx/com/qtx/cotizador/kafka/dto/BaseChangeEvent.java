@@ -24,7 +24,8 @@ import java.util.UUID;
     @JsonSubTypes.Type(value = ComponenteChangeEvent.class, name = "COMPONENTE_CHANGE"),
     @JsonSubTypes.Type(value = CotizacionChangeEvent.class, name = "COTIZACION_CHANGE"),
     @JsonSubTypes.Type(value = ProveedorChangeEvent.class, name = "PROVEEDOR_CHANGE"),
-    @JsonSubTypes.Type(value = PedidoChangeEvent.class, name = "PEDIDO_CHANGE")
+    @JsonSubTypes.Type(value = PedidoChangeEvent.class, name = "PEDIDO_CHANGE"),
+    @JsonSubTypes.Type(value = PromocionChangeEvent.class, name = "PROMOCION_CHANGE")
 })
 public abstract class BaseChangeEvent {
     
@@ -39,13 +40,13 @@ public abstract class BaseChangeEvent {
      * Tipos de eventos disponibles
      */
     public enum EventType {
-        COMPONENTE_CHANGE, COTIZACION_CHANGE, PROVEEDOR_CHANGE, PEDIDO_CHANGE
+        COMPONENTE_CHANGE, COTIZACION_CHANGE, PROVEEDOR_CHANGE, PEDIDO_CHANGE, PROMOCION_CHANGE
     }
     
     private String eventId;
     private EventType eventType;
     private OperationType operationType;
-    private Long entityId;
+    private String entityId;
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timestamp;
@@ -63,7 +64,7 @@ public abstract class BaseChangeEvent {
         this.version = "1.0";
     }
     
-    public BaseChangeEvent(EventType eventType, OperationType operationType, Long entityId) {
+    public BaseChangeEvent(EventType eventType, OperationType operationType, String entityId) {
         this();
         this.eventType = eventType;
         this.operationType = operationType;
@@ -95,11 +96,11 @@ public abstract class BaseChangeEvent {
         this.operationType = operationType;
     }
     
-    public Long getEntityId() {
+    public String getEntityId() {
         return entityId;
     }
     
-    public void setEntityId(Long entityId) {
+    public void setEntityId(String entityId) {
         this.entityId = entityId;
     }
     

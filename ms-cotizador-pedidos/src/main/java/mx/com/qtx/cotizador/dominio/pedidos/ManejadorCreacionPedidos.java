@@ -47,11 +47,11 @@ public class ManejadorCreacionPedidos {
             IPresupuesto presupuestoAdaptado = new CotizacionPresupuestoAdapter(cotizacion);            
             // 2. Agregar el presupuesto al gestor
             gestorPedidos.agregarPresupuesto(presupuestoAdaptado);
-            System.out.println("Iniciando proceso para generar pedido desde cotización: " + cotizacion.getId());
+            System.out.println("Iniciando proceso para generar pedido desde cotización: " + cotizacion.getNum());
             // 3. Generar el pedido
             pedidos.add(gestorPedidos.generarPedido(cveProveedor, numPedido, nivelSurtido, 
                 fechaEmision, fechaEntrega));
-            System.out.println("Pedido generado exitosamente para cotización: " + cotizacion.getId());            
+            System.out.println("Pedido generado exitosamente para cotización: " + cotizacion.getNum());            
         } 
         catch (PresupuestoNoCargadoExcepcion e) {
             System.err.println("Error al cargar el presupuesto: " + e.getMessage());            

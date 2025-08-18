@@ -2,6 +2,7 @@ package mx.com.qtx.cotizador.kafka.service;
 
 import mx.com.qtx.cotizador.entidad.Componente;
 import mx.com.qtx.cotizador.entidad.Promocion;
+import mx.com.qtx.cotizador.entidad.DetallePromocion;
 import mx.com.qtx.cotizador.kafka.dto.BaseChangeEvent;
 import mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent;
 import mx.com.qtx.cotizador.kafka.dto.PcChangeEvent;
@@ -37,9 +38,23 @@ public class EventPublishingService {
     @Async
     public void publishComponenteCreated(Componente componente) {
         try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de componente no enviado: ID={}", componente.getId());
+                return;
+            }
+            
             ComponenteChangeEvent event = new ComponenteChangeEvent(
                 BaseChangeEvent.OperationType.CREATE,
-                componente.getId()
+                componente.getId(),
+                componente.getDescripcion(),
+                componente.getPrecioBase() != null ? componente.getPrecioBase().doubleValue() : null,
+                componente.getMarca(),
+                componente.getModelo(),
+                componente.getTipoComponente() != null ? componente.getTipoComponente().getNombre() : null,
+                componente.getPromocion() != null ? componente.getPromocion().getIdPromocion().longValue() : null,
+                componente.getCapacidadAlm(),
+                componente.getMemoria(),
+                true // activo - asumir true para componentes creados
             );
 
             eventProducer.sendComponenteChangeEvent(event);
@@ -58,9 +73,23 @@ public class EventPublishingService {
     @Async
     public void publishComponenteUpdated(Componente componente) {
         try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de componente no enviado: ID={}", componente.getId());
+                return;
+            }
+            
             ComponenteChangeEvent event = new ComponenteChangeEvent(
                 BaseChangeEvent.OperationType.UPDATE,
-                componente.getId()
+                componente.getId(),
+                componente.getDescripcion(),
+                componente.getPrecioBase() != null ? componente.getPrecioBase().doubleValue() : null,
+                componente.getMarca(),
+                componente.getModelo(),
+                componente.getTipoComponente() != null ? componente.getTipoComponente().getNombre() : null,
+                componente.getPromocion() != null ? componente.getPromocion().getIdPromocion().longValue() : null,
+                componente.getCapacidadAlm(),
+                componente.getMemoria(),
+                true // activo - asumir true para componentes actualizados
             );
 
             eventProducer.sendComponenteChangeEvent(event);
@@ -100,13 +129,44 @@ public class EventPublishingService {
     @Async
     public void publishPromocionCreated(Promocion promocion) {
         try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de promoción no enviado: ID={}", promocion.getIdPromocion());
+                return;
+            }
+            
+            // Obtener información de los detalles de promoción si existen
+            String tipoPromBase = null;
+            String tipoPromAcumulable = null;
+            Double valorDescuento = null;
+            Integer cantidadMinima = null;
+            Integer cantidadMaxima = null;
+            
+            if (promocion.getDetalles() != null && !promocion.getDetalles().isEmpty()) {
+                DetallePromocion detalle = promocion.getDetalles().get(0); // Tomar el primer detalle
+                tipoPromBase = detalle.getTipoPromBase();
+                tipoPromAcumulable = detalle.getTipoPromAcumulable();
+                valorDescuento = detalle.getPorcDctoPlano();
+                cantidadMinima = detalle.getPaguen();
+                cantidadMaxima = detalle.getLlevent();
+            }
+            
             PromocionChangeEvent event = new PromocionChangeEvent(
                 BaseChangeEvent.OperationType.CREATE,
-                String.valueOf(promocion.getIdPromocion())
+                String.valueOf(promocion.getIdPromocion()),
+                promocion.getNombre(),
+                promocion.getDescripcion(),
+                tipoPromBase,
+                tipoPromAcumulable,
+                promocion.getVigenciaDesde() != null ? promocion.getVigenciaDesde().atStartOfDay() : null,
+                promocion.getVigenciaHasta() != null ? promocion.getVigenciaHasta().atTime(23, 59, 59) : null,
+                true, // activa - asumir true para nuevas promociones
+                valorDescuento,
+                cantidadMinima,
+                cantidadMaxima
             );
 
             eventProducer.sendPromocionChangeEvent(event);
-            logger.info("Evento de creación de promoción enviado: ID={}", promocion.getIdPromocion());
+            logger.info("Evento de creación de promoción enviado: ID={}, Nombre={}", promocion.getIdPromocion(), promocion.getNombre());
 
         } catch (Exception e) {
             logger.error("Error publicando evento de creación de promoción {}: {}", promocion.getIdPromocion(), e.getMessage(), e);
@@ -121,13 +181,44 @@ public class EventPublishingService {
     @Async
     public void publishPromocionUpdated(Promocion promocion) {
         try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de promoción no enviado: ID={}", promocion.getIdPromocion());
+                return;
+            }
+            
+            // Obtener información de los detalles de promoción si existen
+            String tipoPromBase = null;
+            String tipoPromAcumulable = null;
+            Double valorDescuento = null;
+            Integer cantidadMinima = null;
+            Integer cantidadMaxima = null;
+            
+            if (promocion.getDetalles() != null && !promocion.getDetalles().isEmpty()) {
+                DetallePromocion detalle = promocion.getDetalles().get(0); // Tomar el primer detalle
+                tipoPromBase = detalle.getTipoPromBase();
+                tipoPromAcumulable = detalle.getTipoPromAcumulable();
+                valorDescuento = detalle.getPorcDctoPlano();
+                cantidadMinima = detalle.getPaguen();
+                cantidadMaxima = detalle.getLlevent();
+            }
+            
             PromocionChangeEvent event = new PromocionChangeEvent(
                 BaseChangeEvent.OperationType.UPDATE,
-                String.valueOf(promocion.getIdPromocion())
+                String.valueOf(promocion.getIdPromocion()),
+                promocion.getNombre(),
+                promocion.getDescripcion(),
+                tipoPromBase,
+                tipoPromAcumulable,
+                promocion.getVigenciaDesde() != null ? promocion.getVigenciaDesde().atStartOfDay() : null,
+                promocion.getVigenciaHasta() != null ? promocion.getVigenciaHasta().atTime(23, 59, 59) : null,
+                true, // activa - determinar según lógica de negocio
+                valorDescuento,
+                cantidadMinima,
+                cantidadMaxima
             );
 
             eventProducer.sendPromocionChangeEvent(event);
-            logger.info("Evento de actualización de promoción enviado: ID={}", promocion.getIdPromocion());
+            logger.info("Evento de actualización de promoción enviado: ID={}, Nombre={}", promocion.getIdPromocion(), promocion.getNombre());
 
         } catch (Exception e) {
             logger.error("Error publicando evento de actualización de promoción {}: {}", promocion.getIdPromocion(), e.getMessage(), e);

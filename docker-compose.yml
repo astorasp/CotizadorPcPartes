@@ -36,7 +36,7 @@ services:
     networks:
       - cotizador-network
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
       timeout: 10s
       retries: 5
       interval: 30s
@@ -427,8 +427,6 @@ services:
     networks:
       - cotizador-network
     depends_on:
-      backend:
-        condition: service_healthy
       ms-seguridad:
         condition: service_healthy
       ms-cotizador-componentes:
@@ -459,8 +457,6 @@ services:
     networks:
       - cotizador-network
     depends_on:
-      backend:
-        condition: service_healthy
       ms-seguridad:
         condition: service_healthy
       ms-cotizador-componentes:

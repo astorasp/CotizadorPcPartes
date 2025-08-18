@@ -107,6 +107,7 @@ kafka:
   topics:
     componentes-changes: ${KAFKA_TOPIC_COMPONENTES_CHANGES:componentes.changes}
     promociones-changes: ${KAFKA_TOPIC_PROMOCIONES_CHANGES:promociones.changes}
+    cotizaciones-changes: ${KAFKA_TOPIC_COTIZACIONES_CHANGES:cotizaciones.changes}
   retry:
     attempts: ${KAFKA_RETRY_ATTEMPTS:3}
     delay-ms: ${KAFKA_RETRY_DELAY_MS:1000}

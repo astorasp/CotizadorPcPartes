@@ -7,9 +7,7 @@ import java.time.LocalDateTime;
  * Evento de cambio para entidades de Cotización.
  * 
  * Se envía cuando se crea, actualiza o elimina una cotización en el sistema.
- * Contiene información de la cotización afectada para sincronización con el microservicio de pedidos.
- * 
- * @author Subagente4E - [2025-08-17 10:45:00 MST] - Evento de cambio para cotizaciones en ms-cotizador-pedidos
+ * Contiene información completa de la cotización afectada para sincronización con otros microservicios.
  */
 public class CotizacionChangeEvent extends BaseChangeEvent {
     

@@ -104,10 +104,10 @@ public class EventSyncService {
      */
     public void syncComponenteCreated(ComponenteChangeEvent event) {
         logger.info("Sincronizando creación de componente: id={}, nombre={}", 
-                   event.getEntityId(), event.getNombre());
+                   event.getEntityId(), event.getDescripcion());
         
         try {
-            Optional<Componente> existingComponente = componenteRepositorio.findById(event.getEntityId().intValue());
+            Optional<Componente> existingComponente = componenteRepositorio.findById(event.getEntityId());
             
             if (existingComponente.isPresent()) {
                 // Conflicto: componente ya existe
@@ -129,10 +129,10 @@ public class EventSyncService {
      */
     public void syncComponenteUpdated(ComponenteChangeEvent event) {
         logger.info("Sincronizando actualización de componente: id={}, nombre={}", 
-                   event.getEntityId(), event.getNombre());
+                   event.getEntityId(), event.getDescripcion());
         
         try {
-            Optional<Componente> existingComponente = componenteRepositorio.findById(event.getEntityId().intValue());
+            Optional<Componente> existingComponente = componenteRepositorio.findById(event.getEntityId());
             
             if (existingComponente.isPresent()) {
                 Componente componente = existingComponente.get();
@@ -162,7 +162,7 @@ public class EventSyncService {
         logger.info("Sincronizando eliminación de componente: id={}", event.getEntityId());
         
         try {
-            Optional<Componente> existingComponente = componenteRepositorio.findById(event.getEntityId().intValue());
+            Optional<Componente> existingComponente = componenteRepositorio.findById(event.getEntityId());
             
             if (existingComponente.isPresent()) {
                 // Para simplificar, solo loggear la eliminación
@@ -185,7 +185,7 @@ public class EventSyncService {
                    event.getEntityId(), event.getCliente());
         
         try {
-            Optional<Cotizacion> existingCotizacion = cotizacionRepositorio.findById(event.getEntityId().intValue());
+            Optional<Cotizacion> existingCotizacion = cotizacionRepositorio.findById(Integer.parseInt(event.getEntityId()));
             
             if (existingCotizacion.isPresent()) {
                 // Conflicto: cotización ya existe
@@ -210,7 +210,7 @@ public class EventSyncService {
                    event.getEntityId(), event.getEstado());
         
         try {
-            Optional<Cotizacion> existingCotizacion = cotizacionRepositorio.findById(event.getEntityId().intValue());
+            Optional<Cotizacion> existingCotizacion = cotizacionRepositorio.findById(Integer.parseInt(event.getEntityId()));
             
             if (existingCotizacion.isPresent()) {
                 Cotizacion cotizacion = existingCotizacion.get();
@@ -240,7 +240,7 @@ public class EventSyncService {
         logger.info("Sincronizando eliminación de cotización: id={}", event.getEntityId());
         
         try {
-            Optional<Cotizacion> existingCotizacion = cotizacionRepositorio.findById(event.getEntityId().intValue());
+            Optional<Cotizacion> existingCotizacion = cotizacionRepositorio.findById(Integer.parseInt(event.getEntityId()));
             
             if (existingCotizacion.isPresent()) {
                 // Para simplificar, solo loggear la eliminación
@@ -417,31 +417,36 @@ public class EventSyncService {
     
     private Componente mapToComponenteEntity(ComponenteChangeEvent event) {
         Componente componente = new Componente();
-        componente.setId(event.getEntityId().intValue());
+        componente.setId(event.getEntityId());
         componente.setDescripcion(event.getDescripcion());
-        if (event.getPrecio() != null) {
-            componente.setPrecio(BigDecimal.valueOf(event.getPrecio()));
+        if (event.getPrecioBase() != null) {
+            componente.setPrecioBase(BigDecimal.valueOf(event.getPrecioBase()));
         }
         componente.setMarca(event.getMarca());
         componente.setModelo(event.getModelo());
+        componente.setCapacidadAlm(event.getCapacidadAlm());
+        componente.setMemoria(event.getMemoria());
         return componente;
     }
     
     private void updateComponenteFromEvent(Componente componente, ComponenteChangeEvent event) {
         if (event.getDescripcion() != null) componente.setDescripcion(event.getDescripcion());
-        if (event.getPrecio() != null) componente.setPrecio(BigDecimal.valueOf(event.getPrecio()));
+        if (event.getPrecioBase() != null) componente.setPrecioBase(BigDecimal.valueOf(event.getPrecioBase()));
         if (event.getMarca() != null) componente.setMarca(event.getMarca());
         if (event.getModelo() != null) componente.setModelo(event.getModelo());
+        if (event.getCapacidadAlm() != null) componente.setCapacidadAlm(event.getCapacidadAlm());
+        if (event.getMemoria() != null) componente.setMemoria(event.getMemoria());
     }
     
     private Cotizacion mapToCotizacionEntity(CotizacionChangeEvent event) {
         Cotizacion cotizacion = new Cotizacion();
-        cotizacion.setId(event.getEntityId().intValue());
+        cotizacion.setFolio(Integer.parseInt(event.getEntityId()));
         if (event.getMontoTotal() != null) cotizacion.setTotal(event.getMontoTotal());
         if (event.getMontoImpuestos() != null) cotizacion.setImpuestos(event.getMontoImpuestos());
-        if (event.getPais() != null) cotizacion.setPais(event.getPais());
+        // Pais no disponible en entidad simplificada
+        // if (event.getPais() != null) cotizacion.setPais(event.getPais());
         if (event.getFechaCotizacion() != null) {
-            cotizacion.setFechaCreacion(event.getFechaCotizacion().toLocalDate());
+            cotizacion.setFecha(event.getFechaCotizacion().toString());
         }
         return cotizacion;
     }
@@ -449,9 +454,10 @@ public class EventSyncService {
     private void updateCotizacionFromEvent(Cotizacion cotizacion, CotizacionChangeEvent event) {
         if (event.getMontoTotal() != null) cotizacion.setTotal(event.getMontoTotal());
         if (event.getMontoImpuestos() != null) cotizacion.setImpuestos(event.getMontoImpuestos());
-        if (event.getPais() != null) cotizacion.setPais(event.getPais());
+        // Pais no disponible en entidad simplificada
+        // if (event.getPais() != null) cotizacion.setPais(event.getPais());
         if (event.getFechaCotizacion() != null) {
-            cotizacion.setFechaCreacion(event.getFechaCotizacion().toLocalDate());
+            cotizacion.setFecha(event.getFechaCotizacion().toString());
         }
     }
     

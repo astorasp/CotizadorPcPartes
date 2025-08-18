@@ -126,7 +126,7 @@ public class PedidoEntityConverter {
                 if (detalleCore.getIdArticulo() != null && !detalleCore.getIdArticulo().isEmpty()) {
                     try {
                         Integer componenteId = Integer.parseInt(detalleCore.getIdArticulo());
-                        Componente componente = componenteRepo.findById(componenteId).orElse(null);
+                        Componente componente = componenteRepo.findById(componenteId.toString()).orElse(null);
                         detalleEntity.setComponente(componente);
                     } catch (NumberFormatException e) {
                         // Log error o manejar ID no numérico

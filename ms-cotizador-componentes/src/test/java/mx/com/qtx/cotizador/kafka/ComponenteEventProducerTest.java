@@ -68,13 +68,13 @@ class ComponenteEventProducerTest {
             BaseChangeEvent.OperationType.CREATE,
             "1",
             "Test Component",
-            "Component for testing",
             150.0,
             "TestBrand",
             "TestModel",
             "MONITOR",
             1L,
             "Test specifications",
+            "8GB",
             true
         );
 
@@ -97,13 +97,13 @@ class ComponenteEventProducerTest {
             BaseChangeEvent.OperationType.UPDATE,
             "2",
             "Updated Component",
-            "Updated description",
             200.0,
             "UpdatedBrand",
             "UpdatedModel",
             "DISCO_DURO",
             2L,
-            "Updated specifications",
+            "1TB",
+            "DDR4",
             true
         );
 

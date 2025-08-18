@@ -31,14 +31,14 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     /**
      * Constructor con parámetros básicos
      */
-    public ComponenteChangeEvent(OperationType operationType, Long entityId) {
+    public ComponenteChangeEvent(OperationType operationType, String entityId) {
         super(EventType.COMPONENTE_CHANGE, operationType, entityId);
     }
     
     /**
      * Constructor completo para creación/actualización
      */
-    public ComponenteChangeEvent(OperationType operationType, Long entityId, String nombre, 
+    public ComponenteChangeEvent(OperationType operationType, String entityId, String nombre, 
                                 String descripcion, Double precio, String marca, String modelo, 
                                 String tipoComponente, Long proveedorId, String especificaciones, Boolean activo) {
         this(operationType, entityId);

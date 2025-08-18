@@ -27,6 +27,8 @@ import static org.hamcrest.Matchers.*;
 @DisplayName("Integration Tests - Gestión de Pedidos")
 class PedidoIntegrationTest extends BaseIntegrationTest {
 
+    private static final String URL_PEDIDOS = "/pedidos/v1/api";
+    
     // ✅ Configuración heredada de BaseIntegrationTest:
     // - Base de datos MySQL compartida
     // - RestAssured configurado automáticamente  
@@ -55,7 +57,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -90,7 +92,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(request)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("45")) // COTIZACION_NO_ENCONTRADA_PEDIDO
@@ -117,7 +119,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("43")) // PROVEEDOR_REQUERIDO_PEDIDO
@@ -144,7 +146,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Error de validación
@@ -171,7 +173,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Error de validación
@@ -189,7 +191,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/v1/api/pedidos/1")
+            .get(URL_PEDIDOS+"/1")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -210,7 +212,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/v1/api/pedidos/999999")
+            .get(URL_PEDIDOS+"/999999")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("40")) // PEDIDO_NO_ENCONTRADO
@@ -226,7 +228,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/v1/api/pedidos/1000")
+            .get(URL_PEDIDOS+"/1000")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("40")) // PEDIDO_NO_ENCONTRADO
@@ -243,7 +245,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/v1/api/pedidos")
+            .get(URL_PEDIDOS+"")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -276,7 +278,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(request)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(401);
     }
@@ -289,7 +291,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().none()
         .when()
-            .get("/pedidos/v1/api/pedidos/1")
+            .get(URL_PEDIDOS+"/1")
         .then()
             .statusCode(401);
     }
@@ -302,7 +304,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().none()
         .when()
-            .get("/pedidos/v1/api/pedidos")
+            .get(URL_PEDIDOS+"")
         .then()
             .statusCode(401);
     }
@@ -327,7 +329,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request1)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -347,7 +349,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request2)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -374,7 +376,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/v1/api/pedidos/generar")
+            .post(URL_PEDIDOS+"/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))

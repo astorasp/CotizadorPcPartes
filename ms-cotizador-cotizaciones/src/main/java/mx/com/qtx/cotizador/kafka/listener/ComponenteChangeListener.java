@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -24,8 +25,11 @@ import org.springframework.stereotype.Component;
  * Procesa eventos de creación, actualización y eliminación de componentes
  * para mantener sincronizada la información local en la base de datos del microservicio.
  * Reemplaza la arquitectura de cache por persistencia directa en BD local.
+ * 
+ * Se desactiva automáticamente en tests cuando kafka.consumer.enabled=false.
  */
 @Component
+@ConditionalOnProperty(value = "kafka.consumer.enabled", havingValue = "true", matchIfMissing = true)
 public class ComponenteChangeListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ComponenteChangeListener.class);

@@ -13,55 +13,104 @@ import jakarta.persistence.Table;
 
 /**
  * Entidad representación de un componente de hardware
- * Esta es una representación mínima para las referencias en pedidos
+ * Sincronizada con ms-cotizador-componentes via eventos Kafka
  */
 @Entity
 @Table(name = "cocomponente")
 public class Componente {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "id_componente")
+    private String id;
     
-    @Column(name = "marca")
-    private String marca;
+    @Column(name = "capacidad_alm")
+    private String capacidadAlm;
     
-    @Column(name = "modelo")
-    private String modelo;
+    @Column(name = "costo")
+    private BigDecimal costo;
     
     @Column(name = "descripcion")
     private String descripcion;
     
-    @Column(name = "precio")
-    private BigDecimal precio;
+    @Column(name = "marca")
+    private String marca;
     
-    @Column(name = "descuento")
-    private BigDecimal descuento;
+    @Column(name = "memoria")
+    private String memoria;
+    
+    @Column(name = "modelo")
+    private String modelo;
+    
+    @Column(name = "precio_base")
+    private BigDecimal precioBase;
     
     @ManyToOne
     @JoinColumn(name = "id_tipo_componente")
     private TipoComponente tipoComponente;
+    
+    @ManyToOne
+    @JoinColumn(name = "id_promocion")
+    private Promocion promocion;
     
     // Constructores
     public Componente() {
         // Constructor vacío requerido por JPA
     }
     
-    public Componente(String marca, String modelo, String descripcion, BigDecimal precio) {
+    public Componente(String id, String descripcion, String marca, String modelo) {
+        this.id = id;
         this.marca = marca;
         this.modelo = modelo;
         this.descripcion = descripcion;
-        this.precio = precio;
-        this.descuento = BigDecimal.ZERO;
     }
     
     // Getters y setters
-    public Integer getId() {
+    public String getId() {
         return id;
     }
     
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
+    }
+    
+    public String getCapacidadAlm() {
+        return capacidadAlm;
+    }
+    
+    public void setCapacidadAlm(String capacidadAlm) {
+        this.capacidadAlm = capacidadAlm;
+    }
+    
+    public BigDecimal getCosto() {
+        return costo;
+    }
+    
+    public void setCosto(BigDecimal costo) {
+        this.costo = costo;
+    }
+    
+    public String getMemoria() {
+        return memoria;
+    }
+    
+    public void setMemoria(String memoria) {
+        this.memoria = memoria;
+    }
+    
+    public BigDecimal getPrecioBase() {
+        return precioBase;
+    }
+    
+    public void setPrecioBase(BigDecimal precioBase) {
+        this.precioBase = precioBase;
+    }
+    
+    public Promocion getPromocion() {
+        return promocion;
+    }
+    
+    public void setPromocion(Promocion promocion) {
+        this.promocion = promocion;
     }
     
     public String getMarca() {
@@ -88,21 +137,6 @@ public class Componente {
         this.descripcion = descripcion;
     }
     
-    public BigDecimal getPrecio() {
-        return precio;
-    }
-    
-    public void setPrecio(BigDecimal precio) {
-        this.precio = precio;
-    }
-    
-    public BigDecimal getDescuento() {
-        return descuento;
-    }
-    
-    public void setDescuento(BigDecimal descuento) {
-        this.descuento = descuento;
-    }
     
     public TipoComponente getTipoComponente() {
         return tipoComponente;

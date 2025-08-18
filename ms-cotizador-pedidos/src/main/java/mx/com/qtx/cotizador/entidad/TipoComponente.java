@@ -1,62 +1,44 @@
 package mx.com.qtx.cotizador.entidad;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import java.util.List;
+import java.util.ArrayList;
 
-/**
- * Entidad que representa un tipo de componente
- */
 @Entity
 @Table(name = "cotipo_componente")
 public class TipoComponente {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_tipo_componente")
-    private Integer idTipoComponente;
+    private Short id;
     
-    @Column(name = "tipo")
-    private String tipo;
+    @Column(name = "nombre")
+    private String nombre;
     
-    @Column(name = "descripcion")
-    private String descripcion;
+    @OneToMany(mappedBy = "tipoComponente", cascade = CascadeType.ALL)
+    private List<Componente> componentes = new ArrayList<>();
     
     // Constructores
-    public TipoComponente() {
-        // Constructor vacío requerido por JPA
-    }
-    
-    public TipoComponente(String tipo, String descripcion) {
-        this.tipo = tipo;
-        this.descripcion = descripcion;
-    }
+    public TipoComponente() {}
     
     // Getters y setters
-    public Integer getIdTipoComponente() {
-        return idTipoComponente;
+    public Short getId() {
+        return id;
     }
     
-    public void setIdTipoComponente(Integer idTipoComponente) {
-        this.idTipoComponente = idTipoComponente;
+    public void setId(Short id) {
+        this.id = id;
     }
     
-    public String getTipo() {
-        return tipo;
+    public String getNombre() {
+        return nombre;
     }
     
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-    
-    public String getDescripcion() {
-        return descripcion;
-    }
-    
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 }

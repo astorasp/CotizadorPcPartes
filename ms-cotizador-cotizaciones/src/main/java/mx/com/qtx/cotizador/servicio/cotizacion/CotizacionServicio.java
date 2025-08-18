@@ -24,6 +24,7 @@ import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
 import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEntityConverter;
+import mx.com.qtx.cotizador.kafka.service.EventPublishingService;
 import mx.com.qtx.cotizador.util.Errores;
 
 import java.math.BigDecimal;
@@ -39,11 +40,14 @@ public class CotizacionServicio {
     
     private final CotizacionRepositorio cotizacionRepo;
     private final ComponenteRepositorio componenteRepositorio;
+    private final EventPublishingService eventPublishingService;
     
     public CotizacionServicio(CotizacionRepositorio cotizacionRepo, 
-                             ComponenteRepositorio componenteRepositorio) {
+                             ComponenteRepositorio componenteRepositorio,
+                             EventPublishingService eventPublishingService) {
         this.cotizacionRepo = cotizacionRepo;
         this.componenteRepositorio = componenteRepositorio;
+        this.eventPublishingService = eventPublishingService;
     }   
 
     /**
@@ -110,7 +114,10 @@ public class CotizacionServicio {
             // 6. Persistir la entidad cotización
             mx.com.qtx.cotizador.entidad.Cotizacion cotizacionGuardada = cotizacionRepo.save(cotizacionEntity);
             
-            // 7. Convertir a DTO de respuesta
+            // 7. Publicar evento de cotización creada
+            eventPublishingService.publishCotizacionCreated(cotizacionDominio);
+            
+            // 8. Convertir a DTO de respuesta
             CotizacionResponse response = CotizacionMapper.toResponse(cotizacionGuardada);
             
             logger.info("Cotización guardada exitosamente con folio: {}", cotizacionGuardada.getFolio());
@@ -198,6 +205,9 @@ public class CotizacionServicio {
 
             var cotizacionEntity = CotizacionEntityConverter.convertToNewEntity(cotizacion);
             cotizacionRepo.save(cotizacionEntity);
+            
+            // Publicar evento de cotización creada
+            eventPublishingService.publishCotizacionCreated(cotizacion);
             
             logger.info("Cotización guardada exitosamente: {}", cotizacion.getNum());
             return new ApiResponse<>(Errores.OK.getCodigo(), Errores.OK.getMensaje());

@@ -38,9 +38,9 @@ class KafkaConsumerConfigurationTest {
         
         // Test constructor con parámetros
         ComponenteChangeEvent event2 = new ComponenteChangeEvent(
-            BaseChangeEvent.OperationType.CREATE, 1L);
+            BaseChangeEvent.OperationType.CREATE, "1");
         assertThat(event2.getOperationType()).isEqualTo(BaseChangeEvent.OperationType.CREATE);
-        assertThat(event2.getEntityId()).isEqualTo(1L);
+        assertThat(event2.getEntityId()).isEqualTo("1");
     }
 
     @Test
@@ -52,9 +52,9 @@ class KafkaConsumerConfigurationTest {
         
         // Test constructor con parámetros
         PromocionChangeEvent event2 = new PromocionChangeEvent(
-            BaseChangeEvent.OperationType.UPDATE, 2L);
+            BaseChangeEvent.OperationType.UPDATE, "2");
         assertThat(event2.getOperationType()).isEqualTo(BaseChangeEvent.OperationType.UPDATE);
-        assertThat(event2.getEntityId()).isEqualTo(2L);
+        assertThat(event2.getEntityId()).isEqualTo("2");
     }
 
     @Test

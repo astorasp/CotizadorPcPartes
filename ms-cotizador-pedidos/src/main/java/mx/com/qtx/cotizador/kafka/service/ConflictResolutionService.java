@@ -47,7 +47,7 @@ public class ConflictResolutionService {
      */
     public boolean hasConflict(Componente localComponente, ComponenteChangeEvent event) {
         // Simplificar verificación - solo verificar ID por ahora
-        boolean hasConflict = !localComponente.getId().equals(event.getEntityId().intValue());
+        boolean hasConflict = !localComponente.getId().equals(event.getEntityId());
         
         if (hasConflict) {
             logger.warn("Conflicto detectado en componente: localId={}, eventId={}", 
@@ -83,7 +83,7 @@ public class ConflictResolutionService {
         } catch (Exception e) {
             logger.error("Error resolviendo conflicto de componente: {}", e.getMessage(), e);
             // En caso de error, mantener datos locales y registrar para revisión manual
-            logConflictForManualResolution("COMPONENTE", localComponente.getId().longValue(), event.getEventId(), e.getMessage());
+            logConflictForManualResolution("COMPONENTE", Long.parseLong(localComponente.getId()), event.getEventId(), e.getMessage());
         }
     }
     
@@ -94,11 +94,11 @@ public class ConflictResolutionService {
      */
     public boolean hasConflict(Cotizacion localCotizacion, CotizacionChangeEvent event) {
         // Simplificar verificación - solo verificar ID por ahora
-        boolean hasConflict = !localCotizacion.getId().equals(event.getEntityId().intValue());
+        boolean hasConflict = !localCotizacion.getFolio().toString().equals(event.getEntityId());
         
         if (hasConflict) {
             logger.warn("Conflicto detectado en cotización: localId={}, eventId={}", 
-                       localCotizacion.getId(), event.getEntityId());
+                       localCotizacion.getFolio(), event.getEntityId());
         }
         
         return hasConflict;
@@ -122,7 +122,7 @@ public class ConflictResolutionService {
             }
         } catch (Exception e) {
             logger.error("Error resolviendo conflicto de cotización: {}", e.getMessage(), e);
-            logConflictForManualResolution("COTIZACION", localCotizacion.getId().longValue(), event.getEventId(), e.getMessage());
+            logConflictForManualResolution("COTIZACION", (long) localCotizacion.getFolio(), event.getEventId(), e.getMessage());
         }
     }
     
@@ -201,7 +201,7 @@ public class ConflictResolutionService {
      */
     private void updateComponenteFromEvent(Componente componente, ComponenteChangeEvent event) {
         if (event.getDescripcion() != null) componente.setDescripcion(event.getDescripcion());
-        if (event.getPrecio() != null) componente.setPrecio(BigDecimal.valueOf(event.getPrecio()));
+        if (event.getPrecioBase() != null) componente.setPrecioBase(BigDecimal.valueOf(event.getPrecioBase()));
         if (event.getMarca() != null) componente.setMarca(event.getMarca());
         if (event.getModelo() != null) componente.setModelo(event.getModelo());
     }
@@ -220,9 +220,10 @@ public class ConflictResolutionService {
     private void updateCotizacionFromEvent(Cotizacion cotizacion, CotizacionChangeEvent event) {
         if (event.getMontoTotal() != null) cotizacion.setTotal(event.getMontoTotal());
         if (event.getMontoImpuestos() != null) cotizacion.setImpuestos(event.getMontoImpuestos());
-        if (event.getPais() != null) cotizacion.setPais(event.getPais());
+        // Campos no disponibles en la estructura simplificada de Cotizacion
+        // if (event.getPais() != null) cotizacion.setPais(event.getPais());
         if (event.getFechaCotizacion() != null) {
-            cotizacion.setFechaCreacion(event.getFechaCotizacion().toLocalDate());
+            cotizacion.setFecha(event.getFechaCotizacion().toString());
         }
     }
     

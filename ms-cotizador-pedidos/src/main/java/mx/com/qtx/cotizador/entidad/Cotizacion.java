@@ -1,45 +1,37 @@
 package mx.com.qtx.cotizador.entidad;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 
-/**
- * Entidad que representa una cotización
- * Esta es una representación mínima para las referencias en pedidos
- */
 @Entity
 @Table(name = "cocotizacion")
 public class Cotizacion {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Integer folio;
     
-    @Column(name = "fecha_creacion")
-    private LocalDate fechaCreacion;
-    
-    @Column(name = "subtotal")
-    private BigDecimal subtotal;
+    @Column(name = "fecha")
+    private String fecha;
     
     @Column(name = "impuestos")
     private BigDecimal impuestos;
     
+    @Column(name = "subtotal")
+    private BigDecimal subtotal;
+    
     @Column(name = "total")
     private BigDecimal total;
-    
-    @Column(name = "pais")
-    private String pais;
     
     @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL)
     private List<DetalleCotizacion> detalles = new ArrayList<>();
@@ -49,37 +41,21 @@ public class Cotizacion {
         // Constructor vacío requerido por JPA
     }
     
-    public Cotizacion(LocalDate fechaCreacion, String pais) {
-        this.fechaCreacion = fechaCreacion;
-        this.pais = pais;
-        this.subtotal = BigDecimal.ZERO;
-        this.impuestos = BigDecimal.ZERO;
-        this.total = BigDecimal.ZERO;
-    }
-    
     // Getters y setters
-    public Integer getId() {
-        return id;
+    public String getFecha() {
+        return fecha;
     }
     
-    public void setId(Integer id) {
-        this.id = id;
+    public void setFecha(String fecha) {
+        this.fecha = fecha;
     }
     
-    public LocalDate getFechaCreacion() {
-        return fechaCreacion;
+    public Integer getFolio() {
+        return folio;
     }
     
-    public void setFechaCreacion(LocalDate fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-    
-    public BigDecimal getSubtotal() {
-        return subtotal;
-    }
-    
-    public void setSubtotal(BigDecimal subtotal) {
-        this.subtotal = subtotal;
+    public void setFolio(Integer folio) {
+        this.folio = folio;
     }
     
     public BigDecimal getImpuestos() {
@@ -90,20 +66,20 @@ public class Cotizacion {
         this.impuestos = impuestos;
     }
     
+    public BigDecimal getSubtotal() {
+        return subtotal;
+    }
+    
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
+    }
+    
     public BigDecimal getTotal() {
         return total;
     }
     
     public void setTotal(BigDecimal total) {
         this.total = total;
-    }
-    
-    public String getPais() {
-        return pais;
-    }
-    
-    public void setPais(String pais) {
-        this.pais = pais;
     }
     
     public List<DetalleCotizacion> getDetalles() {
@@ -114,7 +90,7 @@ public class Cotizacion {
         this.detalles = detalles;
     }
     
-    // Método helper para agregar detalle
+    // Método helper para agregar un detalle
     public void addDetalle(DetalleCotizacion detalle) {
         detalles.add(detalle);
         detalle.setCotizacion(this);

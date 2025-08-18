@@ -20,17 +20,14 @@ public class CotizacionPresupuestoAdapter implements IPresupuesto {
     @Override
     public String getDescripcionArticulo(String idArticulo) {
         DetalleCotizacion detalle = this.getDetallePorId(idArticulo);
-        return (detalle != null && detalle.getComponente() != null) ? 
-            detalle.getComponente().getDescripcion() : "Descripción no encontrada";
+        return (detalle != null) ? detalle.getDescripcion() : "Descripción no encontrada";
     }
 
     @Override
     public Map<String, Integer> getCantidadesXIdArticulo() {
         Map<String, Integer> cantidades = new HashMap<>();
         for (DetalleCotizacion detalle : cotizacionAdaptee.getDetalles()) {
-            if (detalle.getComponente() != null) {
-                cantidades.put(detalle.getComponente().getId().toString(), detalle.getCantidad());
-            }
+            cantidades.put(detalle.getIdComponente(), detalle.getCantidad());
         }
         return cantidades;
     }
@@ -44,10 +41,10 @@ public class CotizacionPresupuestoAdapter implements IPresupuesto {
         // Devolvemos un mapa con los datos que podrían ser útiles del detalle
         // Esto es flexible según lo que realmente necesite IPresupuesto
         Map<String, Object> datos = new HashMap<>();
-        datos.put("descripcion", detalle.getComponente() != null ? detalle.getComponente().getDescripcion() : "");
+        datos.put("descripcion", detalle.getDescripcion());
         datos.put("cantidad", detalle.getCantidad());
-        datos.put("precioBase", detalle.getPrecioUnitario());
-        datos.put("importeTotalLinea", detalle.getSubtotal());
+        datos.put("precioBase", detalle.getPrecioBase());
+        datos.put("importeTotalLinea", detalle.getImporteCotizado());
         // Se podrían añadir más datos si fueran necesarios
         return datos;
     }
@@ -57,7 +54,7 @@ public class CotizacionPresupuestoAdapter implements IPresupuesto {
         return cotizacionAdaptee
             .getDetalles()
             .stream()
-            .filter(x -> x.getComponente() != null && x.getComponente().getId().toString().equals(idArticulo))
+            .filter(x -> x.getIdComponente().equals(idArticulo))
             .findFirst()
             .orElse(null);  
     }
