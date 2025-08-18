@@ -104,6 +104,35 @@ public abstract class Componente {
      */
     public abstract String getCategoria();
 
+    // Factory Methods del patrón original - adaptados al microservicio
+    
+    /**
+     * Método factory para crear un disco duro.
+     * Adaptado del proyecto original para el microservicio de cotizaciones.
+     */
+    public static Componente crearDiscoDuro(String id, String descripcion, String marca, String modelo, 
+                                          BigDecimal costo, BigDecimal precioBase, String capacidadAlm) {
+        return new DiscoDuro(id, descripcion, precioBase, marca, modelo, capacidadAlm);
+    }
+    
+    /**
+     * Método factory para crear un monitor.
+     * Adaptado del proyecto original para el microservicio de cotizaciones.
+     */
+    public static Componente crearMonitor(String id, String descripcion, String marca, String modelo, 
+                                        BigDecimal costo, BigDecimal precioBase) {
+        return new Monitor(id, descripcion, precioBase, marca, modelo);
+    }
+    
+    /**
+     * Método factory para crear una tarjeta de video.
+     * Adaptado del proyecto original para el microservicio de cotizaciones.
+     */
+    public static Componente crearTarjetaVideo(String id, String descripcion, String marca, String modelo, 
+                                             BigDecimal costo, BigDecimal precioBase, String memoria) {
+        return new TarjetaVideo(id, descripcion, precioBase, marca, modelo, memoria);
+    }
+
     @Override
     public String toString() {
         return "Componente [id=" + id + ", descripcion=" + descripcion + ", marca=" + marca + ", modelo=" + modelo

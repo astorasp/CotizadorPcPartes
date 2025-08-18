@@ -92,7 +92,7 @@ public abstract class BaseIntegrationTest {
         
         // Configurar RestAssured para cada test
         RestAssured.port = port;
-        RestAssured.basePath = "/cotizador-cotizaciones/v1/api";
+        RestAssured.basePath = "/cotizaciones/v1/api";
         RestAssured.authentication = RestAssured.basic(USER_ADMIN, PASSWORD_ADMIN);
     }
     

@@ -73,12 +73,7 @@ public class ComponenteServicio {
             compRepo.deleteById(id);
             
             // Publicar evento de eliminación de componente
-            try {
-                Long componenteId = Long.parseLong(id);
-                eventPublishingService.publishComponenteDeleted(componenteId);
-            } catch (NumberFormatException e) {
-                log.warn("No se pudo convertir ID {} a Long para evento Kafka: {}", id, e.getMessage());
-            }
+            eventPublishingService.publishComponenteDeleted(id);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente eliminado exitosamente");
         } catch (Exception e) {
@@ -490,13 +485,8 @@ public class ComponenteServicio {
             PcResponse pcResponse = pcCompleta.getDatos();
             
             // Publicar evento de creación de PC
-            try {
-                Long pcId = Long.parseLong(pcEntity.getId());
-                eventPublishingService.publishPcCreated(pcId, pc.getId(), "PC completa", 
-                                                       1000.0, true);
-            } catch (NumberFormatException e) {
-                log.warn("No se pudo convertir PC ID {} a Long para evento Kafka: {}", pcEntity.getId(), e.getMessage());
-            }
+            eventPublishingService.publishPcCreated(pcEntity.getId(), pc.getId(), "PC completa", 
+                                                   1000.0, true);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC guardada exitosamente", pcResponse);
         } catch (Exception e) {
@@ -586,13 +576,8 @@ public class ComponenteServicio {
             PcResponse pcResponse = PcMapper.toResponse((Pc) pcResultado);
             
             // Publicar evento de actualización de PC
-            try {
-                Long pcId = Long.parseLong(id);
-                eventPublishingService.publishPcUpdated(pcId, pc.getId(), "PC completa", 
-                                                       1000.0, true);
-            } catch (NumberFormatException e) {
-                log.warn("No se pudo convertir PC ID {} a Long para evento Kafka: {}", id, e.getMessage());
-            }
+            eventPublishingService.publishPcUpdated(id, pc.getId(), "PC completa", 
+                                                   1000.0, true);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC actualizada exitosamente", pcResponse);
         } catch (Exception e) {
@@ -748,12 +733,7 @@ public class ComponenteServicio {
             compRepo.deleteById(pcId);
             
             // Publicar evento de eliminación de PC
-            try {
-                Long pcIdLong = Long.parseLong(pcId);
-                eventPublishingService.publishPcDeleted(pcIdLong);
-            } catch (NumberFormatException e) {
-                log.warn("No se pudo convertir PC ID {} a Long para evento Kafka: {}", pcId, e.getMessage());
-            }
+            eventPublishingService.publishPcDeleted(pcId);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC eliminada exitosamente");
         } catch (Exception e) {

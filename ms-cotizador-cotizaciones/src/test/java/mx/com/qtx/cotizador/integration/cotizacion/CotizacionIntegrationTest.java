@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import io.restassured.http.ContentType;
 import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 
@@ -30,11 +31,12 @@ import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
  * - Puerto aleatorio para evitar conflictos
  * - Datos de prueba precargados via DDL/DML de /sql
  * - Consume endpoints REST del CotizacionController
+ * - Usa datos locales (NO mocks HTTP) - Arquitectura correcta
  */
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 public class CotizacionIntegrationTest extends BaseIntegrationTest {
     
-    // setUp() y configuraciones heredadas de BaseIntegrationTest
+    // Sin mocks HTTP - usando datos locales precargados via DDL/DML
 
     // ========================================================================
     // CASO DE USO 3.3: LISTAR COTIZACIONES  

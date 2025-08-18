@@ -35,6 +35,9 @@ import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 class ProveedorIntegrationTest extends BaseIntegrationTest {
 
+    // Base path para el API de proveedores
+    private static final String PROVEEDORES_API_PATH = "/proveedores/v1/api";
+
     // ✅ Configuración heredada de BaseIntegrationTest:
     // - Base de datos MySQL compartida
     // - RestAssured configurado automáticamente  
@@ -49,7 +52,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
     void deberiaCrearProveedorCorrectamente() {
         String requestBody = """
             {
-                "cve": "PROV001",
+                "cve": "PROV999",
                 "nombre": "Proveedor Test",
                 "razonSocial": "Proveedor Test S.A. de C.V."
             }
@@ -60,7 +63,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -84,7 +87,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(400);
     }
@@ -92,10 +95,10 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("CU 4.1.3 - Debería rechazar clave duplicada")
     void deberiaRechazarClaveDuplicada() {
-        // Primero crear un proveedor
+        // Primero crear un proveedor con clave nueva (no existe en DML)
         String requestBody = """
             {
-                "cve": "PROV003",
+                "cve": "PROV099",
                 "nombre": "Proveedor Original",
                 "razonSocial": "Proveedor Original S.A."
             }
@@ -106,14 +109,14 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200);
 
         // Intentar crear otro con la misma clave
         String requestBodyDuplicado = """
             {
-                "cve": "PROV003",
+                "cve": "PROV099",
                 "nombre": "Proveedor Duplicado",
                 "razonSocial": "Proveedor Duplicado S.A."
             }
@@ -124,7 +127,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBodyDuplicado)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("31"));
@@ -149,7 +152,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200);
 
@@ -166,7 +169,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestActualizacion)
         .when()
-            .put("/proveedores/PROV004")
+            .put(PROVEEDORES_API_PATH + "/PROV004")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -191,7 +194,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestActualizacion)
         .when()
-            .put("/proveedores/NOEXISTE")
+            .put(PROVEEDORES_API_PATH + "/NOEXISTE")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("30"));
@@ -216,7 +219,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200);
 
@@ -224,7 +227,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
         .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/PROV005")
+            .get(PROVEEDORES_API_PATH + "/PROV005")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -240,7 +243,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/INEXISTENTE")
+            .get(PROVEEDORES_API_PATH + "/INEXISTENTE")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("30"));
@@ -273,7 +276,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
                 .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
                 .body(proveedor)
             .when()
-                .post("/proveedores")
+                .post(PROVEEDORES_API_PATH)
             .then()
                 .statusCode(200);
         }
@@ -282,7 +285,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
         .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores")
+            .get(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -308,7 +311,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200);
 
@@ -316,7 +319,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/proveedores/ELIM001")
+            .delete(PROVEEDORES_API_PATH + "/ELIM001")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -326,7 +329,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/ELIM001")
+            .get(PROVEEDORES_API_PATH + "/ELIM001")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("30"));
@@ -338,7 +341,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/proveedores/NOEXISTE")
+            .delete(PROVEEDORES_API_PATH + "/NOEXISTE")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("30"));
@@ -373,7 +376,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
                 .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
                 .body(proveedor)
             .when()
-                .post("/proveedores")
+                .post(PROVEEDORES_API_PATH)
             .then()
                 .statusCode(200);
         }
@@ -383,7 +386,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .queryParam("nombre", "Tecnología")
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/buscar/nombre")
+            .get(PROVEEDORES_API_PATH + "/buscar/nombre")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -407,7 +410,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200);
 
@@ -416,7 +419,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .queryParam("razonSocial", "Distribuidora")
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/buscar/razon-social")
+            .get(PROVEEDORES_API_PATH + "/buscar/razon-social")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -430,7 +433,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .queryParam("nombre", "")
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/buscar/nombre")
+            .get(PROVEEDORES_API_PATH + "/buscar/nombre")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("8"));
@@ -439,7 +442,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .queryParam("razonSocial", "")
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/buscar/razon-social")
+            .get(PROVEEDORES_API_PATH + "/buscar/razon-social")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("8"));
@@ -462,7 +465,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(400);
     }
@@ -483,7 +486,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestBody)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(400);
     }
@@ -507,7 +510,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestCreacion)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -516,7 +519,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
         .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/" + clave)
+            .get(PROVEEDORES_API_PATH + "/" + clave)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -535,7 +538,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestActualizacion)
         .when()
-            .put("/proveedores/" + clave)
+            .put(PROVEEDORES_API_PATH + "/" + clave)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -545,7 +548,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .delete("/proveedores/" + clave)
+            .delete(PROVEEDORES_API_PATH + "/" + clave)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -554,7 +557,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/proveedores/" + clave)
+            .get(PROVEEDORES_API_PATH + "/" + clave)
         .then()
             .statusCode(400)
             .body("codigo", equalTo("30"));
@@ -577,7 +580,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
                 .contentType(ContentType.JSON)
                 .body(request)
         .when()
-                .post("/proveedores")
+                .post(PROVEEDORES_API_PATH)
         .then()
                 .statusCode(200)
                 .extract()

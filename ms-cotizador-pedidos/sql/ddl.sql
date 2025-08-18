@@ -3,16 +3,8 @@
 -- Microservicio: ms-cotizador-pedidos
 -- =================================================================
 
--- Configurar UTF-8 explícitamente al inicio
-SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
-SET CHARACTER SET utf8mb4;
-
--- Crear base de datos
-CREATE DATABASE IF NOT EXISTS cotizador_pedidos_db
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
-USE cotizador_pedidos_db;
+-- TestContainers ya creó la base de datos, no necesitamos crear ni usar
+-- Solo crear las tablas directamente
 
 -- =================================================================
 -- TABLAS PRINCIPALES DEL DOMINIO PEDIDOS
@@ -68,55 +60,12 @@ CREATE TABLE codetalle_pedido (
 ) ENGINE=InnoDB;
 
 -- =================================================================
--- TABLAS DE CACHE LOCAL (DATOS REPLICADOS)
+-- DATOS REPLICADOS DE OTROS MICROSERVICIOS
 -- =================================================================
 
--- Cache de componentes (replicado desde ms-cotizador-componentes)
-CREATE TABLE cocomponente_cache (
-    id_componente VARCHAR(50) PRIMARY KEY,
-    descripcion VARCHAR(255) NOT NULL,
-    marca VARCHAR(100) NOT NULL,
-    modelo VARCHAR(100) NOT NULL,
-    precio_base DECIMAL(20,2) NOT NULL,
-    costo DECIMAL(20,2) NOT NULL,
-    id_tipo_componente SMALLINT UNSIGNED NOT NULL,
-    -- Campos de control de cache
-    cache_version BIGINT DEFAULT 1,
-    cache_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    cache_status ENUM('ACTIVE', 'STALE', 'DELETED') DEFAULT 'ACTIVE'
-) ENGINE=InnoDB;
-
--- Cache de cotizaciones (replicado desde ms-cotizador-cotizaciones)
-CREATE TABLE cocotizacion_cache (
-    folio INT UNSIGNED PRIMARY KEY,
-    fecha VARCHAR(20) NOT NULL,
-    subtotal DECIMAL(20,2) NOT NULL,
-    impuestos DECIMAL(20,2) NOT NULL,
-    total DECIMAL(20,2) NOT NULL,
-    algoritmo_cotizacion ENUM('COTIZADOR_A', 'COTIZADOR_B') DEFAULT 'COTIZADOR_A',
-    -- Campos de control de cache
-    cache_version BIGINT DEFAULT 1,
-    cache_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    cache_status ENUM('ACTIVE', 'STALE', 'DELETED') DEFAULT 'ACTIVE'
-) ENGINE=InnoDB;
-
--- Cache de detalles de cotización
-CREATE TABLE codetalle_cotizacion_cache (
-    folio INT UNSIGNED NOT NULL,
-    num_detalle INT UNSIGNED NOT NULL,
-    cantidad INT UNSIGNED NOT NULL,
-    descripcion VARCHAR(255) NOT NULL,
-    id_componente VARCHAR(50) NOT NULL,
-    precio_base DECIMAL(20,2) NOT NULL,
-    precio_con_promocion DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    subtotal_detalle DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    -- Campos de control de cache
-    cache_version BIGINT DEFAULT 1,
-    cache_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    cache_status ENUM('ACTIVE', 'STALE', 'DELETED') DEFAULT 'ACTIVE',
-    PRIMARY KEY (folio, num_detalle),
-    FOREIGN KEY (folio) REFERENCES cocotizacion_cache(folio) ON DELETE CASCADE
-) ENGINE=InnoDB;
+-- Los datos de componentes y cotizaciones se obtienen vía Kafka
+-- o mediante llamadas REST a los microservicios correspondientes
+-- No se mantienen tablas cache locales para simplificar la arquitectura
 
 
 -- =================================================================
@@ -134,11 +83,7 @@ CREATE INDEX idx_pedido_cotizacion ON copedido (folio_cotizacion);
 CREATE INDEX idx_detalle_pedido_componente ON codetalle_pedido (id_componente);
 CREATE INDEX idx_detalle_pedido_fecha_surtido ON codetalle_pedido (fecha_surtido);
 
--- Índices para tablas de cache
-CREATE INDEX idx_componente_cache_timestamp ON cocomponente_cache (cache_timestamp);
-CREATE INDEX idx_componente_cache_status ON cocomponente_cache (cache_status);
-CREATE INDEX idx_cotizacion_cache_timestamp ON cocotizacion_cache (cache_timestamp);
-CREATE INDEX idx_cotizacion_cache_status ON cocotizacion_cache (cache_status);
+-- Sin índices para cache ya que no hay tablas cache
 
 
 -- =================================================================
@@ -178,20 +123,7 @@ BEGIN
     WHERE num_pedido = NEW.num_pedido;
 END$$
 
--- Trigger para limpiar cache obsoleto
-CREATE TRIGGER cleanup_stale_cache_pedidos
-    AFTER INSERT ON cocomponente_cache
-    FOR EACH ROW
-BEGIN
-    -- Limpiar registros marcados como DELETED y más antiguos de 24 horas
-    DELETE FROM cocomponente_cache 
-    WHERE cache_status = 'DELETED' 
-    AND cache_timestamp < DATE_SUB(NOW(), INTERVAL 24 HOUR);
-    
-    DELETE FROM cocotizacion_cache 
-    WHERE cache_status = 'DELETED' 
-    AND cache_timestamp < DATE_SUB(NOW(), INTERVAL 24 HOUR);
-END$$
+-- Trigger para auditoria de cambios en pedidos (futuro)
 
 DELIMITER ;
 

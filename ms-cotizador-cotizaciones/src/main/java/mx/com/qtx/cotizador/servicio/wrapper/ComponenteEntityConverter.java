@@ -40,7 +40,7 @@ public class ComponenteEntityConverter {
             tipoComponente,
             entidadComponente.getId(),
             entidadComponente.getDescripcion(),
-            entidadComponente.getPrecio(),
+            entidadComponente.getPrecioBase(),
             entidadComponente.getMarca(),
             entidadComponente.getModelo(),
             promocion

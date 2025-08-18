@@ -3,19 +3,11 @@
 -- Microservicio: ms-cotizador-pedidos
 -- =================================================================
 
--- Configurar UTF-8 explícitamente al inicio
-SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
-SET CHARACTER SET utf8mb4;
-
--- Crear base de datos
-CREATE DATABASE IF NOT EXISTS cotizador_pedidos_db
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
-USE cotizador_pedidos_db;
+-- TestContainers ya creó la base de datos, no necesitamos crear ni usar
+-- Solo crear las tablas directamente
 
 -- =================================================================
--- TABLAS PRINCIPALES DEL DOMINIO PEDIDOS
+-- TABLAS BÁSICAS (SIN DEPENDENCIAS)
 -- =================================================================
 
 -- Tabla de proveedores
@@ -32,6 +24,67 @@ CREATE TABLE coproveedor (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- Tabla de tipos de componente
+CREATE TABLE cotipo_componente (
+    id_tipo_componente INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    tipo VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255),
+    -- Campos de auditoria
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =================================================================
+-- TABLAS CON DEPENDENCIAS DE PRIMER NIVEL
+-- =================================================================
+
+-- Tabla de componentes locales
+CREATE TABLE cocomponente (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    marca VARCHAR(100) NOT NULL,
+    modelo VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(20,2) NOT NULL,
+    descuento DECIMAL(20,2) DEFAULT 0.00,
+    id_tipo_componente INT UNSIGNED NOT NULL,
+    -- Campos de auditoria
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_tipo_componente) REFERENCES cotipo_componente(id_tipo_componente)
+) ENGINE=InnoDB;
+
+-- Tabla de cotizaciones locales
+CREATE TABLE cocotizacion (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    fecha_creacion DATE NOT NULL,
+    subtotal DECIMAL(20,2) NOT NULL,
+    impuestos DECIMAL(20,2) NOT NULL,
+    total DECIMAL(20,2) NOT NULL,
+    pais VARCHAR(10) NOT NULL,
+    -- Campos de auditoria
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Tabla de detalles de cotización locales
+CREATE TABLE codetalle_cotizacion (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cantidad INT UNSIGNED NOT NULL,
+    precio_unitario DECIMAL(20,2) NOT NULL,
+    subtotal DECIMAL(20,2) NOT NULL,
+    cotizacion_id INT UNSIGNED NOT NULL,
+    componente_id INT UNSIGNED NOT NULL,
+    -- Campos de auditoria
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cotizacion_id) REFERENCES cocotizacion(id) ON DELETE CASCADE,
+    FOREIGN KEY (componente_id) REFERENCES cocomponente(id)
+) ENGINE=InnoDB;
+
+-- =================================================================
+-- TABLAS CON DEPENDENCIAS DE SEGUNDO NIVEL
+-- =================================================================
 
 -- Tabla de pedidos
 CREATE TABLE copedido (
@@ -58,65 +111,16 @@ CREATE TABLE codetalle_pedido (
     cantidad INT UNSIGNED NOT NULL,
     precio_unitario DECIMAL(20,2) NOT NULL,
     total_cotizado DECIMAL(20,2) NOT NULL,
-    id_componente VARCHAR(50) NOT NULL,
+    id_componente INT UNSIGNED NOT NULL,
     -- Campos adicionales para control de surtido
     cantidad_surtida INT UNSIGNED DEFAULT 0,
     cantidad_pendiente INT UNSIGNED GENERATED ALWAYS AS (cantidad - cantidad_surtida) STORED,
     fecha_surtido DATE NULL,
     PRIMARY KEY (num_pedido, num_detalle),
-    FOREIGN KEY (num_pedido) REFERENCES copedido(num_pedido) ON DELETE CASCADE
+    FOREIGN KEY (num_pedido) REFERENCES copedido(num_pedido) ON DELETE CASCADE,
+    FOREIGN KEY (id_componente) REFERENCES cocomponente(id)
 ) ENGINE=InnoDB;
 
--- =================================================================
--- TABLAS DE CACHE LOCAL (DATOS REPLICADOS)
--- =================================================================
-
--- Cache de componentes (replicado desde ms-cotizador-componentes)
-CREATE TABLE cocomponente_cache (
-    id_componente VARCHAR(50) PRIMARY KEY,
-    descripcion VARCHAR(255) NOT NULL,
-    marca VARCHAR(100) NOT NULL,
-    modelo VARCHAR(100) NOT NULL,
-    precio_base DECIMAL(20,2) NOT NULL,
-    costo DECIMAL(20,2) NOT NULL,
-    id_tipo_componente SMALLINT UNSIGNED NOT NULL,
-    -- Campos de control de cache
-    cache_version BIGINT DEFAULT 1,
-    cache_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    cache_status ENUM('ACTIVE', 'STALE', 'DELETED') DEFAULT 'ACTIVE'
-) ENGINE=InnoDB;
-
--- Cache de cotizaciones (replicado desde ms-cotizador-cotizaciones)
-CREATE TABLE cocotizacion_cache (
-    folio INT UNSIGNED PRIMARY KEY,
-    fecha VARCHAR(20) NOT NULL,
-    subtotal DECIMAL(20,2) NOT NULL,
-    impuestos DECIMAL(20,2) NOT NULL,
-    total DECIMAL(20,2) NOT NULL,
-    algoritmo_cotizacion ENUM('COTIZADOR_A', 'COTIZADOR_B') DEFAULT 'COTIZADOR_A',
-    -- Campos de control de cache
-    cache_version BIGINT DEFAULT 1,
-    cache_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    cache_status ENUM('ACTIVE', 'STALE', 'DELETED') DEFAULT 'ACTIVE'
-) ENGINE=InnoDB;
-
--- Cache de detalles de cotización
-CREATE TABLE codetalle_cotizacion_cache (
-    folio INT UNSIGNED NOT NULL,
-    num_detalle INT UNSIGNED NOT NULL,
-    cantidad INT UNSIGNED NOT NULL,
-    descripcion VARCHAR(255) NOT NULL,
-    id_componente VARCHAR(50) NOT NULL,
-    precio_base DECIMAL(20,2) NOT NULL,
-    precio_con_promocion DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    subtotal_detalle DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-    -- Campos de control de cache
-    cache_version BIGINT DEFAULT 1,
-    cache_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    cache_status ENUM('ACTIVE', 'STALE', 'DELETED') DEFAULT 'ACTIVE',
-    PRIMARY KEY (folio, num_detalle),
-    FOREIGN KEY (folio) REFERENCES cocotizacion_cache(folio) ON DELETE CASCADE
-) ENGINE=InnoDB;
 
 
 -- =================================================================
@@ -134,71 +138,26 @@ CREATE INDEX idx_pedido_cotizacion ON copedido (folio_cotizacion);
 CREATE INDEX idx_detalle_pedido_componente ON codetalle_pedido (id_componente);
 CREATE INDEX idx_detalle_pedido_fecha_surtido ON codetalle_pedido (fecha_surtido);
 
--- Índices para tablas de cache
-CREATE INDEX idx_componente_cache_timestamp ON cocomponente_cache (cache_timestamp);
-CREATE INDEX idx_componente_cache_status ON cocomponente_cache (cache_status);
-CREATE INDEX idx_cotizacion_cache_timestamp ON cocotizacion_cache (cache_timestamp);
-CREATE INDEX idx_cotizacion_cache_status ON cocotizacion_cache (cache_status);
+-- Índices para tablas locales de datos
+CREATE INDEX idx_tipo_componente_tipo ON cotipo_componente (tipo);
+CREATE INDEX idx_componente_marca ON cocomponente (marca);
+CREATE INDEX idx_componente_tipo ON cocomponente (id_tipo_componente);
+CREATE INDEX idx_cotizacion_fecha ON cocotizacion (fecha_creacion);
+CREATE INDEX idx_cotizacion_pais ON cocotizacion (pais);
+CREATE INDEX idx_detalle_cotizacion_componente ON codetalle_cotizacion (componente_id);
+CREATE INDEX idx_detalle_cotizacion_cotizacion ON codetalle_cotizacion (cotizacion_id);
+
 
 
 -- =================================================================
 -- TRIGGERS PARA MANTENIMIENTO
 -- =================================================================
 
-DELIMITER $$
-
--- Trigger para actualizar estado del pedido basado en surtido
-CREATE TRIGGER update_pedido_estado
-    AFTER UPDATE ON codetalle_pedido
-    FOR EACH ROW
-BEGIN
-    DECLARE total_cantidad INT DEFAULT 0;
-    DECLARE total_surtido INT DEFAULT 0;
-    DECLARE nuevo_estado ENUM('CREADO', 'ENVIADO', 'PARCIAL', 'COMPLETO', 'CANCELADO');
-    
-    -- Calcular totales del pedido
-    SELECT SUM(cantidad), SUM(cantidad_surtida)
-    INTO total_cantidad, total_surtido
-    FROM codetalle_pedido
-    WHERE num_pedido = NEW.num_pedido;
-    
-    -- Determinar nuevo estado
-    IF total_surtido = 0 THEN
-        SET nuevo_estado = 'ENVIADO';
-    ELSEIF total_surtido = total_cantidad THEN
-        SET nuevo_estado = 'COMPLETO';
-    ELSE
-        SET nuevo_estado = 'PARCIAL';
-    END IF;
-    
-    -- Actualizar estado del pedido
-    UPDATE copedido 
-    SET estado_pedido = nuevo_estado,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE num_pedido = NEW.num_pedido;
-END$$
-
--- Trigger para limpiar cache obsoleto
-CREATE TRIGGER cleanup_stale_cache_pedidos
-    AFTER INSERT ON cocomponente_cache
-    FOR EACH ROW
-BEGIN
-    -- Limpiar registros marcados como DELETED y más antiguos de 24 horas
-    DELETE FROM cocomponente_cache 
-    WHERE cache_status = 'DELETED' 
-    AND cache_timestamp < DATE_SUB(NOW(), INTERVAL 24 HOUR);
-    
-    DELETE FROM cocotizacion_cache 
-    WHERE cache_status = 'DELETED' 
-    AND cache_timestamp < DATE_SUB(NOW(), INTERVAL 24 HOUR);
-END$$
-
-DELIMITER ;
+-- Los triggers no se incluyen en tests de integración
+-- para simplificar la configuración de TestContainers
+-- Los triggers se configuran en el DDL de producción
 
 -- =================================================================
--- CONFIGURACIÓN INICIAL
+-- CONFIGURACIÓN INICIAL COMPLETADA
+-- Los datos iniciales están en dml.sql
 -- =================================================================
-
--- Insertar proveedor por defecto
-INSERT INTO coproveedor (cve, nombre, razon_social, telefono, email, activo) 
-VALUES ('PROV001', 'Proveedor General', 'Proveedor General S.A. de C.V.', '555-0123', 'contacto@proveedor.com', TRUE);

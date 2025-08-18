@@ -38,7 +38,7 @@ public class DetalleCotizacion implements Serializable {
     private Cotizacion cotizacion;
     
     @ManyToOne
-    @JoinColumn(name = "id_componente", nullable = true)
+    @JoinColumn(name = "id_componente", nullable = false)
     private Componente componente;
     
     // Constructores

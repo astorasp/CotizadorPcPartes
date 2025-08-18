@@ -8,6 +8,7 @@ import mx.com.qtx.cotizador.entidad.Cotizacion;
 import mx.com.qtx.cotizador.entidad.Proveedor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
  * @author Subagente4E - [2025-08-17 11:30:00 MST] - Servicio de resolución de conflictos para ms-cotizador-pedidos
  */
 @Service
+@Profile("!test")
 public class ConflictResolutionService {
 
     private static final Logger logger = LoggerFactory.getLogger(ConflictResolutionService.class);

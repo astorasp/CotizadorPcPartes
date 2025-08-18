@@ -2,6 +2,7 @@ package mx.com.qtx.cotizador.kafka.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Subagente4E - [2025-08-17 11:35:00 MST] - Servicio de monitoreo Kafka para ms-cotizador-pedidos
  */
 @Service
+@Profile("!test")
 public class KafkaMonitorService {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaMonitorService.class);

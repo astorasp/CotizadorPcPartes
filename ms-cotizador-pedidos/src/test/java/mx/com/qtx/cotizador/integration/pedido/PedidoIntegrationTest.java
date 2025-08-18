@@ -42,8 +42,8 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         
         // Arrange - Usar datos existentes del DML
         GenerarPedidoRequest request = GenerarPedidoRequest.builder()
-                .cotizacionId(1) // Cotización existente: PC Gaming Alto Rendimiento
-                .cveProveedor("TECH001") // Proveedor existente: TechSupply SA
+                .cotizacionId(1) // Cotización existente en datos de prueba
+                .cveProveedor("PROV001") // Proveedor existente: TechCorp Distribution
                 .fechaEmision(LocalDate.of(2025, 5, 15))
                 .fechaEntrega(LocalDate.of(2025, 5, 30))
                 .nivelSurtido(75)
@@ -55,7 +55,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -64,8 +64,8 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .body("datos.fechaEmision", equalTo("2025-05-15"))
             .body("datos.fechaEntrega", equalTo("2025-05-30"))
             .body("datos.nivelSurtido", equalTo(75))
-            .body("datos.cveProveedor", equalTo("TECH001"))
-            .body("datos.nombreProveedor", equalTo("TechSupply SA"))
+            .body("datos.cveProveedor", equalTo("PROV001"))
+            .body("datos.nombreProveedor", equalTo("TechCorp Distribution"))
             .body("datos.total", notNullValue())
             .body("datos.detalles", notNullValue())
             .body("datos.totalDetalles", greaterThan(0));
@@ -78,7 +78,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         // Arrange
         GenerarPedidoRequest request = GenerarPedidoRequest.builder()
                 .cotizacionId(999999) // Cotización que no existe
-                .cveProveedor("TECH001")
+                .cveProveedor("PROV001")
                 .fechaEmision(LocalDate.of(2025, 5, 15))
                 .fechaEntrega(LocalDate.of(2025, 5, 30))
                 .nivelSurtido(50)
@@ -90,7 +90,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(request)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("45")) // COTIZACION_NO_ENCONTRADA_PEDIDO
@@ -117,7 +117,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("43")) // PROVEEDOR_REQUERIDO_PEDIDO
@@ -132,7 +132,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         // Arrange - Request con datos faltantes/inválidos
         GenerarPedidoRequest request = GenerarPedidoRequest.builder()
                 .cotizacionId(null) // Campo requerido faltante
-                .cveProveedor("TECH001")
+                .cveProveedor("PROV001")
                 .fechaEmision(LocalDate.of(2025, 5, 15))
                 .fechaEntrega(LocalDate.of(2025, 5, 30))
                 .nivelSurtido(50)
@@ -144,7 +144,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Error de validación
@@ -159,7 +159,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         // Arrange
         GenerarPedidoRequest request = GenerarPedidoRequest.builder()
                 .cotizacionId(1)
-                .cveProveedor("TECH001")
+                .cveProveedor("PROV001")
                 .fechaEmision(LocalDate.of(2025, 5, 15))
                 .fechaEntrega(LocalDate.of(2025, 5, 30))
                 .nivelSurtido(150) // Fuera del rango 0-100
@@ -171,7 +171,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("2")) // Error de validación
@@ -189,15 +189,15 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/1")
+            .get("/pedidos/v1/api/pedidos/1")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
             .body("mensaje", equalTo("Pedido encontrado"))
             .body("datos", notNullValue())
             .body("datos.numPedido", equalTo(1))
-            .body("datos.cveProveedor", equalTo("TECH001"))
-            .body("datos.nombreProveedor", equalTo("TechSupply SA"))
+            .body("datos.cveProveedor", equalTo("PROV001"))
+            .body("datos.nombreProveedor", equalTo("TechCorp Distribution"))
             .body("datos.total", notNullValue())
             .body("datos.detalles", notNullValue());
     }
@@ -210,7 +210,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/999999")
+            .get("/pedidos/v1/api/pedidos/999999")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("40")) // PEDIDO_NO_ENCONTRADO
@@ -226,7 +226,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos/1000")
+            .get("/pedidos/v1/api/pedidos/1000")
         .then()
             .statusCode(400)
             .body("codigo", equalTo("40")) // PEDIDO_NO_ENCONTRADO
@@ -243,7 +243,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get("/pedidos")
+            .get("/pedidos/v1/api/pedidos")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
@@ -264,7 +264,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         // Arrange
         GenerarPedidoRequest request = GenerarPedidoRequest.builder()
                 .cotizacionId(1)
-                .cveProveedor("TECH001")
+                .cveProveedor("PROV001")
                 .fechaEmision(LocalDate.of(2025, 5, 15))
                 .fechaEntrega(LocalDate.of(2025, 5, 30))
                 .nivelSurtido(50)
@@ -276,7 +276,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(request)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(401);
     }
@@ -289,7 +289,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().none()
         .when()
-            .get("/pedidos/1")
+            .get("/pedidos/v1/api/pedidos/1")
         .then()
             .statusCode(401);
     }
@@ -302,7 +302,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         given()
             .auth().none()
         .when()
-            .get("/pedidos")
+            .get("/pedidos/v1/api/pedidos")
         .then()
             .statusCode(401);
     }
@@ -316,7 +316,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         // Test 1: Cotización 2 - PC Oficina
         GenerarPedidoRequest request1 = GenerarPedidoRequest.builder()
                 .cotizacionId(2)
-                .cveProveedor("HARD002")
+                .cveProveedor("PROV002")
                 .fechaEmision(LocalDate.of(2025, 5, 16))
                 .fechaEntrega(LocalDate.of(2025, 5, 31))
                 .nivelSurtido(80)
@@ -327,16 +327,16 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request1)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
-            .body("datos.cveProveedor", equalTo("HARD002"));
+            .body("datos.cveProveedor", equalTo("PROV002"));
         
         // Test 2: Cotización 3 - PC Diseño
         GenerarPedidoRequest request2 = GenerarPedidoRequest.builder()
                 .cotizacionId(3)
-                .cveProveedor("COMP003")
+                .cveProveedor("PROV003")
                 .fechaEmision(LocalDate.of(2025, 5, 17))
                 .fechaEntrega(LocalDate.of(2025, 6, 1))
                 .nivelSurtido(90)
@@ -347,11 +347,11 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request2)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
-            .body("datos.cveProveedor", equalTo("COMP003"));
+            .body("datos.cveProveedor", equalTo("PROV003"));
     }
 
     @Test
@@ -361,7 +361,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         // Paso 1: Generar pedido
         GenerarPedidoRequest request = GenerarPedidoRequest.builder()
                 .cotizacionId(5) // PC Gaming Económica
-                .cveProveedor("GLOB004") // Proveedor existente: Global PC Parts
+                .cveProveedor("PROV001") // Proveedor existente: TechCorp Distribution
                 .fechaEmision(LocalDate.of(2025, 5, 18))
                 .fechaEntrega(LocalDate.of(2025, 6, 2))
                 .nivelSurtido(95)
@@ -374,12 +374,12 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(request)
         .when()
-            .post("/pedidos/generar")
+            .post("/pedidos/v1/api/pedidos/generar")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
             .body("datos", notNullValue())
-            .body("datos.cveProveedor", equalTo("GLOB004"))
+            .body("datos.cveProveedor", equalTo("PROV001"))
             .body("datos.nivelSurtido", equalTo(95));
         
         // TODO: Habilitar consulta posterior cuando se resuelva el issue de auto-incremento de IDs

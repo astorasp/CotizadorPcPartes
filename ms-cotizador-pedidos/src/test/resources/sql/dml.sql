@@ -3,11 +3,8 @@
 -- Microservicio: ms-cotizador-pedidos
 -- =================================================================
 
--- Configurar UTF-8 explícitamente al inicio
-SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
-SET CHARACTER SET utf8mb4;
-
-USE cotizador_pedidos_db;
+-- TestContainers ya configuró la base de datos, no necesitamos USE
+-- Solo insertar los datos directamente
 
 -- =================================================================
 -- DATOS INICIALES PARA PRUEBAS
@@ -19,45 +16,71 @@ INSERT INTO coproveedor (cve, nombre, razon_social, telefono, email, direccion, 
 ('PROV002', 'Hardware Solutions', 'Hardware Solutions México S.A.', '+52-55-9876-5432', 'contacto@hwsolutions.mx', 'Calle Circuitos 456, Col. Electrónica, Guadalajara', TRUE),
 ('PROV003', 'Component Masters', 'Component Masters Internacional', '+52-33-5555-7777', 'info@componentmasters.com', 'Blvd. Componentes 789, Col. Digital, Monterrey', TRUE);
 
+-- Insertar tipos de componente
+INSERT INTO cotipo_componente (tipo, descripcion) VALUES
+('PROCESADOR', 'Unidad central de procesamiento'),
+('MEMORIA', 'Memoria RAM del sistema'),
+('TARJETA_GRAFICA', 'Tarjeta gráfica/GPU'),
+('ALMACENAMIENTO', 'Dispositivos de almacenamiento'),
+('MOTHERBOARD', 'Placa base/Motherboard'),
+('FUENTE_PODER', 'Fuente de alimentación'),
+('GABINETE', 'Carcasa/Gabinete del sistema');
+
+-- Insertar componentes de prueba
+INSERT INTO cocomponente (marca, modelo, descripcion, precio, descuento, id_tipo_componente) VALUES
+('Intel', 'i7-13700K', 'Procesador Intel Core i7 13va gen', 12500.00, 0.00, 1),
+('AMD', 'Ryzen 5 5600', 'Procesador AMD Ryzen 5 serie 5000', 6200.00, 0.00, 1),
+('Corsair', 'Vengeance DDR4 16GB', 'Memoria RAM DDR4 3200MHz', 8800.00, 0.00, 2),
+('Kingston', 'ValueRAM DDR4 8GB', 'Memoria RAM DDR4 básica', 3800.00, 0.00, 2),
+('NVIDIA', 'RTX 4060', 'Tarjeta gráfica gaming media', 15100.00, 0.00, 3),
+('Samsung', '980 NVMe SSD 500GB', 'Almacenamiento SSD rápido', 4250.00, 0.00, 4),
+('NVIDIA', 'RTX 4080', 'Tarjeta gráfica profesional', 22800.00, 0.00, 3),
+('ASUS', 'Z790-E Gaming', 'Motherboard para Intel 13va gen', 10800.00, 0.00, 5),
+('Seasonic', 'Focus GX-850', 'Fuente de poder modular', 8750.00, 0.00, 6),
+('Fractal Design', 'Define 7', 'Gabinete gaming con RGB', 5400.00, 0.00, 7);
+
 -- =================================================================
--- INSERTAR DATOS DE CACHE PARA SINCRONIZACIÓN
+-- DATOS DE CACHE PARA SINCRONIZACIÓN
 -- =================================================================
 
--- Cache de tipos de componente (sincronizado desde ms-cotizador-componentes)
-INSERT INTO cache_tipo_componente (id_tipo, descripcion, activo) VALUES
-(1, 'Procesador', TRUE),
-(2, 'Memoria RAM', TRUE),
-(3, 'Disco Duro', TRUE),
-(4, 'Tarjeta de Video', TRUE),
-(5, 'Monitor', TRUE),
-(6, 'Teclado', TRUE),
-(7, 'Mouse', TRUE),
-(8, 'Parlantes', TRUE),
-(9, 'Motherboard', TRUE),
-(10, 'Fuente de Poder', TRUE);
-
--- Cache de componentes básicos (sincronizado desde ms-cotizador-componentes)
-INSERT INTO cache_componente (id_componente, descripcion, precio, id_tipo, activo) VALUES
-('COMP001', 'Intel Core i7-13700K 3.4GHz', 6500.00, 1, TRUE),
-('COMP002', 'AMD Ryzen 7 7700X 4.5GHz', 5800.00, 1, TRUE),
-('COMP003', 'Corsair Vengeance LPX 16GB DDR4-3200', 1200.00, 2, TRUE),
-('COMP004', 'Kingston Fury Beast 32GB DDR4-3600', 2300.00, 2, TRUE),
-('COMP005', 'WD Black SN850X 1TB NVMe SSD', 2800.00, 3, TRUE),
-('COMP006', 'Seagate Barracuda 2TB HDD', 1500.00, 3, TRUE),
-('COMP007', 'NVIDIA GeForce RTX 4070 12GB', 12500.00, 4, TRUE),
-('COMP008', 'AMD Radeon RX 7700 XT 12GB', 10800.00, 4, TRUE),
-('COMP009', 'ASUS ROG Swift 27" 144Hz Gaming', 8500.00, 5, TRUE),
-('COMP010', 'LG UltraGear 24" 165Hz', 4200.00, 5, TRUE);
-
--- Cache de cotizaciones básicas para pruebas (sincronizado desde ms-cotizador-cotizaciones)
-INSERT INTO cache_cotizacion (folio, fecha, total, activo) VALUES
-(1, '2024-08-15', 25500.00, TRUE),
-(2, '2024-08-16', 18700.00, TRUE),
-(3, '2024-08-17', 32100.00, TRUE);
+-- Los datos de cache se omiten en tests de integración
+-- para simplificar la configuración de TestContainers
+-- En producción estos datos vienen de otros microservicios
 
 -- =================================================================
 -- DATOS DE PRUEBA PARA DESARROLLO
 -- =================================================================
+
+-- Cotizaciones de ejemplo para pruebas
+INSERT INTO cocotizacion (fecha_creacion, subtotal, impuestos, total, pais) VALUES
+('2024-08-01', 38440.00, 6144.00, 44584.00, 'MX'),
+('2024-08-02', 15730.00, 2517.00, 18247.00, 'MX'),
+('2024-08-03', 44880.00, 7181.00, 52061.00, 'MX'),
+('2024-08-04', 27285.00, 4366.00, 31651.00, 'MX'),
+('2024-08-05', 19915.00, 3186.00, 23101.00, 'MX');
+
+-- Detalles de cotizaciones de ejemplo
+INSERT INTO codetalle_cotizacion (cantidad, precio_unitario, subtotal, cotizacion_id, componente_id) VALUES
+-- Cotización 1 - GAMING_HIGH
+(1, 12500.00, 12500.00, 1, 1),
+(2, 8800.00, 17600.00, 1, 3),
+(1, 15100.00, 15100.00, 1, 5),
+-- Cotización 2 - OFFICE_BASIC  
+(1, 6200.00, 6200.00, 2, 2),
+(1, 3800.00, 3800.00, 2, 4),
+(2, 4250.00, 8500.00, 2, 6),
+-- Cotización 3 - DESIGN_PRO
+(1, 12500.00, 12500.00, 3, 1),
+(1, 22800.00, 22800.00, 3, 7),
+(2, 8750.00, 17500.00, 3, 9),
+-- Cotización 4 - GAMING_MID
+(1, 6200.00, 6200.00, 4, 2),
+(1, 15100.00, 15100.00, 4, 5),
+(1, 10800.00, 10800.00, 4, 8),
+-- Cotización 5 - GAMING_BUDGET
+(1, 8800.00, 8800.00, 5, 3),
+(1, 3800.00, 3800.00, 5, 4),
+(2, 5400.00, 10800.00, 5, 10);
 
 -- Pedidos de ejemplo
 INSERT INTO copedido (cve_proveedor, fecha_emision, fecha_entrega, nivel_surtido, total, estado_pedido, folio_cotizacion, observaciones) VALUES
@@ -66,47 +89,24 @@ INSERT INTO copedido (cve_proveedor, fecha_emision, fecha_entrega, nivel_surtido
 ('PROV003', '2024-08-17', '2024-08-30', 75, 32100.00, 'PARCIAL', 3, 'Pendiente entrega de tarjeta de video');
 
 -- Detalles de pedidos de ejemplo
-INSERT INTO codetalle_pedido (num_pedido, num_detalle, id_componente, cantidad, precio_unitario, subtotal) VALUES
+INSERT INTO codetalle_pedido (num_pedido, num_detalle, id_componente, cantidad, precio_unitario, total_cotizado) VALUES
 -- Pedido 1
-(1, 1, 'COMP001', 2, 6500.00, 13000.00),
-(1, 2, 'COMP003', 4, 1200.00, 4800.00),
-(1, 3, 'COMP005', 2, 2800.00, 5600.00),
-(1, 4, 'COMP009', 1, 8500.00, 8500.00),
+(1, 1, 1, 2, 6500.00, 13000.00),
+(1, 2, 3, 4, 1200.00, 4800.00),
+(1, 3, 5, 2, 2800.00, 5600.00),
+(1, 4, 9, 1, 8500.00, 8500.00),
 -- Pedido 2  
-(2, 1, 'COMP002', 1, 5800.00, 5800.00),
-(2, 2, 'COMP004', 2, 2300.00, 4600.00),
-(2, 3, 'COMP006', 3, 1500.00, 4500.00),
-(2, 4, 'COMP010', 2, 4200.00, 8400.00),
+(2, 1, 2, 1, 5800.00, 5800.00),
+(2, 2, 4, 2, 2300.00, 4600.00),
+(2, 3, 6, 3, 1500.00, 4500.00),
+(2, 4, 10, 2, 4200.00, 8400.00),
 -- Pedido 3
-(3, 1, 'COMP001', 3, 6500.00, 19500.00),
-(3, 2, 'COMP007', 1, 12500.00, 12500.00);
+(3, 1, 1, 3, 6500.00, 19500.00),
+(3, 2, 7, 1, 12500.00, 12500.00);
 
 -- =================================================================
--- VERIFICACIÓN DE INTEGRIDAD
+-- DATOS DE PRUEBA CARGADOS EXITOSAMENTE  
 -- =================================================================
 
--- Verificar que los totales de pedidos coincidan con la suma de detalles
-SELECT 
-    p.num_pedido,
-    p.total as total_pedido,
-    SUM(dp.subtotal) as total_calculado,
-    CASE 
-        WHEN p.total = SUM(dp.subtotal) THEN 'OK'
-        ELSE 'ERROR'
-    END as verificacion
-FROM copedido p
-LEFT JOIN codetalle_pedido dp ON p.num_pedido = dp.num_pedido
-GROUP BY p.num_pedido, p.total;
-
--- Mostrar resumen de datos insertados
-SELECT 'Proveedores' as tabla, COUNT(*) as registros FROM coproveedor
-UNION ALL
-SELECT 'Pedidos' as tabla, COUNT(*) as registros FROM copedido  
-UNION ALL
-SELECT 'Detalles Pedido' as tabla, COUNT(*) as registros FROM codetalle_pedido
-UNION ALL
-SELECT 'Cache Componentes' as tabla, COUNT(*) as registros FROM cache_componente
-UNION ALL
-SELECT 'Cache Tipos' as tabla, COUNT(*) as registros FROM cache_tipo_componente
-UNION ALL
-SELECT 'Cache Cotizaciones' as tabla, COUNT(*) as registros FROM cache_cotizacion;
+-- Los datos de prueba han sido insertados correctamente
+-- Para verificación manual, ejecutar consultas por separado

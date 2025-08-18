@@ -30,14 +30,14 @@ public class PcChangeEvent extends BaseChangeEvent {
     /**
      * Constructor con parámetros básicos
      */
-    public PcChangeEvent(OperationType operationType, Long entityId) {
+    public PcChangeEvent(OperationType operationType, String entityId) {
         super(EventType.PC_CHANGE, operationType, entityId);
     }
     
     /**
      * Constructor completo para creación/actualización
      */
-    public PcChangeEvent(OperationType operationType, Long entityId, String nombre, 
+    public PcChangeEvent(OperationType operationType, String entityId, String nombre, 
                         String descripcion, Double precio, Boolean activa,
                         List<Long> componenteIds, Integer cantidadComponentes) {
         this(operationType, entityId);

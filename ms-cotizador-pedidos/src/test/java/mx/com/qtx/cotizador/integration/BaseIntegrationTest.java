@@ -29,7 +29,14 @@ import mx.com.qtx.cotizador.config.TestContainerConfig;
  * @author Sistema Cotizador
  * @version 1.0
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {
+        "spring.kafka.enabled=false",
+        "spring.kafka.consumer.auto-startup=false",
+        "spring.kafka.producer.enabled=false"
+    }
+)
 @ActiveProfiles("test")
 @Import(TestContainerConfig.class)
 public abstract class BaseIntegrationTest {
@@ -82,7 +89,7 @@ public abstract class BaseIntegrationTest {
         
         // Configurar RestAssured para cada test
         RestAssured.port = port;
-        RestAssured.basePath = "/cotizador/v1/api";
+        // No configurar basePath - se maneja a nivel de controladores
         RestAssured.authentication = RestAssured.basic(USER_ADMIN, PASSWORD_ADMIN);
     }
     

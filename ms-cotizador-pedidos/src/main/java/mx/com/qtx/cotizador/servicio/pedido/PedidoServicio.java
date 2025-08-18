@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +23,9 @@ import mx.com.qtx.cotizador.dto.proveedor.response.ProveedorResponse;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.repositorio.PedidoRepositorio;
 import mx.com.qtx.cotizador.repositorio.ProveedorRepositorio;
-import mx.com.qtx.cotizador.client.CotizacionClient;
+import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEntityConverter;
 import mx.com.qtx.cotizador.servicio.wrapper.PedidoEntityConverter;
-import mx.com.qtx.cotizador.kafka.service.EventProducerService;
 import mx.com.qtx.cotizador.util.Errores;
 
 /**
@@ -46,22 +46,18 @@ public class PedidoServicio {
     private final PedidoRepositorio pedidoRepositorio;
     private final ProveedorRepositorio proveedorRepositorio;
     private final ComponenteRepositorio componenteRepositorio;
+    private final CotizacionRepositorio cotizacionRepositorio;
     private final ProveedorServicio proveedorServicio;
-    private final CotizacionClient cotizacionClient;
-    private final EventProducerService eventProducerService;
-    
     public PedidoServicio(PedidoRepositorio pedidoRepositorio,
                           ProveedorRepositorio proveedorRepositorio,
                           ComponenteRepositorio componenteRepositorio,
-                          ProveedorServicio proveedorServicio,
-                          CotizacionClient cotizacionClient,
-                          EventProducerService eventProducerService) {
+                          CotizacionRepositorio cotizacionRepositorio,
+                          ProveedorServicio proveedorServicio) {
         this.pedidoRepositorio = pedidoRepositorio;
         this.proveedorRepositorio = proveedorRepositorio;
         this.componenteRepositorio = componenteRepositorio;
+        this.cotizacionRepositorio = cotizacionRepositorio;
         this.proveedorServicio = proveedorServicio;
-        this.cotizacionClient = cotizacionClient;
-        this.eventProducerService = eventProducerService;
     }
     
     /**
@@ -87,10 +83,9 @@ public class PedidoServicio {
                                        "Los datos para generar el pedido son requeridos");
             }
             
-            // 1. Buscar la cotización desde el microservicio de cotizaciones
-            ApiResponse<mx.com.qtx.cotizador.entidad.Cotizacion> cotizacionResponse = 
-                cotizacionClient.buscarCotizacionPorId(request.getCotizacionId());
-            if (!"0".equals(cotizacionResponse.getCodigo())) {
+            // 1. Buscar la cotización en la base de datos local
+            var cotizacionEntity = cotizacionRepositorio.findById(request.getCotizacionId()).orElse(null);
+            if (cotizacionEntity == null) {
                 return new ApiResponse<>(Errores.COTIZACION_NO_ENCONTRADA_PEDIDO.getCodigo(), 
                                        "Cotización no encontrada: " + request.getCotizacionId());
             }
@@ -104,7 +99,6 @@ public class PedidoServicio {
             }
             
             // 3. Convertir entidad de cotización a dominio de cotización
-            mx.com.qtx.cotizador.entidad.Cotizacion cotizacionEntity = cotizacionResponse.getDatos();
             Cotizacion cotizacionDominio = CotizacionEntityConverter.convertToDomain(cotizacionEntity);
             
             // 4. Convertir ProveedorResponse a Proveedor dominio
@@ -136,14 +130,8 @@ public class PedidoServicio {
             // 10. Convertir resultado a DTO
             PedidoResponse response = PedidoMapper.toResponse(pedidoGenerado);
             
-            // 11. Enviar evento Kafka de pedido creado (opcional - eventual consistency)
-            try {
-                eventProducerService.sendPedidoCreated((int) pedidoGenerado.getNumPedido(), 
-                                                     request.getCveProveedor());
-            } catch (Exception e) {
-                logger.warn("Error enviando evento Kafka de pedido creado: {}", e.getMessage());
-                // No fallar la operación por error en evento
-            }
+            // 11. Pedido creado exitosamente - no se requiere notificación externa
+            // Los pedidos son responsabilidad interna del microservicio
             
             logger.info("Pedido generado exitosamente. Número: {}", pedidoGenerado.getNumPedido());
             return new ApiResponse<>(Errores.OK.getCodigo(), 
@@ -193,16 +181,8 @@ public class PedidoServicio {
             
             logger.info("Pedido {} marcado para cancelación. Razón: {}", pedidoId, reason);
             
-            // 4. Enviar evento Kafka de pedido cancelado (opcional - eventual consistency)
-            try {
-                // Buscar el proveedor del pedido para el evento
-                PedidoResponse pedido = pedidoResponse.getDatos();
-                // TODO: Añadir proveedorCve al PedidoResponse o recuperarlo del entity
-                eventProducerService.sendPedidoCancelled(pedidoId, "UNKNOWN_PROVEEDOR");
-            } catch (Exception e) {
-                logger.warn("Error enviando evento Kafka de pedido cancelado: {}", e.getMessage());
-                // No fallar la operación por error en evento
-            }
+            // 4. Pedido cancelado exitosamente - no se requiere notificación externa
+            // Los pedidos son responsabilidad interna del microservicio
             
             return new ApiResponse<>(Errores.OK.getCodigo(),
                                    "Pedido cancelado exitosamente",

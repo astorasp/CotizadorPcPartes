@@ -44,7 +44,7 @@ public abstract class BaseChangeEvent {
     private String eventId;
     private EventType eventType;
     private OperationType operationType;
-    private Long entityId;
+    private String entityId;
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timestamp;
@@ -62,7 +62,7 @@ public abstract class BaseChangeEvent {
         this.version = "1.0";
     }
     
-    public BaseChangeEvent(EventType eventType, OperationType operationType, Long entityId) {
+    public BaseChangeEvent(EventType eventType, OperationType operationType, String entityId) {
         this();
         this.eventType = eventType;
         this.operationType = operationType;
@@ -94,11 +94,11 @@ public abstract class BaseChangeEvent {
         this.operationType = operationType;
     }
     
-    public Long getEntityId() {
+    public String getEntityId() {
         return entityId;
     }
     
-    public void setEntityId(Long entityId) {
+    public void setEntityId(String entityId) {
         this.entityId = entityId;
     }
     

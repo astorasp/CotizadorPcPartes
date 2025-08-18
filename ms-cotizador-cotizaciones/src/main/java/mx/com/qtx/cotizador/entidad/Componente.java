@@ -15,17 +15,26 @@ public class Componente {
     @Column(name = "id_componente")
     private String id;
     
+    @Column(name = "capacidad_alm")
+    private String capacidadAlm;
+    
+    @Column(name = "costo")
+    private BigDecimal costo;
+    
     @Column(name = "descripcion")
     private String descripcion;
-    
-    @Column(name = "precio")
-    private BigDecimal precio;
     
     @Column(name = "marca")
     private String marca;
     
+    @Column(name = "memoria")
+    private String memoria;
+    
     @Column(name = "modelo")
     private String modelo;
+    
+    @Column(name = "precio_base")
+    private BigDecimal precioBase;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tipo_componente")
@@ -35,16 +44,14 @@ public class Componente {
     @JoinColumn(name = "id_promocion")
     private Promocion promocion;
     
-    @Column(name = "activo")
-    private Boolean activo = true;
-    
     // Constructores
     public Componente() {}
     
-    public Componente(String id, String descripcion, BigDecimal precio, String marca, String modelo) {
+    public Componente(String id, String descripcion, BigDecimal costo, BigDecimal precioBase, String marca, String modelo) {
         this.id = id;
         this.descripcion = descripcion;
-        this.precio = precio;
+        this.costo = costo;
+        this.precioBase = precioBase;
         this.marca = marca;
         this.modelo = modelo;
     }
@@ -53,24 +60,30 @@ public class Componente {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     
+    public String getCapacidadAlm() { return capacidadAlm; }
+    public void setCapacidadAlm(String capacidadAlm) { this.capacidadAlm = capacidadAlm; }
+    
+    public BigDecimal getCosto() { return costo; }
+    public void setCosto(BigDecimal costo) { this.costo = costo; }
+    
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    
-    public BigDecimal getPrecio() { return precio; }
-    public void setPrecio(BigDecimal precio) { this.precio = precio; }
     
     public String getMarca() { return marca; }
     public void setMarca(String marca) { this.marca = marca; }
     
+    public String getMemoria() { return memoria; }
+    public void setMemoria(String memoria) { this.memoria = memoria; }
+    
     public String getModelo() { return modelo; }
     public void setModelo(String modelo) { this.modelo = modelo; }
+    
+    public BigDecimal getPrecioBase() { return precioBase; }
+    public void setPrecioBase(BigDecimal precioBase) { this.precioBase = precioBase; }
     
     public TipoComponente getTipoComponente() { return tipoComponente; }
     public void setTipoComponente(TipoComponente tipoComponente) { this.tipoComponente = tipoComponente; }
     
     public Promocion getPromocion() { return promocion; }
     public void setPromocion(Promocion promocion) { this.promocion = promocion; }
-    
-    public Boolean getActivo() { return activo; }
-    public void setActivo(Boolean activo) { this.activo = activo; }
 }

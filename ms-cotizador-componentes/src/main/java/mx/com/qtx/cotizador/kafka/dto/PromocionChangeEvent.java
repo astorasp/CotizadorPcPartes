@@ -34,14 +34,14 @@ public class PromocionChangeEvent extends BaseChangeEvent {
     /**
      * Constructor con parámetros básicos
      */
-    public PromocionChangeEvent(OperationType operationType, Long entityId) {
+    public PromocionChangeEvent(OperationType operationType, String entityId) {
         super(EventType.PROMOCION_CHANGE, operationType, entityId);
     }
     
     /**
      * Constructor completo para creación/actualización
      */
-    public PromocionChangeEvent(OperationType operationType, Long entityId, String nombre, 
+    public PromocionChangeEvent(OperationType operationType, String entityId, String nombre, 
                                String descripcion, String tipoPromocion, String tipoPromocionAcumulable,
                                LocalDateTime fechaInicio, LocalDateTime fechaFin, Boolean activa,
                                Double valorDescuento, Integer cantidadMinima, Integer cantidadMaxima) {

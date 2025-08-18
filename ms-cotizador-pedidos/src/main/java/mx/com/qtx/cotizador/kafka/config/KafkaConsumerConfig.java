@@ -6,6 +6,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -29,6 +30,7 @@ import java.util.Map;
  * @author Subagente4E - [2025-08-17 11:00:00 MST] - Configuración de consumidor Kafka para ms-cotizador-pedidos
  */
 @Configuration
+@Profile("!test")
 @EnableRetry
 public class KafkaConsumerConfig {
 

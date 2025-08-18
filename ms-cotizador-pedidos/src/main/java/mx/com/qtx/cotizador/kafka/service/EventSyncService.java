@@ -14,6 +14,7 @@ import mx.com.qtx.cotizador.entidad.Proveedor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Subagente4E - [2025-08-17 11:25:00 MST] - Servicio de sincronización de eventos para ms-cotizador-pedidos
  */
 @Service
+@Profile("!test")
 @Transactional
 public class EventSyncService {
 

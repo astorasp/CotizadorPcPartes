@@ -38,7 +38,7 @@ import java.util.List;
  * - CONSULTOR: Solo lectura para consultoría (ver, buscar)
  */
 @RestController
-@RequestMapping("/proveedores")
+@RequestMapping("/proveedores/v1/api")
 @CrossOrigin(origins = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class ProveedorController {
@@ -80,7 +80,7 @@ public class ProveedorController {
             logger.debug("Data.getRazonSocial(): {}", data.getRazonSocial());
             logger.debug("Data.getNumeroPedidos(): {}", data.getNumeroPedidos());
         } else {
-            logger.error("DATA ES NULL EN EL CONTROLADOR!");
+            logger.debug("DATA ES NULL EN EL CONTROLADOR (esto es normal para errores)");
         }
         
         // Mapear el código de error a HTTP status

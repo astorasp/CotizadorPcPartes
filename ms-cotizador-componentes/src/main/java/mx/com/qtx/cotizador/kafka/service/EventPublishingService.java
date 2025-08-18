@@ -39,7 +39,7 @@ public class EventPublishingService {
         try {
             ComponenteChangeEvent event = new ComponenteChangeEvent(
                 BaseChangeEvent.OperationType.CREATE,
-                Long.parseLong(componente.getId())
+                componente.getId()
             );
 
             eventProducer.sendComponenteChangeEvent(event);
@@ -60,7 +60,7 @@ public class EventPublishingService {
         try {
             ComponenteChangeEvent event = new ComponenteChangeEvent(
                 BaseChangeEvent.OperationType.UPDATE,
-                Long.parseLong(componente.getId())
+                componente.getId()
             );
 
             eventProducer.sendComponenteChangeEvent(event);
@@ -77,7 +77,7 @@ public class EventPublishingService {
      * @param componenteId ID del componente eliminado
      */
     @Async
-    public void publishComponenteDeleted(Long componenteId) {
+    public void publishComponenteDeleted(String componenteId) {
         try {
             ComponenteChangeEvent event = new ComponenteChangeEvent(
                 BaseChangeEvent.OperationType.DELETE,
@@ -102,7 +102,7 @@ public class EventPublishingService {
         try {
             PromocionChangeEvent event = new PromocionChangeEvent(
                 BaseChangeEvent.OperationType.CREATE,
-                Long.valueOf(promocion.getIdPromocion())
+                String.valueOf(promocion.getIdPromocion())
             );
 
             eventProducer.sendPromocionChangeEvent(event);
@@ -123,7 +123,7 @@ public class EventPublishingService {
         try {
             PromocionChangeEvent event = new PromocionChangeEvent(
                 BaseChangeEvent.OperationType.UPDATE,
-                Long.valueOf(promocion.getIdPromocion())
+                String.valueOf(promocion.getIdPromocion())
             );
 
             eventProducer.sendPromocionChangeEvent(event);
@@ -144,7 +144,7 @@ public class EventPublishingService {
         try {
             PromocionChangeEvent event = new PromocionChangeEvent(
                 BaseChangeEvent.OperationType.DELETE,
-                promocionId
+                String.valueOf(promocionId)
             );
 
             eventProducer.sendPromocionChangeEvent(event);
@@ -165,7 +165,7 @@ public class EventPublishingService {
      * @param activa Estado activo de la PC
      */
     @Async
-    public void publishPcCreated(Long pcId, String nombre, String descripcion, Double precio, Boolean activa) {
+    public void publishPcCreated(String pcId, String nombre, String descripcion, Double precio, Boolean activa) {
         try {
             PcChangeEvent event = new PcChangeEvent(
                 BaseChangeEvent.OperationType.CREATE,
@@ -190,7 +190,7 @@ public class EventPublishingService {
      * @param activa Estado activo de la PC
      */
     @Async
-    public void publishPcUpdated(Long pcId, String nombre, String descripcion, Double precio, Boolean activa) {
+    public void publishPcUpdated(String pcId, String nombre, String descripcion, Double precio, Boolean activa) {
         try {
             PcChangeEvent event = new PcChangeEvent(
                 BaseChangeEvent.OperationType.UPDATE,
@@ -211,7 +211,7 @@ public class EventPublishingService {
      * @param pcId ID de la PC eliminada
      */
     @Async
-    public void publishPcDeleted(Long pcId) {
+    public void publishPcDeleted(String pcId) {
         try {
             PcChangeEvent event = new PcChangeEvent(
                 BaseChangeEvent.OperationType.DELETE,

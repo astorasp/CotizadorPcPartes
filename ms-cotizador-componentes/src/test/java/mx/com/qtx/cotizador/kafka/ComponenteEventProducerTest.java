@@ -66,7 +66,7 @@ class ComponenteEventProducerTest {
         // Arrange
         ComponenteChangeEvent event = new ComponenteChangeEvent(
             BaseChangeEvent.OperationType.CREATE,
-            1L,
+            "1",
             "Test Component",
             "Component for testing",
             150.0,
@@ -95,7 +95,7 @@ class ComponenteEventProducerTest {
         // Arrange
         ComponenteChangeEvent event = new ComponenteChangeEvent(
             BaseChangeEvent.OperationType.UPDATE,
-            2L,
+            "2",
             "Updated Component",
             "Updated description",
             200.0,
@@ -122,7 +122,7 @@ class ComponenteEventProducerTest {
         // Arrange
         ComponenteChangeEvent event = new ComponenteChangeEvent(
             BaseChangeEvent.OperationType.DELETE,
-            3L
+            "3"
         );
 
         // Act
@@ -146,7 +146,7 @@ class ComponenteEventProducerTest {
         // Arrange
         ComponenteChangeEvent event = new ComponenteChangeEvent(
             BaseChangeEvent.OperationType.CREATE,
-            123L
+            "123"
         );
 
         // Act

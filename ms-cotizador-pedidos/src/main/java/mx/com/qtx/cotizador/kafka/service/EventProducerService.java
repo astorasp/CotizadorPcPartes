@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Subagente4E - [2025-08-17 11:40:00 MST] - Servicio productor de eventos Kafka para ms-cotizador-pedidos
  */
 @Service
+@Profile("!test")
 public class EventProducerService {
 
     private static final Logger logger = LoggerFactory.getLogger(EventProducerService.class);

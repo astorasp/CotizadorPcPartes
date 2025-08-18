@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
  * @author Subagente4E - [2025-08-17 11:15:00 MST] - Listener de eventos de cotizaciones para ms-cotizador-pedidos
  */
 @Component
+@Profile("!test")
 public class CotizacionChangeListener {
 
     private static final Logger logger = LoggerFactory.getLogger(CotizacionChangeListener.class);

@@ -81,8 +81,12 @@ public class CotizacionEntityConverter {
             detalleEntity.setDescripcion(detalleCore.getDescripcion());
             detalleEntity.setPrecioBase(detalleCore.getPrecioBase());
             
-            // NO establecer la referencia al componente para evitar dependencias
-            // La información del componente se obtiene via API remota cuando se necesita
+            // Crear entidad Componente stub con solo el ID para satisfacer constraint de BD
+            // La información completa del componente se obtiene via API remota cuando se necesita
+            mx.com.qtx.cotizador.entidad.Componente componenteStub = 
+                new mx.com.qtx.cotizador.entidad.Componente();
+            componenteStub.setId(detalleCore.getIdComponente());
+            detalleEntity.setComponente(componenteStub);
             
             // Establecer la relación con la cotización
             cotizacionEntity.addDetalle(detalleEntity);
@@ -136,8 +140,12 @@ public class CotizacionEntityConverter {
                 detalleEntity.setDescripcion(detalleCore.getDescripcion());
                 detalleEntity.setPrecioBase(detalleCore.getPrecioBase());
                 
-                // NO establecer la referencia al componente (componente = null)
-                // Esto permite que la cotización se guarde sin depender del microservicio de componentes
+                // Crear entidad Componente stub con solo el ID para satisfacer constraint de BD
+                // Esto permite que la cotización se guarde sin depender completamente del microservicio de componentes
+                mx.com.qtx.cotizador.entidad.Componente componenteStub = 
+                    new mx.com.qtx.cotizador.entidad.Componente();
+                componenteStub.setId(detalleCore.getIdComponente());
+                detalleEntity.setComponente(componenteStub);
                 
                 // Establecer la relación con la cotización
                 cotizacionEntity.addDetalle(detalleEntity);

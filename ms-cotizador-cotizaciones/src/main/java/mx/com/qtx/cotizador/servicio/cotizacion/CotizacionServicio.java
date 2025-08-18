@@ -22,10 +22,8 @@ import mx.com.qtx.cotizador.dto.cotizacion.response.CotizacionResponse;
 import mx.com.qtx.cotizador.dto.cotizacion.mapper.CotizacionMapper;
 import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
 import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
-import mx.com.qtx.cotizador.client.ComponenteClient;
+import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEntityConverter;
-import mx.com.qtx.cotizador.servicio.wrapper.ComponenteResponseConverter;
-import mx.com.qtx.cotizador.servicio.cache.ComponenteCacheService;
 import mx.com.qtx.cotizador.util.Errores;
 
 import java.math.BigDecimal;
@@ -40,15 +38,12 @@ public class CotizacionServicio {
     private static final Logger logger = LoggerFactory.getLogger(CotizacionServicio.class);
     
     private final CotizacionRepositorio cotizacionRepo;
-    private final ComponenteClient componenteClient;
-    private final ComponenteCacheService componenteCacheService;
+    private final ComponenteRepositorio componenteRepositorio;
     
     public CotizacionServicio(CotizacionRepositorio cotizacionRepo, 
-                             ComponenteClient componenteClient,
-                             ComponenteCacheService componenteCacheService) {
+                             ComponenteRepositorio componenteRepositorio) {
         this.cotizacionRepo = cotizacionRepo;
-        this.componenteClient = componenteClient;
-        this.componenteCacheService = componenteCacheService;
+        this.componenteRepositorio = componenteRepositorio;
     }   
 
     /**
@@ -83,21 +78,20 @@ public class CotizacionServicio {
             // 2. Crear cotizador según tipo especificado
             ICotizador cotizador = crearCotizador(request.getTipoCotizador());
             
-            // 3. Agregar componentes al cotizador usando cache (con fallback a cliente remoto)
+            // 3. Agregar componentes al cotizador usando datos locales
             for (DetalleCotizacionRequest detalle : request.getDetalles()) {
-                // Buscar componente usando cache primero, con fallback automático al cliente remoto
-                ApiResponse<ComponenteResponse> componenteResponse = 
-                    componenteCacheService.buscarComponente(detalle.getIdComponente());
+                // Buscar componente en la base de datos local
+                Optional<mx.com.qtx.cotizador.entidad.Componente> componenteEntity = 
+                    componenteRepositorio.findById(detalle.getIdComponente());
                 
-                if (!componenteResponse.getCodigo().equals(Errores.OK.getCodigo()) || 
-                    componenteResponse.getDatos() == null) {
-                    logger.warn("Componente no encontrado: {}", detalle.getIdComponente());
+                if (componenteEntity.isEmpty()) {
+                    logger.warn("Componente no encontrado en BD local: {}", detalle.getIdComponente());
                     return new ApiResponse<>(Errores.COMPONENTE_NO_ENCONTRADO_EN_COTIZACION.getCodigo(), 
                                            "Componente no encontrado: " + detalle.getIdComponente());
                 }
                 
-                // Convertir DTO de respuesta a objeto de dominio
-                Componente compDominio = ComponenteResponseConverter.toDomainObject(componenteResponse.getDatos());
+                // Convertir entidad local a objeto de dominio
+                Componente compDominio = convertirEntidadADominio(componenteEntity.get());
                 
                 // Agregar al cotizador
                 cotizador.agregarComponente(detalle.getCantidad(), compDominio);
@@ -518,6 +512,55 @@ public class CotizacionServicio {
             logger.error("Error al generar reporte de resumen: {}", e.getMessage(), e);
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
                                    Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+    
+    /**
+     * Convierte una entidad Componente JPA a objeto de dominio.
+     * Reemplaza la funcionalidad que antes hacía ComponenteResponseConverter.
+     */
+    private Componente convertirEntidadADominio(mx.com.qtx.cotizador.entidad.Componente entidad) {
+        if (entidad == null) {
+            return null;
+        }
+        
+        // Usar factory methods según el tipo de componente para crear instancias concretas
+        String tipoNombre = entidad.getTipoComponente() != null ? 
+                           entidad.getTipoComponente().getNombre().toUpperCase() : "MONITOR";
+        
+        switch (tipoNombre) {
+            case "DISCO_DURO":
+                return Componente.crearDiscoDuro(
+                    entidad.getId(),
+                    entidad.getDescripcion() != null ? entidad.getDescripcion() : "Sin descripción",
+                    entidad.getMarca() != null ? entidad.getMarca() : "Sin marca",
+                    entidad.getModelo() != null ? entidad.getModelo() : "Sin modelo",
+                    entidad.getCosto() != null ? entidad.getCosto() : BigDecimal.ZERO,
+                    entidad.getPrecioBase() != null ? entidad.getPrecioBase() : BigDecimal.ZERO,
+                    entidad.getCapacidadAlm() != null ? entidad.getCapacidadAlm() : "Sin especificar"
+                );
+                
+            case "TARJETA_VIDEO":
+                return Componente.crearTarjetaVideo(
+                    entidad.getId(),
+                    entidad.getDescripcion() != null ? entidad.getDescripcion() : "Sin descripción",
+                    entidad.getMarca() != null ? entidad.getMarca() : "Sin marca",
+                    entidad.getModelo() != null ? entidad.getModelo() : "Sin modelo",
+                    entidad.getCosto() != null ? entidad.getCosto() : BigDecimal.ZERO,
+                    entidad.getPrecioBase() != null ? entidad.getPrecioBase() : BigDecimal.ZERO,
+                    entidad.getMemoria() != null ? entidad.getMemoria() : "Sin especificar"
+                );
+                
+            case "MONITOR":
+            default:
+                return Componente.crearMonitor(
+                    entidad.getId(),
+                    entidad.getDescripcion() != null ? entidad.getDescripcion() : "Sin descripción",
+                    entidad.getMarca() != null ? entidad.getMarca() : "Sin marca",
+                    entidad.getModelo() != null ? entidad.getModelo() : "Sin modelo",
+                    entidad.getCosto() != null ? entidad.getCosto() : BigDecimal.ZERO,
+                    entidad.getPrecioBase() != null ? entidad.getPrecioBase() : BigDecimal.ZERO
+                );
         }
     }
 }

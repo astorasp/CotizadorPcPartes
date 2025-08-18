@@ -1,0 +1,110 @@
+package mx.com.qtx.cotizador.repositorio;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.EntityGraph;
+
+import mx.com.qtx.cotizador.entidad.Componente;
+import java.util.List;
+import java.math.BigDecimal;
+
+/**
+ * Repositorio JPA para la entidad Componente.
+ * <p>
+ * Proporciona operaciones de persistencia para los componentes, incluyendo consultas
+ * personalizadas para buscar componentes por tipo, marca y rango de precio. Extiende
+ * JpaRepository para heredar operaciones CRUD estándar.
+ * </p>
+ */
+@Repository
+public interface ComponenteRepositorio extends JpaRepository<Componente, String> {
+
+    @EntityGraph("Componente.completo")
+    @Query("""
+        SELECT c FROM Componente c
+            JOIN FETCH c.tipoComponente
+        WHERE c.id = :id                
+    """)
+    Componente findByIdWithTipoComponente(@Param("id") String id);
+
+    /**
+     * Obtiene todos los componentes con su tipo de componente cargado.
+     * 
+     * @return Lista de todos los componentes con el tipo de componente incluido
+     */
+    @EntityGraph("Componente.completo")
+    @Query("""
+        SELECT c FROM Componente c
+            JOIN FETCH c.tipoComponente                
+    """)
+    List<Componente> findAllWithTipoComponente();
+
+    // Nota: Query de PcParte removida - no aplicable en microservicio de cotizaciones
+    // Las PC se ensamblan en ms-cotizador-componentes, aquí solo se cotizan componentes individuales
+
+    /**
+     * Encuentra componentes por nombre del tipo de componente.
+     * 
+     * @param nombreTipo Nombre del tipo de componente a buscar
+     * @return Lista de componentes del tipo especificado
+     */
+    @EntityGraph("Componente.completo")
+    @Query("""
+        SELECT c FROM Componente c
+            JOIN FETCH c.tipoComponente tc
+        WHERE tc.nombre = :nombreTipo                
+    """)
+    List<Componente> findByTipoComponenteNombre(@Param("nombreTipo") String nombreTipo);
+
+    /**
+     * Encuentra componentes por su tipo de componente.
+     * <p>
+     * Permite buscar todos los componentes que pertenecen a una categoría o tipo específico,
+     * identificado por su ID. Útil para filtrar componentes por categoría como monitores,
+     * discos duros, tarjetas de video, etc.
+     * </p>
+     * 
+     * @param idTipoComponente ID del tipo de componente a buscar
+     * @return Lista de componentes que pertenecen al tipo especificado
+     */
+    List<Componente> findByTipoComponenteId(Short idTipoComponente);
+    
+    /**
+     * Encuentra componentes cuya marca contiene el texto especificado, ignorando mayúsculas y minúsculas.
+     * <p>
+     * Permite realizar búsquedas parciales de texto en el campo marca, facilitando
+     * la búsqueda de componentes sin necesidad de conocer la marca exacta o completa.
+     * La búsqueda es insensible a mayúsculas/minúsculas para mayor flexibilidad.
+     * </p>
+     * 
+     * @param marca Texto a buscar dentro del campo marca de los componentes
+     * @return Lista de componentes cuya marca contiene el texto especificado
+     */
+    List<Componente> findByMarcaContainingIgnoreCase(String marca);
+    
+    /**
+     * Encuentra componentes cuyo precio base está dentro del rango especificado.
+     * <p>
+     * Permite filtrar componentes por un rango de precios, lo que facilita la búsqueda
+     * de componentes dentro de determinados límites presupuestarios.
+     * </p>
+     * 
+     * @param min Límite inferior del rango de precios (inclusive)
+     * @param max Límite superior del rango de precios (inclusive)
+     * @return Lista de componentes cuyo precio base está dentro del rango especificado
+     */
+    List<Componente> findByPrecioBaseBetween(BigDecimal min, BigDecimal max);
+
+    /**
+     * Elimina un componente por su ID.
+     * <p>
+     * Sobrescribe el método estándar de JpaRepository para garantizar la correcta
+     * eliminación de un componente basado en su identificador único.
+     * </p>
+     * 
+     * @param id Identificador único del componente a eliminar
+     */
+    void deleteById(String id);
+}
