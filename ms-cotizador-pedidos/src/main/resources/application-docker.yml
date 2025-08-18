@@ -116,6 +116,44 @@ management:
     env:
       enabled: true
 
+# Configuración de Kafka para Docker
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+  consumer:
+    group-id: ${KAFKA_CONSUMER_GROUP_ID:cotizador-pedidos-group}
+    auto-offset-reset: ${KAFKA_CONSUMER_AUTO_OFFSET_RESET:earliest}
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    enable-auto-commit: ${KAFKA_CONSUMER_ENABLE_AUTO_COMMIT:false}
+    fetch-min-size: ${KAFKA_CONSUMER_FETCH_MIN_SIZE:1024}
+    fetch-max-wait: ${KAFKA_CONSUMER_FETCH_MAX_WAIT:500}
+    max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:10}
+    enabled: ${KAFKA_CONSUMER_ENABLED:true}
+    properties:
+      spring.json.trusted.packages: "mx.com.qtx.cotizador.kafka.dto"
+      spring.json.type.mapping: "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent,CotizacionChangeEvent:mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent,ProveedorChangeEvent:mx.com.qtx.cotizador.kafka.dto.ProveedorChangeEvent,PromocionChangeEvent:mx.com.qtx.cotizador.kafka.dto.PromocionChangeEvent"
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    acks: ${KAFKA_PRODUCER_ACKS:all}
+    retries: ${KAFKA_PRODUCER_RETRIES:3}
+    batch-size: ${KAFKA_PRODUCER_BATCH_SIZE:16384}
+    linger-ms: ${KAFKA_PRODUCER_LINGER_MS:5}
+    buffer-memory: ${KAFKA_PRODUCER_BUFFER_MEMORY:33554432}
+    max-block-ms: ${KAFKA_PRODUCER_MAX_BLOCK_MS:10000}
+    enabled: ${KAFKA_PRODUCER_ENABLED:true}
+  topics:
+    componentes-changes: ${KAFKA_TOPIC_COMPONENTES_CHANGES:componentes.changes}
+    cotizaciones-changes: ${KAFKA_TOPIC_COTIZACIONES_CHANGES:cotizaciones.changes}
+    proveedores-changes: ${KAFKA_TOPIC_PROVEEDORES_CHANGES:proveedores.changes}
+    promociones-changes: ${KAFKA_TOPIC_PROMOCIONES_CHANGES:promociones.changes}
+    pedidos-changes: ${KAFKA_TOPIC_PEDIDOS_CHANGES:pedidos.changes}
+  retry:
+    attempts: ${KAFKA_RETRY_ATTEMPTS:3}
+    delay-ms: ${KAFKA_RETRY_DELAY_MS:1000}
+    multiplier: ${KAFKA_RETRY_MULTIPLIER:2.0}
+    max-delay-ms: ${KAFKA_RETRY_MAX_DELAY_MS:10000}
+
 # Logging optimizado para contenedores
 logging:
   level:
