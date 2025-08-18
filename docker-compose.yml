@@ -1,31 +1,83 @@
 services:
-  # Base de datos MySQL para Cotizador
-  mysql:
-    image: mysql:8.4.4
-    container_name: cotizador-mysql
+  # ===============================================
+  # INFRAESTRUCTURA KAFKA Y BASES DE DATOS
+  # ===============================================
+  
+  # Apache Kafka 4.0.0 en modo KRaft (sin Zookeeper)
+  kafka:
+    image: apache/kafka:4.0.0
+    container_name: cotizador-kafka
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_COTIZADOR_DATABASE}
-      MYSQL_USER: ${MYSQL_COTIZADOR_USER}
-      MYSQL_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
-      MYSQL_ROOT_HOST: '%'
+      # Configuración KRaft (sin Zookeeper)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Configuración de topics y replicación
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # Configuración de log y limpieza
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      # Timezone
       TZ: America/Mazatlan
-      # Forzar UTF-8 durante inicialización
-      MYSQL_INITDB_SKIP_TZINFO: 1
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    # PUERTO NO EXPUESTO - Solo acceso interno
+    ports:
+      - "9092:9092"  # Puerto expuesto para conectores externos si es necesario
     volumes:
-      - ./ms-cotizador/sql/ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
-      - ./ms-cotizador/sql/dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
+      - kafka_data:/var/lib/kafka/data
+      - ./kafka-config:/etc/kafka/config
     networks:
       - cotizador-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "cotizador_user", "-pcotizador_pass"]
-      timeout: 20s
-      retries: 10
-      interval: 10s
-      start_period: 40s
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 60s
+
+  # Kafka Connect con Debezium para CDC
+  kafka-connect:
+    image: debezium/connect:2.5
+    container_name: cotizador-kafka-connect
+    restart: unless-stopped
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: cotizador-connect
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      # Configuración de conectores
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: 'false'
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+      # Timezone
+      TZ: America/Mazatlan
+    ports:
+      - "8083:8083"  # Puerto expuesto para configuración de conectores
+    volumes:
+      - ./kafka-config/connectors:/kafka/connect
+    networks:
+      - cotizador-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/connectors"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 120s
 
   # Base de datos MySQL para Seguridad
   mysql-seguridad:
@@ -41,10 +93,15 @@ services:
       TZ: America/Mazatlan
       # Forzar UTF-8 durante inicialización
       MYSQL_INITDB_SKIP_TZINFO: 1
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: 
+      - --defaults-extra-file=/etc/mysql/conf.d/mysql-debezium.cnf
+      - --character-set-server=utf8mb4 
+      - --collation-server=utf8mb4_unicode_ci
+      - --server-id=184058
     # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
       - ./ms-seguridad/scripts/seguridad_ddl.sql:/docker-entrypoint-initdb.d/01-seguridad-ddl.sql
+      - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network
     healthcheck:
@@ -53,6 +110,106 @@ services:
       retries: 10
       interval: 10s
       start_period: 40s
+
+  # Base de datos MySQL para ms-cotizador-componentes
+  mysql-componentes:
+    image: mysql:8.4.4
+    container_name: componentes-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: cotizador_componentes_db
+      MYSQL_USER: componentes_user
+      MYSQL_PASSWORD: componentes_pass
+      MYSQL_ROOT_HOST: '%'
+      TZ: America/Mazatlan
+      # Forzar UTF-8 durante inicialización
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    command: 
+      - --defaults-extra-file=/etc/mysql/conf.d/mysql-debezium.cnf
+      - --character-set-server=utf8mb4 
+      - --collation-server=utf8mb4_unicode_ci
+      - --server-id=184054
+    # PUERTO NO EXPUESTO - Solo acceso interno
+    volumes:
+      - ./kafka-config/sql/componentes-ddl.sql:/docker-entrypoint-initdb.d/01-componentes-ddl.sql
+      - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
+    networks:
+      - cotizador-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "componentes_user", "-pcomponentes_pass"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Base de datos MySQL para ms-cotizador-cotizaciones
+  mysql-cotizaciones:
+    image: mysql:8.4.4
+    container_name: cotizaciones-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: cotizador_cotizaciones_db
+      MYSQL_USER: cotizaciones_user
+      MYSQL_PASSWORD: cotizaciones_pass
+      MYSQL_ROOT_HOST: '%'
+      TZ: America/Mazatlan
+      # Forzar UTF-8 durante inicialización
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    command: 
+      - --defaults-extra-file=/etc/mysql/conf.d/mysql-debezium.cnf
+      - --character-set-server=utf8mb4 
+      - --collation-server=utf8mb4_unicode_ci
+      - --server-id=184055
+    # PUERTO NO EXPUESTO - Solo acceso interno
+    volumes:
+      - ./kafka-config/sql/cotizaciones-ddl.sql:/docker-entrypoint-initdb.d/01-cotizaciones-ddl.sql
+      - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
+    networks:
+      - cotizador-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "cotizaciones_user", "-pcotizaciones_pass"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Base de datos MySQL para ms-cotizador-pedidos
+  mysql-pedidos:
+    image: mysql:8.4.4
+    container_name: pedidos-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: cotizador_pedidos_db
+      MYSQL_USER: pedidos_user
+      MYSQL_PASSWORD: pedidos_pass
+      MYSQL_ROOT_HOST: '%'
+      TZ: America/Mazatlan
+      # Forzar UTF-8 durante inicialización
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    command: 
+      - --defaults-extra-file=/etc/mysql/conf.d/mysql-debezium.cnf
+      - --character-set-server=utf8mb4 
+      - --collation-server=utf8mb4_unicode_ci
+      - --server-id=184056
+    # PUERTO NO EXPUESTO - Solo acceso interno
+    volumes:
+      - ./kafka-config/sql/pedidos-ddl.sql:/docker-entrypoint-initdb.d/01-pedidos-ddl.sql
+      - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
+    networks:
+      - cotizador-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "pedidos_user", "-ppedidos_pass"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # ===============================================
+  # MICROSERVICIOS
+  # ===============================================
 
   # Microservicio de Seguridad
   ms-seguridad:
@@ -100,19 +257,19 @@ services:
       interval: 30s
       start_period: 120s
 
-  # Backend Spring Boot
-  backend:
-    build: 
-      context: ./ms-cotizador
+  # Microservicio de Componentes
+  ms-cotizador-componentes:
+    build:
+      context: ./ms-cotizador-componentes
       dockerfile: Dockerfile
-    container_name: cotizador-backend
+    container_name: ms-cotizador-componentes
     restart: unless-stopped
     environment:
       # Base de datos
-      DB_HOST: mysql
+      DB_HOST: mysql-componentes
       DB_PORT: 3306
-      DB_USERNAME: ${MYSQL_COTIZADOR_USER}
-      DB_PASSWORD: ${MYSQL_COTIZADOR_PASSWORD}
+      DB_USERNAME: componentes_user
+      DB_PASSWORD: componentes_pass
       # Seguridad
       SECURITY_USERNAME: ${SECURITY_USERNAME}
       SECURITY_PASSWORD: ${SECURITY_PASSWORD}
@@ -126,23 +283,10 @@ services:
       JWT_JWKS_INITIAL_DELAY_MS: ${JWT_JWKS_INITIAL_DELAY_MS}
       JWT_MS_SEGURIDAD_TIMEOUT: ${JWT_MS_SEGURIDAD_TIMEOUT}
       JWT_MS_SEGURIDAD_CONNECT_TIMEOUT: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT}
-      # JWT Key Rotation Configuration
-      JWT_KEY_ROTATION_ENABLED: ${JWT_KEY_ROTATION_ENABLED}
-      JWT_SECURITY_ALERT_THRESHOLD: ${JWT_SECURITY_ALERT_THRESHOLD}
-      JWT_LOG_ROTATION_EVENTS: ${JWT_LOG_ROTATION_EVENTS}
-      JWT_CLEANUP_OLD_KEYS: ${JWT_CLEANUP_OLD_KEYS}
-      # JWT Session Validation Configuration
-      JWT_SESSION_VALIDATION_ENABLED: ${JWT_SESSION_VALIDATION_ENABLED}
-      # Session Cache Configuration
-      SESSION_CACHE_TTL_MS: ${SESSION_CACHE_TTL_MS}
-      SESSION_CACHE_MAX_SIZE: ${SESSION_CACHE_MAX_SIZE}
-      SESSION_CACHE_ENABLED: ${SESSION_CACHE_ENABLED}
-      # Session Validation Configuration
-      SESSION_VALIDATION_TIMEOUT_MS: ${SESSION_VALIDATION_TIMEOUT_MS}
-      SESSION_VALIDATION_MAX_RETRIES: ${SESSION_VALIDATION_MAX_RETRIES}
-      SESSION_VALIDATION_RETRY_DELAY_MS: ${SESSION_VALIDATION_RETRY_DELAY_MS}
+      # Kafka Configuration
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       # Java
-      JAVA_OPTS: "${COTIZADOR_JAVA_OPTS}"
+      JAVA_OPTS: "${COMPONENTES_JAVA_OPTS:-'-Xms512m -Xmx1024m'}"
       # Spring profiles
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       # Timezone
@@ -151,12 +295,119 @@ services:
     networks:
       - cotizador-network
     depends_on:
-      mysql:
+      mysql-componentes:
         condition: service_healthy
       ms-seguridad:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:8080/actuator/health || nc -z localhost 8080"]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8082/actuator/health || nc -z localhost 8082"]
+      timeout: 15s
+      retries: 8
+      interval: 30s
+      start_period: 120s
+
+  # Microservicio de Cotizaciones
+  ms-cotizador-cotizaciones:
+    build:
+      context: ./ms-cotizador-cotizaciones
+      dockerfile: Dockerfile
+    container_name: ms-cotizador-cotizaciones
+    restart: unless-stopped
+    environment:
+      # Base de datos
+      DB_HOST: mysql-cotizaciones
+      DB_PORT: 3306
+      DB_USERNAME: cotizaciones_user
+      DB_PASSWORD: cotizaciones_pass
+      # Seguridad
+      SECURITY_USERNAME: ${SECURITY_USERNAME}
+      SECURITY_PASSWORD: ${SECURITY_PASSWORD}
+      # JWT Configuration
+      JWT_MS_SEGURIDAD_BASE_URL: http://ms-seguridad:8081
+      JWT_MS_SEGURIDAD_CONTEXT_PATH: /seguridad/v1/api
+      JWT_EXPECTED_ISSUER: ${JWT_ISSUER}
+      JWT_CACHE_TIMEOUT_MS: ${JWT_CACHE_TIMEOUT_MS}
+      JWT_JWKS_REFRESH_INTERVAL_MS: ${JWT_JWKS_REFRESH_INTERVAL_MS}
+      JWT_JWKS_MAX_RETRIES: ${JWT_JWKS_MAX_RETRIES}
+      JWT_JWKS_INITIAL_DELAY_MS: ${JWT_JWKS_INITIAL_DELAY_MS}
+      JWT_MS_SEGURIDAD_TIMEOUT: ${JWT_MS_SEGURIDAD_TIMEOUT}
+      JWT_MS_SEGURIDAD_CONNECT_TIMEOUT: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT}
+      # Kafka Configuration
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # Java
+      JAVA_OPTS: "${COTIZACIONES_JAVA_OPTS:-'-Xms512m -Xmx1024m'}"
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      # Timezone
+      TZ: America/Mazatlan
+    # PUERTO NO EXPUESTO - Solo acceso a través del gateway
+    networks:
+      - cotizador-network
+    depends_on:
+      mysql-cotizaciones:
+        condition: service_healthy
+      ms-seguridad:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8083/actuator/health || nc -z localhost 8083"]
+      timeout: 15s
+      retries: 8
+      interval: 30s
+      start_period: 120s
+
+  # Microservicio de Pedidos
+  ms-cotizador-pedidos:
+    build:
+      context: ./ms-cotizador-pedidos
+      dockerfile: Dockerfile
+    container_name: ms-cotizador-pedidos
+    restart: unless-stopped
+    environment:
+      # Base de datos
+      DB_HOST: mysql-pedidos
+      DB_PORT: 3306
+      DB_USERNAME: pedidos_user
+      DB_PASSWORD: pedidos_pass
+      # Seguridad
+      SECURITY_USERNAME: ${SECURITY_USERNAME}
+      SECURITY_PASSWORD: ${SECURITY_PASSWORD}
+      # JWT Configuration
+      JWT_MS_SEGURIDAD_BASE_URL: http://ms-seguridad:8081
+      JWT_MS_SEGURIDAD_CONTEXT_PATH: /seguridad/v1/api
+      JWT_EXPECTED_ISSUER: ${JWT_ISSUER}
+      JWT_CACHE_TIMEOUT_MS: ${JWT_CACHE_TIMEOUT_MS}
+      JWT_JWKS_REFRESH_INTERVAL_MS: ${JWT_JWKS_REFRESH_INTERVAL_MS}
+      JWT_JWKS_MAX_RETRIES: ${JWT_JWKS_MAX_RETRIES}
+      JWT_JWKS_INITIAL_DELAY_MS: ${JWT_JWKS_INITIAL_DELAY_MS}
+      JWT_MS_SEGURIDAD_TIMEOUT: ${JWT_MS_SEGURIDAD_TIMEOUT}
+      JWT_MS_SEGURIDAD_CONNECT_TIMEOUT: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT}
+      # Client Configuration for other microservices
+      MS_COMPONENTES_BASE_URL: http://ms-cotizador-componentes:8082
+      MS_COTIZACIONES_BASE_URL: http://ms-cotizador-cotizaciones:8083
+      # Kafka Configuration
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # Java
+      JAVA_OPTS: "${PEDIDOS_JAVA_OPTS:-'-Xms512m -Xmx1024m'}"
+      # Spring profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      # Timezone
+      TZ: America/Mazatlan
+    # PUERTO NO EXPUESTO - Solo acceso a través del gateway
+    networks:
+      - cotizador-network
+    depends_on:
+      mysql-pedidos:
+        condition: service_healthy
+      ms-seguridad:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:8084/actuator/health || nc -z localhost 8084"]
       timeout: 15s
       retries: 8
       interval: 30s
@@ -179,6 +430,12 @@ services:
       backend:
         condition: service_healthy
       ms-seguridad:
+        condition: service_healthy
+      ms-cotizador-componentes:
+        condition: service_healthy
+      ms-cotizador-cotizaciones:
+        condition: service_healthy
+      ms-cotizador-pedidos:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
@@ -206,6 +463,12 @@ services:
         condition: service_healthy
       ms-seguridad:
         condition: service_healthy
+      ms-cotizador-componentes:
+        condition: service_healthy
+      ms-cotizador-cotizaciones:
+        condition: service_healthy
+      ms-cotizador-pedidos:
+        condition: service_healthy
       frontend:
         condition: service_healthy
     healthcheck:
@@ -220,3 +483,9 @@ networks:
   cotizador-network:
     driver: bridge
     name: cotizador-network
+
+# Volúmenes persistentes
+volumes:
+  kafka_data:
+    driver: local
+    name: cotizador_kafka_data

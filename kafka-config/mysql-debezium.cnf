@@ -1,0 +1,69 @@
+# =================================================================
+# CONFIGURACIÓN MYSQL PARA DEBEZIUM CDC
+# Configuración optimizada para Change Data Capture
+# =================================================================
+
+[mysqld]
+# CONFIGURACIÓN BINLOG PARA CDC
+# =============================
+# Habilitar binlog para captura de cambios
+log-bin=mysql-bin
+binlog-format=ROW
+binlog-row-image=FULL
+expire-logs-days=7
+sync-binlog=1
+
+# Server ID único para cada instancia
+# Este valor debe ser diferente para cada contenedor MySQL
+# server-id se configurará individualmente en cada contenedor
+
+# CONFIGURACIÓN GTID (para consistencia)
+# =====================================
+gtid-mode=ON
+enforce-gtid-consistency=ON
+
+# CONFIGURACIÓN DE PERFORMANCE
+# =============================
+# Optimización para operaciones de CDC
+max_connections=200
+innodb_buffer_pool_size=256M
+innodb_log_file_size=64M
+innodb_log_files_in_group=2
+
+# CONFIGURACIÓN DE REPLICACIÓN
+# ============================
+# Configuración para permitir conexiones de Debezium
+skip-name-resolve=1
+max_allowed_packet=64M
+
+# CONFIGURACIÓN DE TABLAS Y CHARSET
+# =================================
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+default-storage-engine=INNODB
+
+# CONFIGURACIÓN DE LOGS
+# =====================
+# Logs para troubleshooting
+general_log=0
+slow_query_log=1
+slow_query_log_file=/var/log/mysql/slow.log
+long_query_time=2
+
+# CONFIGURACIÓN DE TIMEOUTS
+# =========================
+interactive_timeout=600
+wait_timeout=600
+net_read_timeout=60
+net_write_timeout=60
+
+# CONFIGURACIÓN DE CDC ESPECÍFICA
+# ===============================
+# Permitir captura de cambios en tablas sin primary key
+binlog_rows_query_log_events=ON
+log_slave_updates=ON
+
+# CONFIGURACIÓN DE SEGURIDAD
+# ==========================
+# Configuración mínima para entorno de desarrollo
+sql_mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO

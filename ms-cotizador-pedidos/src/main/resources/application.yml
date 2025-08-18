@@ -1,0 +1,152 @@
+spring:
+  application:
+    name: cotizador-pedidos-api
+  
+  datasource:
+    url: jdbc:mysql://${DB_HOST:192.168.200.5}:${DB_PORT:3306}/cotizador_pedidos_db?serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME:pedidos_user}
+    password: ${DB_PASSWORD:pedidos_pass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: false
+  
+server:
+  port: 8084
+  servlet:
+    context-path: /pedidos/v1/api
+
+# Configuración de Seguridad
+security:
+  basic:
+    enabled: true
+    username: ${SECURITY_USERNAME:admin}
+    password: ${SECURITY_PASSWORD:admin123}
+    realm: "Cotizador API"
+
+# Configuración JWT
+jwt:
+  ms-seguridad:
+    base-url: ${JWT_MS_SEGURIDAD_BASE_URL:http://localhost:8080}
+    context-path: ${JWT_MS_SEGURIDAD_CONTEXT_PATH:/seguridad/v1/api}
+    timeout: ${JWT_MS_SEGURIDAD_TIMEOUT:10000}
+    connect-timeout: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT:5000}
+  expected-issuer: ${JWT_EXPECTED_ISSUER:ms-seguridad}
+  cache-timeout-ms: ${JWT_CACHE_TIMEOUT_MS:300000}
+  jwks:
+    refresh-interval-ms: ${JWT_JWKS_REFRESH_INTERVAL_MS:300000}
+    max-retries: ${JWT_JWKS_MAX_RETRIES:3}
+    initial-delay-ms: ${JWT_JWKS_INITIAL_DELAY_MS:10000}
+  # Configuración de rotación reactiva de llaves
+  key-rotation:
+    enabled: ${JWT_KEY_ROTATION_ENABLED:true}          # Habilitar rotación reactiva
+    security-alert-threshold: ${JWT_SECURITY_ALERT_THRESHOLD:3}  # Alertas después de N intentos con KID inválido
+    log-rotation-events: ${JWT_LOG_ROTATION_EVENTS:true}         # Registrar eventos de rotación
+    cleanup-old-keys: ${JWT_CLEANUP_OLD_KEYS:true}              # Limpiar llaves anteriores después de rotación
+  # Configuración de validación de sesiones
+  session-validation:
+    enabled: ${JWT_SESSION_VALIDATION_ENABLED:true}             # Habilitar validación de sesiones en JWT
+
+# Configuración de Sesiones
+session:
+  cache:
+    ttl-ms: ${SESSION_CACHE_TTL_MS:30000}          # TTL del caché de sesiones (30 segundos)
+    max-size: ${SESSION_CACHE_MAX_SIZE:1000}       # Tamaño máximo del caché
+    enabled: ${SESSION_CACHE_ENABLED:true}         # Habilitar caché de sesiones
+  validation:
+    timeout-ms: ${SESSION_VALIDATION_TIMEOUT_MS:5000}     # Timeout para validación de sesiones
+    max-retries: ${SESSION_VALIDATION_MAX_RETRIES:3}      # Máximo número de reintentos
+    retry-delay-ms: ${SESSION_VALIDATION_RETRY_DELAY_MS:1000}  # Delay entre reintentos
+
+# Configuración de Microservicios
+microservices:
+  cotizacion:
+    base-url: ${COTIZACION_SERVICE_URL:http://localhost:8083}
+    context-path: ${COTIZACION_SERVICE_CONTEXT_PATH:/cotizaciones/v1/api}
+    timeout: ${COTIZACION_SERVICE_TIMEOUT:30000}
+  componente:
+    base-url: ${COMPONENTE_SERVICE_URL:http://localhost:8082}
+    context-path: ${COMPONENTE_SERVICE_CONTEXT_PATH:/componentes/v1/api}
+    timeout: ${COMPONENTE_SERVICE_TIMEOUT:30000}
+
+# Configuración de Kafka
+kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumer:
+    group-id: ${KAFKA_CONSUMER_GROUP_ID:cotizador-pedidos-group}
+    auto-offset-reset: ${KAFKA_CONSUMER_AUTO_OFFSET_RESET:earliest}
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    enable-auto-commit: ${KAFKA_CONSUMER_ENABLE_AUTO_COMMIT:false}
+    fetch-min-size: ${KAFKA_CONSUMER_FETCH_MIN_SIZE:1024}
+    fetch-max-wait: ${KAFKA_CONSUMER_FETCH_MAX_WAIT:500}
+    max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:10}
+    properties:
+      spring.json.trusted.packages: "mx.com.qtx.cotizador.kafka.dto"
+      spring.json.type.mapping: "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent,CotizacionChangeEvent:mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent,ProveedorChangeEvent:mx.com.qtx.cotizador.kafka.dto.ProveedorChangeEvent"
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    acks: ${KAFKA_PRODUCER_ACKS:all}
+    retries: ${KAFKA_PRODUCER_RETRIES:3}
+    batch-size: ${KAFKA_PRODUCER_BATCH_SIZE:16384}
+    linger-ms: ${KAFKA_PRODUCER_LINGER_MS:5}
+    buffer-memory: ${KAFKA_PRODUCER_BUFFER_MEMORY:33554432}
+  topics:
+    componentes-changes: ${KAFKA_TOPIC_COMPONENTES_CHANGES:componentes.changes}
+    cotizaciones-changes: ${KAFKA_TOPIC_COTIZACIONES_CHANGES:cotizaciones.changes}
+    proveedores-changes: ${KAFKA_TOPIC_PROVEEDORES_CHANGES:proveedores.changes}
+    pedidos-changes: ${KAFKA_TOPIC_PEDIDOS_CHANGES:pedidos.changes}
+  retry:
+    attempts: ${KAFKA_RETRY_ATTEMPTS:3}
+    delay-ms: ${KAFKA_RETRY_DELAY_MS:1000}
+    multiplier: ${KAFKA_RETRY_MULTIPLIER:2.0}
+    max-delay-ms: ${KAFKA_RETRY_MAX_DELAY_MS:10000}
+
+# Configuración de Spring Boot Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+
+logging:
+  level:
+    mx.com.qtx: INFO
+    mx.com.qtx.cotizador.security: DEBUG
+    mx.com.qtx.cotizador.kafka: INFO
+    kafka.metrics: INFO
+    org.springframework.web: WARN
+    org.springframework.security: INFO
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type: WARN
+    com.zaxxer.hikari: WARN
+    org.springframework.boot: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/pedidos-application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+      total-size-cap: 500MB

@@ -1,4 +1,4 @@
-import apiClient from './apiClient'
+import componentesApiClient from './componentesApiClient'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
@@ -10,7 +10,7 @@ export const promocionesApi = {
    * Obtener todas las promociones
    */
   async getAll() {
-    const response = await apiClient.get(API_ENDPOINTS.PROMOCIONES.BASE)
+    const response = await componentesApiClient.get(API_ENDPOINTS.PROMOCIONES.BASE)
     return response.datos || []
   },
 
@@ -18,7 +18,7 @@ export const promocionesApi = {
    * Obtener promoción por ID
    */
   async getById(id) {
-    const response = await apiClient.get(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
+    const response = await componentesApiClient.get(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
     return response.datos
   },
 
@@ -26,7 +26,7 @@ export const promocionesApi = {
    * Crear nueva promoción
    */
   async create(promocionData) {
-    const response = await apiClient.post(API_ENDPOINTS.PROMOCIONES.BASE, promocionData)
+    const response = await componentesApiClient.post(API_ENDPOINTS.PROMOCIONES.BASE, promocionData)
     return response
   },
 
@@ -34,7 +34,7 @@ export const promocionesApi = {
    * Actualizar promoción existente
    */
   async update(id, promocionData) {
-    const response = await apiClient.put(API_ENDPOINTS.PROMOCIONES.BY_ID(id), promocionData)
+    const response = await componentesApiClient.put(API_ENDPOINTS.PROMOCIONES.BY_ID(id), promocionData)
     return response
   },
 
@@ -42,7 +42,7 @@ export const promocionesApi = {
    * Eliminar promoción
    */
   async delete(id) {
-    const response = await apiClient.delete(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
+    const response = await componentesApiClient.delete(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
     return response
   },
 

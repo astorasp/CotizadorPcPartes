@@ -1,16 +1,16 @@
-import apiClient from './apiClient'
+import cotizacionesApiClient from './cotizacionesApiClient'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
- * API service para Cotizaciones (migración exacta de PortalApi.cotizaciones)
- * Incluye todas las operaciones CRUD de cotizaciones y gestión de componentes/impuestos
+ * API service para Cotizaciones usando el microservicio específico de cotizaciones
+ * Migrado para usar ms-cotizador-cotizaciones via gateway
  */
 export const cotizacionesApi = {
   /**
    * Obtener todas las cotizaciones
    */
   async getAll() {
-    const response = await apiClient.get(API_ENDPOINTS.COTIZACIONES.BASE)
+    const response = await cotizacionesApiClient.get(API_ENDPOINTS.COTIZACIONES.BASE)
     return response.datos || []
   },
 
@@ -18,7 +18,7 @@ export const cotizacionesApi = {
    * Obtener cotización por ID
    */
   async getById(id) {
-    const response = await apiClient.get(API_ENDPOINTS.COTIZACIONES.BY_ID(id))
+    const response = await cotizacionesApiClient.get(API_ENDPOINTS.COTIZACIONES.BY_ID(id))
     return response.datos
   },
 
@@ -26,7 +26,7 @@ export const cotizacionesApi = {
    * Crear nueva cotización
    */
   async create(cotizacionData) {
-    const response = await apiClient.post(API_ENDPOINTS.COTIZACIONES.BASE, cotizacionData)
+    const response = await cotizacionesApiClient.post(API_ENDPOINTS.COTIZACIONES.BASE, cotizacionData)
     return response
   },
 
@@ -34,7 +34,7 @@ export const cotizacionesApi = {
    * Actualizar cotización existente
    */
   async update(id, cotizacionData) {
-    const response = await apiClient.put(API_ENDPOINTS.COTIZACIONES.BY_ID(id), cotizacionData)
+    const response = await cotizacionesApiClient.put(API_ENDPOINTS.COTIZACIONES.BY_ID(id), cotizacionData)
     return response
   },
 
@@ -42,7 +42,7 @@ export const cotizacionesApi = {
    * Eliminar cotización
    */
   async delete(id) {
-    const response = await apiClient.delete(API_ENDPOINTS.COTIZACIONES.BY_ID(id))
+    const response = await cotizacionesApiClient.delete(API_ENDPOINTS.COTIZACIONES.BY_ID(id))
     return response
   },
 
@@ -50,7 +50,7 @@ export const cotizacionesApi = {
    * Buscar cotizaciones por fecha
    */
   async getByDate(fecha) {
-    const response = await apiClient.get(API_ENDPOINTS.COTIZACIONES.BY_DATE, {
+    const response = await cotizacionesApiClient.get(API_ENDPOINTS.COTIZACIONES.BY_DATE, {
       params: { fecha }
     })
     return response.datos || []
@@ -61,7 +61,7 @@ export const cotizacionesApi = {
    */
   async exists(id) {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.COTIZACIONES.BY_ID(id))
+      const response = await cotizacionesApiClient.get(API_ENDPOINTS.COTIZACIONES.BY_ID(id))
       return response.datos !== null
     } catch (error) {
       // Si da 404, significa que no existe

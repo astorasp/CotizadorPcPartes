@@ -1,0 +1,119 @@
+-- Configurar UTF-8 explícitamente
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
+-- Insertar valores iniciales para tipos de componente
+INSERT INTO cotipo_componente (nombre) VALUES 
+    ('PC'), ('DISCO_DURO'), ('MONITOR'), ('TARJETA_VIDEO');
+
+-- ===================================================================
+-- MICROSERVICIO: ms-cotizador-componentes
+-- DATOS PARA: componentes, tipos, promociones y PCs únicamente
+-- ===================================================================
+-- DATOS ELIMINADOS (transferidos a otros microservicios):
+-- - proveedores → ms-cotizador-pedidos
+-- - cotizaciones y detalles → ms-cotizador-cotizaciones  
+-- - pedidos y detalles → ms-cotizador-pedidos
+-- ===================================================================
+
+-- Insertar promociones
+INSERT INTO copromocion (id_promocion, descripcion, nombre, vigencia_desde, vigencia_hasta) VALUES
+(1, 'Sin promoción', 'Regular', '2025-01-01', '2030-12-31'),
+(2, 'Descuento por cantidad en monitores', 'Monitores por Volumen', '2025-03-01', '2025-05-31'),
+(3, 'Promoción compra 3 paga 2 en tarjetas de video', 'Tarjetas 3x2', '2025-04-01', '2025-04-30'),
+(4, 'Descuento del 20% en componentes para PC', 'PC Componentes', '2025-05-01', '2025-07-31'),
+(5, 'Promoción compra 3 paga 2 en discos duros', 'HDD 3x2', '2025-06-01', '2025-06-30');
+
+-- Insertar detalles de promoción
+INSERT INTO codetalle_promocion (id_detalle_promocion, es_base, llevent, nombre, paguen, porc_dcto_plano, tipo_prom_acumulable, tipo_prom_base, id_promocion) VALUES
+-- Promoción Regular (sin promoción)
+(1, TRUE, 1, 'Precio Regular', 1, 0.00, NULL, 'BASE', 1),
+
+-- Promoción de Monitores por Volumen (descuento por cantidad)
+(2, TRUE, 1, 'Descuento por Volumen Monitores', 1, 0.00, NULL, 'BASE', 2),
+
+-- Promoción Tarjetas 3x2 (compra N lleva M)
+(3, TRUE, 3, 'Compra 3 Paga 2 - Tarjetas', 2, 33.33, NULL, 'BASE', 3),
+
+-- Promoción PC Componentes (descuento general)
+(4, TRUE, 1, 'Descuento en PC Componentes', 1, 20.00, NULL, 'BASE', 4),
+
+-- Promoción HDD 3x2 (compra N lleva M)
+(5, TRUE, 3, 'Compra 3 Paga 2 - Discos', 2, 33.33, NULL, 'BASE', 5);
+
+-- Insertar detalles de promoción por documento y cantidad
+INSERT INTO codetalle_prom_dscto_x_cant (num_dscto, cantidad, dscto, num_det_promocion, num_promocion) VALUES
+-- Detalle Promoción Monitores por Volumen - escalado por cantidad
+(1, 3, 5.00, 2, 2),  -- 5% para 3-5 monitores
+(2, 6, 10.00, 2, 2); -- 10% para 6+ monitores
+
+-- Insertar componentes - Monitores
+INSERT INTO cocomponente (id_componente, descripcion, marca, modelo, costo, precio_base, id_tipo_componente, id_promocion) VALUES
+('MON001', 'Monitor 24 pulgadas FullHD', 'LG', 'MN24F', 2500.00, 3500.00, 3, 2),
+('MON002', 'Monitor 27 pulgadas 4K', 'Samsung', 'S27K', 4200.00, 5900.00, 3, 2),
+('MON003', 'Monitor 32 pulgadas Curvo', 'Dell', 'D32C', 5100.00, 6800.00, 3, 1),
+('MON004', 'Monitor Gamer 24" 144Hz', 'ASUS', 'VG24', 3800.00, 5200.00, 3, 1),
+('MON005', 'Monitor UltraWide 29"', 'LG', 'UW29', 4500.00, 6300.00, 3, 2);
+
+-- Insertar componentes - Discos Duros
+INSERT INTO cocomponente (id_componente, descripcion, marca, modelo, costo, precio_base, id_tipo_componente, capacidad_alm, id_promocion) VALUES
+('HDD001', 'Disco Duro 1TB SATA', 'Western Digital', 'WD10EZEX', 850.00, 1200.00, (SELECT id FROM cotipo_componente WHERE nombre = 'DISCO_DURO'), '1TB', 5),
+('HDD002', 'SSD 500GB SATA', 'Samsung', 'EVO860', 1200.00, 1800.00, (SELECT id FROM cotipo_componente WHERE nombre = 'DISCO_DURO'), '500GB', 1),
+('HDD003', 'NVMe SSD 1TB', 'Kingston', 'KC2500', 2300.00, 3100.00, (SELECT id FROM cotipo_componente WHERE nombre = 'DISCO_DURO'), '1TB', 5),
+('HDD004', 'Disco Duro 2TB SATA', 'Seagate', 'Barracuda', 1100.00, 1600.00, (SELECT id FROM cotipo_componente WHERE nombre = 'DISCO_DURO'), '2TB', 1),
+('HDD005', 'SSD 1TB SATA', 'Crucial', 'MX500', 1800.00, 2400.00, (SELECT id FROM cotipo_componente WHERE nombre = 'DISCO_DURO'), '1TB', 5);
+
+-- Insertar componentes - Tarjetas de Video
+INSERT INTO cocomponente (id_componente, descripcion, marca, modelo, costo, precio_base, id_tipo_componente, memoria, id_promocion) VALUES
+('GPU001', 'Tarjeta de Video Gaming', 'NVIDIA', 'GeForce RTX 3060', 6000.00, 8500.00, (SELECT id FROM cotipo_componente WHERE nombre = 'TARJETA_VIDEO'), '8GB', 3),
+('GPU002', 'Tarjeta de Video Profesional', 'AMD', 'Radeon RX 6700 XT', 7500.00, 10200.00, (SELECT id FROM cotipo_componente WHERE nombre = 'TARJETA_VIDEO'), '12GB', 1),
+('GPU003', 'Tarjeta de Video Básica', 'NVIDIA', 'GeForce GTX 1650', 3200.00, 4500.00, (SELECT id FROM cotipo_componente WHERE nombre = 'TARJETA_VIDEO'), '4GB', 3),
+('GPU004', 'Tarjeta de Video Alto Rendimiento', 'NVIDIA', 'GeForce RTX 3080', 12000.00, 16500.00, (SELECT id FROM cotipo_componente WHERE nombre = 'TARJETA_VIDEO'), '10GB', 1),
+('GPU005', 'Tarjeta de Video Mid-Range', 'AMD', 'Radeon RX 6600', 5800.00, 7900.00, (SELECT id FROM cotipo_componente WHERE nombre = 'TARJETA_VIDEO'), '8GB', 3);
+
+-- Insertar componentes - PCs (ensamblados)
+INSERT INTO cocomponente (id_componente, descripcion, marca, modelo, costo, precio_base, id_tipo_componente, id_promocion) VALUES
+('PC001', 'PC Gaming Alto Rendimiento', 'Custom Build', 'Gamer Pro X', 25000.00, 32000.00, (SELECT id FROM cotipo_componente WHERE nombre = 'PC'), 4),
+('PC002', 'PC Oficina Estándar', 'Custom Build', 'Office Elite', 12000.00, 15000.00, (SELECT id FROM cotipo_componente WHERE nombre = 'PC'), 1),
+('PC003', 'PC Diseño Profesional', 'Custom Build', 'Design Master', 28000.00, 35000.00, (SELECT id FROM cotipo_componente WHERE nombre = 'PC'), 4),
+('PC004', 'PC Workstation', 'Custom Build', 'Power Station', 32000.00, 42000.00, (SELECT id FROM cotipo_componente WHERE nombre = 'PC'), 1),
+('PC005', 'PC Gaming Económica', 'Custom Build', 'Game Start', 18000.00, 24000.00, (SELECT id FROM cotipo_componente WHERE nombre = 'PC'), 4);
+
+-- Insertar relaciones PC-Componentes
+INSERT INTO copc_parte (id_pc, id_componente) VALUES
+-- PC001 - Gaming Alto Rendimiento
+('PC001', 'HDD003'), -- NVMe SSD 1TB
+('PC001', 'GPU004'), -- GeForce RTX 3080
+('PC001', 'MON004'), -- Monitor Gamer 24" 144Hz
+
+-- PC002 - Oficina Estándar
+('PC002', 'HDD002'), -- SSD 500GB SATA
+('PC002', 'GPU003'), -- GeForce GTX 1650
+('PC002', 'MON001'), -- Monitor 24 pulgadas FullHD
+
+-- PC003 - Diseño Profesional
+('PC003', 'HDD005'), -- SSD 1TB SATA
+('PC003', 'GPU002'), -- Radeon RX 6700 XT
+('PC003', 'MON002'), -- Monitor 27 pulgadas 4K
+
+-- PC004 - Workstation
+('PC004', 'HDD003'), -- NVMe SSD 1TB
+('PC004', 'HDD004'), -- Disco Duro 2TB SATA
+('PC004', 'GPU004'), -- GeForce RTX 3080
+('PC004', 'MON003'), -- Monitor 32 pulgadas Curvo
+
+-- PC005 - Gaming Económica
+('PC005', 'HDD001'), -- Disco Duro 1TB SATA
+('PC005', 'GPU005'), -- Radeon RX 6600
+('PC005', 'MON001'); -- Monitor 24 pulgadas FullHD
+
+-- ===================================================================
+-- FIN DE DATOS PARA ms-cotizador-componentes
+-- TOTAL DE REGISTROS INSERTADOS:
+-- - cotipo_componente: 4 tipos
+-- - copromocion: 5 promociones
+-- - codetalle_promocion: 5 detalles
+-- - codetalle_prom_dscto_x_cant: 2 descuentos por cantidad
+-- - cocomponente: 20 componentes (5 de cada tipo)
+-- - copc_parte: 12 relaciones PC-componente
+-- ===================================================================
