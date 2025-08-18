@@ -141,7 +141,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         // Primero crear un proveedor
         String requestCreacion = """
             {
-                "cve": "PROV004",
+                "cve": "PROV006",
                 "nombre": "Proveedor Original",
                 "razonSocial": "Proveedor Original S.A."
             }
@@ -169,12 +169,12 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .body(requestActualizacion)
         .when()
-            .put(PROVEEDORES_API_PATH + "/PROV004")
+            .put(PROVEEDORES_API_PATH + "/PROV006")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
             .body("mensaje", equalTo("Proveedor actualizado exitosamente"))
-            .body("datos.cve", equalTo("PROV004"))
+            .body("datos.cve", equalTo("PROV006"))
             .body("datos.nombre", equalTo("Proveedor Actualizado"))
             .body("datos.razonSocial", equalTo("Proveedor Actualizado S.A. de C.V."));
     }
@@ -208,7 +208,7 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         // Crear un proveedor
         String requestCreacion = """
             {
-                "cve": "PROV005",
+                "cve": "PROV007",
                 "nombre": "Proveedor Consulta",
                 "razonSocial": "Proveedor Consulta S.A."
             }
@@ -227,12 +227,12 @@ class ProveedorIntegrationTest extends BaseIntegrationTest {
         given()
         .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
         .when()
-            .get(PROVEEDORES_API_PATH + "/PROV005")
+            .get(PROVEEDORES_API_PATH + "/PROV007")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"))
             .body("mensaje", equalTo("Proveedor encontrado"))
-            .body("datos.cve", equalTo("PROV005"))
+            .body("datos.cve", equalTo("PROV007"))
             .body("datos.nombre", equalTo("Proveedor Consulta"))
             .body("datos.razonSocial", equalTo("Proveedor Consulta S.A."));
     }

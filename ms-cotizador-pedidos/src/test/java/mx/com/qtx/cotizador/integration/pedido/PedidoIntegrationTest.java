@@ -362,7 +362,7 @@ class PedidoIntegrationTest extends BaseIntegrationTest {
         
         // Paso 1: Generar pedido
         GenerarPedidoRequest request = GenerarPedidoRequest.builder()
-                .cotizacionId(5) // PC Gaming Económica
+                .cotizacionId(1) // PC Gaming Alto Rendimiento (cotización existente)
                 .cveProveedor("PROV001") // Proveedor existente: TechCorp Distribution
                 .fechaEmision(LocalDate.of(2025, 5, 18))
                 .fechaEntrega(LocalDate.of(2025, 6, 2))

@@ -122,16 +122,8 @@ public class PedidoEntityConverter {
             
             // Buscar componente por ID si existe
             if (componenteRepo != null) {
-                // Buscar el componente por ID usando el idArticulo del detalle
-                if (detalleCore.getIdArticulo() != null && !detalleCore.getIdArticulo().isEmpty()) {
-                    try {
-                        Integer componenteId = Integer.parseInt(detalleCore.getIdArticulo());
-                        Componente componente = componenteRepo.findById(componenteId.toString()).orElse(null);
-                        detalleEntity.setComponente(componente);
-                    } catch (NumberFormatException e) {
-                        // Log error o manejar ID no numérico
-                    }
-                }
+                Componente componente = componenteRepo.findById(detalleCore.getIdArticulo()).orElse(null);
+                detalleEntity.setComponente(componente);
             }
             
             // Establecer la relación con el pedido
@@ -257,7 +249,7 @@ public class PedidoEntityConverter {
             for (mx.com.qtx.cotizador.entidad.DetallePedido detalleEntity : pedidoEntity.getDetalles()) {
                 // Extraer datos del detalle de la entidad
                 String idArticulo = detalleEntity.getComponente() != null ? 
-                        detalleEntity.getComponente().getId().toString() : "N/A";
+                        detalleEntity.getComponente().getId() : "N/A";
                         
                 String descripcion = detalleEntity.getComponente() != null ? 
                         detalleEntity.getComponente().getDescripcion() : "Sin descripción";
