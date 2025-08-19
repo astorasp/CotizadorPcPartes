@@ -7,7 +7,7 @@ import { API_CONFIG } from '@/utils/constants'
  */
 class CotizacionesApiClient extends BaseApiClient {
   constructor() {
-    super(API_CONFIG.COTIZACIONES_BASE_URL)
+    super(API_CONFIG.COTIZACIONES_BASE_URL + '/cotizaciones')
   }
 }
 

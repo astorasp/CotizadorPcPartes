@@ -5,9 +5,9 @@
 // Configuración de la API
 export const API_CONFIG = {
   // URLs base por microservicio via gateway
-  COMPONENTES_BASE_URL: import.meta.env.VITE_COMPONENTES_API_BASE_URL || '/api/componentes',
-  COTIZACIONES_BASE_URL: import.meta.env.VITE_COTIZACIONES_API_BASE_URL || '/api/cotizaciones',
-  PEDIDOS_BASE_URL: import.meta.env.VITE_PEDIDOS_API_BASE_URL || '/api/pedidos',
+  COMPONENTES_BASE_URL: import.meta.env.VITE_COMPONENTES_API_BASE_URL || '/api',
+  COTIZACIONES_BASE_URL: import.meta.env.VITE_COTIZACIONES_API_BASE_URL || '/api',
+  PEDIDOS_BASE_URL: import.meta.env.VITE_PEDIDOS_API_BASE_URL || '/api',
   SEGURIDAD_BASE_URL: import.meta.env.VITE_SEGURIDAD_API_BASE_URL || '/api/seguridad',
   // URL legacy para compatibilidad (deprecada)
   BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api/cotizador',
@@ -22,7 +22,7 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // Componentes
   COMPONENTES: {
-    BASE: '',
+    BASE: '/componentes',
     BY_ID: (id) => `/${id}`,
     BY_TYPE: (tipo) => `/tipo/${tipo}`,
     EXISTS: (id) => `/${id}/existe`

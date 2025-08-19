@@ -7,7 +7,7 @@ import { API_CONFIG } from '@/utils/constants'
  */
 class PedidosApiClient extends BaseApiClient {
   constructor() {
-    super(API_CONFIG.PEDIDOS_BASE_URL)
+    super(API_CONFIG.PEDIDOS_BASE_URL + '/pedidos')
   }
 }
 
