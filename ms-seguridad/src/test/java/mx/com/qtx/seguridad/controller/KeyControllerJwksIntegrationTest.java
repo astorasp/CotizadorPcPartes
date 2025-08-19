@@ -43,7 +43,7 @@ class KeyControllerJwksIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        baseUrl = "http://localhost:" + port + "/seguridad/v1/api/keys";
+        baseUrl = "http://localhost:" + port + "/api/v1/seguridad/keys";
     }
 
     @Test

@@ -48,7 +48,7 @@ public abstract class BaseIntegrationTest {
 
     @BeforeEach
     void setUpBaseTest() {
-        baseUrl = "http://localhost:" + port + "/seguridad/v1/api";
+        baseUrl = "http://localhost:" + port + "/api/v1/seguridad";
         
         // Solo limpiar la lista de tokens para el nuevo test
         activeTokens.clear();
