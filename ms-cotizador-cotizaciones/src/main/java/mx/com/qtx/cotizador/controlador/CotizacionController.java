@@ -27,7 +27,7 @@ import java.util.List;
  * - CONSULTOR: Solo lectura para consultoría
  */
 @RestController
-@RequestMapping("/cotizaciones/v1/api")
+@RequestMapping("/cotizaciones")
 @CrossOrigin(origins = "*")
 @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'VENDEDOR', 'INVENTARIO', 'CONSULTOR')")
 public class CotizacionController {

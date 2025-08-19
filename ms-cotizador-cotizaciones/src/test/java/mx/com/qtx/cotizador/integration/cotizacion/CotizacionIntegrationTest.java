@@ -37,7 +37,7 @@ import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 public class CotizacionIntegrationTest extends BaseIntegrationTest {
 
     // Base path para el API de cotizaciones
-    private static final String COTIZACIONES_API_PATH = "/cotizaciones/v1/api";
+    private static final String COTIZACIONES_API_PATH = "/cotizaciones";
     
     // Sin mocks HTTP - usando datos locales precargados via DDL/DML
 

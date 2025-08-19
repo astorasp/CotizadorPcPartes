@@ -36,6 +36,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
     private ProveedorCreateRequest validCreateRequest;
     private ProveedorUpdateRequest validUpdateRequest;
     private static final String TEST_PROVEEDOR_CVE = "PERM_TEST_001";
+    private static final String PROVEEDORES_API_PATH = "/proveedores";
 
     @BeforeEach
     protected void setUp() {
@@ -65,7 +66,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validCreateRequest)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -80,7 +81,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("admin", "admin123")
         .when()
-            .get("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .get(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -97,7 +98,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validUpdateRequest)
         .when()
-            .put("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .put(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -112,7 +113,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("admin", "admin123")
         .when()
-            .delete("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .delete(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -124,7 +125,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("admin", "admin123")
         .when()
-            .get("/proveedores/buscar/nombre?nombre=Test")
+            .get(PROVEEDORES_API_PATH + "/buscar/nombre?nombre=Test")
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -144,7 +145,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validCreateRequest)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -160,7 +161,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validUpdateRequest)
         .when()
-            .put("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .put(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -174,7 +175,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("gerente", "gerente123")
         .when()
-            .delete("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .delete(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(403); // Forbidden
     }
@@ -191,7 +192,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("vendedor", "vendedor123")
         .when()
-            .get("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .get(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -207,7 +208,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validCreateRequest)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(403); // Forbidden
     }
@@ -222,7 +223,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validUpdateRequest)
         .when()
-            .put("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .put(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(403); // Forbidden
     }
@@ -235,7 +236,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("vendedor", "vendedor123")
         .when()
-            .delete("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .delete(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(403); // Forbidden
     }
@@ -254,7 +255,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validCreateRequest)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -270,7 +271,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validUpdateRequest)
         .when()
-            .put("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .put(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -284,7 +285,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("inventario", "inventario123")
         .when()
-            .delete("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .delete(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(403); // Forbidden
     }
@@ -301,7 +302,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("consultor", "consultor123")
         .when()
-            .get("/proveedores/" + TEST_PROVEEDOR_CVE)
+            .get(PROVEEDORES_API_PATH + "/" + TEST_PROVEEDOR_CVE)
         .then()
             .statusCode(200)
             .body("codigo", equalTo("0"));
@@ -317,7 +318,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             .contentType(ContentType.JSON)
             .body(validCreateRequest)
         .when()
-            .post("/proveedores")
+            .post(PROVEEDORES_API_PATH)
         .then()
             .statusCode(403); // Forbidden
     }
@@ -333,7 +334,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("gerente", "gerente123")
         .when()
-            .get("/proveedores/buscar/nombre?nombre=Test")
+            .get(PROVEEDORES_API_PATH + "/buscar/nombre?nombre=Test")
         .then()
             .statusCode(200);
 
@@ -341,7 +342,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("vendedor", "vendedor123")
         .when()
-            .get("/proveedores/buscar/nombre?nombre=Test")
+            .get(PROVEEDORES_API_PATH + "/buscar/nombre?nombre=Test")
         .then()
             .statusCode(200);
 
@@ -349,7 +350,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .auth().basic("consultor", "consultor123")
         .when()
-            .get("/proveedores/buscar/nombre?nombre=Test")
+            .get(PROVEEDORES_API_PATH + "/buscar/nombre?nombre=Test")
         .then()
             .statusCode(200);
     }
@@ -365,7 +366,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
             given()
                 .auth().basic(users[i], passwords[i])
             .when()
-                .get("/proveedores/buscar/razon-social?razonSocial=Test")
+                .get(PROVEEDORES_API_PATH + "/buscar/razon-social?razonSocial=Test")
             .then()
                 .statusCode(200)
                 .body("codigo", equalTo("0"));
@@ -382,7 +383,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
         given()
             .contentType(ContentType.JSON)
         .when()
-            .get("/proveedores")
+            .get(PROVEEDORES_API_PATH)
         .then()
             .statusCode(401); // Unauthorized
     }
@@ -398,7 +399,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
                 .contentType(ContentType.JSON)
                 .body(validCreateRequest)
             .when()
-                .post("/proveedores")
+                .post(PROVEEDORES_API_PATH)
             .then()
                 .statusCode(200);
         } catch (Exception e) {

@@ -19,7 +19,7 @@ spring:
   
 server:
   port: 8084
-
+  context-path: /api/v1
 # Configuración de Seguridad
 security:
   basic:

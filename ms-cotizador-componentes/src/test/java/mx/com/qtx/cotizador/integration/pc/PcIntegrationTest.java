@@ -32,10 +32,10 @@ import io.restassured.response.ValidatableResponse;
 class PcIntegrationTest extends BaseIntegrationTest {
 
     // Base path para el API de PCs
-    private static final String PCS_API_PATH = "/pcs/v1/api";
+    private static final String PCS_API_PATH = "/pcs";
     
     // Base path para el API de Componentes (usado para crear componentes en tests de PC)
-    private static final String COMPONENTES_API_PATH = "/componentes/v1/api";
+    private static final String COMPONENTES_API_PATH = "/componentes";
 
     private static final String USER_ADMIN = "test";
     private static final String PASSWORD_ADMIN = "test123";

@@ -35,7 +35,7 @@ public class PedidoRolePermissionsTest extends BaseIntegrationTest {
     private GenerarPedidoRequest validGenerarPedidoRequest;
     private static final Integer TEST_COTIZACION_ID = 1;
     private static final String TEST_PROVEEDOR_CVE = "PROV-001";
-    private static final String URL_PEDIDOS = "/pedidos/v1/api";
+    private static final String URL_PEDIDOS = "/pedidos";
 
     @BeforeEach
     protected void setUp() {

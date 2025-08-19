@@ -1,4 +1,4 @@
-import pedidosApiClient from './pedidosApiClient'
+import proveedoresApiClient from './proveedoresApiClient'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
@@ -10,7 +10,7 @@ export const proveedoresApi = {
    * Obtener todos los proveedores
    */
   async getAll() {
-    const response = await pedidosApiClient.get(API_ENDPOINTS.PROVEEDORES.BASE)
+    const response = await proveedoresApiClient.get(API_ENDPOINTS.PROVEEDORES.BASE)
     return response.datos || []
   },
 
@@ -18,7 +18,7 @@ export const proveedoresApi = {
    * Obtener proveedor por clave
    */
   async getByCve(cve) {
-    const response = await pedidosApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve))
+    const response = await proveedoresApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve))
     return response.datos
   },
 
@@ -26,7 +26,7 @@ export const proveedoresApi = {
    * Crear nuevo proveedor
    */
   async create(proveedorData) {
-    const response = await pedidosApiClient.post(API_ENDPOINTS.PROVEEDORES.BASE, proveedorData)
+    const response = await proveedoresApiClient.post(API_ENDPOINTS.PROVEEDORES.BASE, proveedorData)
     return response
   },
 
@@ -34,7 +34,7 @@ export const proveedoresApi = {
    * Actualizar proveedor existente
    */
   async update(cve, proveedorData) {
-    const response = await pedidosApiClient.put(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve), proveedorData)
+    const response = await proveedoresApiClient.put(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve), proveedorData)
     return response
   },
 
@@ -42,7 +42,7 @@ export const proveedoresApi = {
    * Eliminar proveedor
    */
   async delete(cve) {
-    const response = await pedidosApiClient.delete(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve))
+    const response = await proveedoresApiClient.delete(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve))
     return response
   },
 
@@ -50,7 +50,7 @@ export const proveedoresApi = {
    * Buscar proveedores por nombre comercial
    */
   async searchByName(nombre) {
-    const response = await pedidosApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_NAME, {
+    const response = await proveedoresApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_NAME, {
       params: { nombre }
     })
     return response.datos || []
@@ -60,7 +60,7 @@ export const proveedoresApi = {
    * Buscar proveedores por razón social
    */
   async searchByRazon(razonSocial) {
-    const response = await pedidosApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_RAZON, {
+    const response = await proveedoresApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_RAZON, {
       params: { razonSocial }
     })
     return response.datos || []
@@ -71,7 +71,7 @@ export const proveedoresApi = {
    */
   async exists(cve) {
     try {
-      const response = await pedidosApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve))
+      const response = await proveedoresApiClient.get(API_ENDPOINTS.PROVEEDORES.BY_CVE(cve))
       return response.datos !== null
     } catch (error) {
       // Si da 404, significa que no existe

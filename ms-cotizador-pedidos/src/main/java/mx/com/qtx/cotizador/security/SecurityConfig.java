@@ -85,11 +85,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 
                 // Endpoints de API que requieren autenticación
-                .requestMatchers("/componentes/**").authenticated()
-                .requestMatchers("/pcs/**").authenticated()
-                .requestMatchers("/cotizaciones/**").authenticated()
                 .requestMatchers("/pedidos/**").authenticated()
-                .requestMatchers("/promociones/**").authenticated()
                 .requestMatchers("/proveedores/**").authenticated()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ¡IMPORTANTE!
                 // Cualquier otro endpoint requiere autenticación

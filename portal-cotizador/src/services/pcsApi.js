@@ -1,4 +1,4 @@
-import componentesApiClient from './componentesApiClient'
+import pcsApiClient from './pcsApiClient'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
@@ -10,7 +10,7 @@ export const pcsApi = {
    * Obtener todas las PCs
    */
   async getAll() {
-    const response = await componentesApiClient.get(API_ENDPOINTS.PCS.BASE)
+    const response = await pcsApiClient.get(API_ENDPOINTS.PCS.BASE)
     return response.datos || []
   },
 
@@ -18,7 +18,7 @@ export const pcsApi = {
    * Obtener PC por ID
    */
   async getById(id) {
-    const response = await componentesApiClient.get(API_ENDPOINTS.PCS.BY_ID(id))
+    const response = await pcsApiClient.get(API_ENDPOINTS.PCS.BY_ID(id))
     return response.datos
   },
 
@@ -26,7 +26,7 @@ export const pcsApi = {
    * Crear nueva PC
    */
   async create(pcData) {
-    const response = await componentesApiClient.post(API_ENDPOINTS.PCS.BASE, pcData)
+    const response = await pcsApiClient.post(API_ENDPOINTS.PCS.BASE, pcData)
     return response
   },
 
@@ -34,7 +34,7 @@ export const pcsApi = {
    * Actualizar PC existente
    */
   async update(id, pcData) {
-    const response = await componentesApiClient.put(API_ENDPOINTS.PCS.BY_ID(id), pcData)
+    const response = await pcsApiClient.put(API_ENDPOINTS.PCS.BY_ID(id), pcData)
     return response
   },
 
@@ -42,7 +42,7 @@ export const pcsApi = {
    * Eliminar PC
    */
   async delete(id) {
-    const response = await componentesApiClient.delete(API_ENDPOINTS.PCS.BY_ID(id))
+    const response = await pcsApiClient.delete(API_ENDPOINTS.PCS.BY_ID(id))
     return response
   },
 
@@ -50,7 +50,7 @@ export const pcsApi = {
    * Obtener componentes de una PC específica
    */
   async getComponents(pcId) {
-    const response = await componentesApiClient.get(API_ENDPOINTS.PCS.COMPONENTS(pcId))
+    const response = await pcsApiClient.get(API_ENDPOINTS.PCS.COMPONENTS(pcId))
     return response.datos || []
   },
 
@@ -58,7 +58,7 @@ export const pcsApi = {
    * Agregar componente a una PC
    */
   async addComponent(pcId, componentData) {
-    const response = await componentesApiClient.post(API_ENDPOINTS.PCS.ADD_COMPONENT(pcId), componentData)
+    const response = await pcsApiClient.post(API_ENDPOINTS.PCS.ADD_COMPONENT(pcId), componentData)
     return response
   },
 
@@ -66,7 +66,7 @@ export const pcsApi = {
    * Quitar componente de una PC
    */
   async removeComponent(pcId, componenteId) {
-    const response = await componentesApiClient.delete(API_ENDPOINTS.PCS.REMOVE_COMPONENT(pcId, componenteId))
+    const response = await pcsApiClient.delete(API_ENDPOINTS.PCS.REMOVE_COMPONENT(pcId, componenteId))
     return response
   },
 
@@ -75,7 +75,7 @@ export const pcsApi = {
    */
   async exists(id) {
     try {
-      const response = await componentesApiClient.get(API_ENDPOINTS.PCS.BY_ID(id))
+      const response = await pcsApiClient.get(API_ENDPOINTS.PCS.BY_ID(id))
       return response.datos !== null
     } catch (error) {
       // Si da 404, significa que no existe

@@ -25,6 +25,7 @@ import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEntityConverter;
 import mx.com.qtx.cotizador.kafka.service.EventPublishingService;
+import org.springframework.beans.factory.annotation.Autowired;
 import mx.com.qtx.cotizador.util.Errores;
 
 import java.math.BigDecimal;
@@ -40,14 +41,14 @@ public class CotizacionServicio {
     
     private final CotizacionRepositorio cotizacionRepo;
     private final ComponenteRepositorio componenteRepositorio;
-    private final EventPublishingService eventPublishingService;
+    
+    @Autowired(required = false)
+    private EventPublishingService eventPublishingService;
     
     public CotizacionServicio(CotizacionRepositorio cotizacionRepo, 
-                             ComponenteRepositorio componenteRepositorio,
-                             EventPublishingService eventPublishingService) {
+                             ComponenteRepositorio componenteRepositorio) {
         this.cotizacionRepo = cotizacionRepo;
         this.componenteRepositorio = componenteRepositorio;
-        this.eventPublishingService = eventPublishingService;
     }   
 
     /**
@@ -114,8 +115,10 @@ public class CotizacionServicio {
             // 6. Persistir la entidad cotización
             mx.com.qtx.cotizador.entidad.Cotizacion cotizacionGuardada = cotizacionRepo.save(cotizacionEntity);
             
-            // 7. Publicar evento de cotización creada
-            eventPublishingService.publishCotizacionCreated(cotizacionDominio);
+            // 7. Publicar evento de cotización creada (solo si Kafka está habilitado)
+            if (eventPublishingService != null) {
+                eventPublishingService.publishCotizacionCreated(cotizacionDominio);
+            }
             
             // 8. Convertir a DTO de respuesta
             CotizacionResponse response = CotizacionMapper.toResponse(cotizacionGuardada);
@@ -206,8 +209,10 @@ public class CotizacionServicio {
             var cotizacionEntity = CotizacionEntityConverter.convertToNewEntity(cotizacion);
             cotizacionRepo.save(cotizacionEntity);
             
-            // Publicar evento de cotización creada
-            eventPublishingService.publishCotizacionCreated(cotizacion);
+            // Publicar evento de cotización creada (solo si Kafka está habilitado)
+            if (eventPublishingService != null) {
+                eventPublishingService.publishCotizacionCreated(cotizacion);
+            }
             
             logger.info("Cotización guardada exitosamente: {}", cotizacion.getNum());
             return new ApiResponse<>(Errores.OK.getCodigo(), Errores.OK.getMensaje());

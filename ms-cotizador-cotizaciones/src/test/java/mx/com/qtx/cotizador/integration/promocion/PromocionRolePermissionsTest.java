@@ -45,7 +45,7 @@ public class PromocionRolePermissionsTest extends BaseIntegrationTest {
     @BeforeEach
     protected void setUp() {
         RestAssured.port = port;
-        RestAssured.basePath = "/cotizador/v1/api";
+        RestAssured.basePath = "";
     }
 
     @Test

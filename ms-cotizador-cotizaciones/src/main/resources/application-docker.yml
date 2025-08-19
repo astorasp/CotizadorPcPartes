@@ -34,6 +34,7 @@ spring:
 # Configuración específica para contenedor
 server:
   port: 8083
+  context-path: /api/v1
   tomcat:
     max-threads: 200
     min-spare-threads: 10

@@ -3,11 +3,7 @@ package mx.com.qtx.cotizador.kafka.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,6 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Subagente3E - [2025-01-17 19:05:00 MST] - Monitoreo de consumidor Kafka
  */
 @Service
+@Profile("!test")
 public class KafkaMonitorService {
     
     private static final Logger logger = LoggerFactory.getLogger(KafkaMonitorService.class);

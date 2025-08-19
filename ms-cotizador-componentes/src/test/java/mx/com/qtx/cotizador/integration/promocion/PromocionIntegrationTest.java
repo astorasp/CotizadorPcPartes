@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.*;
 class PromocionIntegrationTest extends BaseIntegrationTest {
 
     // Base path para el API de promociones
-    private static final String PROMOCIONES_API_PATH = "/promociones/v1/api";
+    private static final String PROMOCIONES_API_PATH = "/promociones";
 
     // ✅ Configuración heredada de BaseIntegrationTest:
     // - Base de datos MySQL compartida

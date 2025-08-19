@@ -33,7 +33,7 @@ import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 public class ComponenteIntegrationTest extends BaseIntegrationTest {
 
     // Base path para el API de componentes
-    private static final String COMPONENTES_API_PATH = "/componentes/v1/api";
+    private static final String COMPONENTES_API_PATH = "/componentes";
     
     // IDs de componentes para tests (usaremos estos para mantener consistencia)
     private static final String COMPONENTE_TEST_ID = "TEST001";

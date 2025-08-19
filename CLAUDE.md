@@ -347,3 +347,4 @@ GET    /promociones       # List promotions
 POST   /promociones       # Create (ADMIN, GERENTE)
 DELETE /promociones/{id}  # Delete (ADMIN only)
 ```
+- No mover el mapping de los controladores de los proyectos de microservicios a menos que el usuario asi lo solicite expresamente

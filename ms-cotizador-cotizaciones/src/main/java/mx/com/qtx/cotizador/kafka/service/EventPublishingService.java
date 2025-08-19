@@ -10,6 +10,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Servicio para publicar eventos de cambio de cotizaciones en Kafka.
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
  * eventos cuando ocurren cambios en cotizaciones.
  */
 @Service
+@Profile("!test")
 public class EventPublishingService {
 
     private static final Logger logger = LoggerFactory.getLogger(EventPublishingService.class);
