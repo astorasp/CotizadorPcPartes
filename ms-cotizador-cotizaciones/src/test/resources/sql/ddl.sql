@@ -88,37 +88,6 @@ CREATE TABLE IF NOT EXISTS codetalle_cotizacion (
     FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente)
 ) ENGINE=InnoDB;
 
--- Tabla de proveedores
-CREATE TABLE IF NOT EXISTS coproveedor (
-    cve VARCHAR(50) PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    razon_social VARCHAR(255) NOT NULL
-) ENGINE=InnoDB;
-
--- Tabla de pedidos
-CREATE TABLE IF NOT EXISTS copedido (
-    num_pedido INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    cve_proveedor VARCHAR(50) NOT NULL,
-    fecha_emision DATE NOT NULL,
-    fecha_entrega DATE NOT NULL,
-    nivel_surtido INT NOT NULL,
-    total DECIMAL(20,2) NOT NULL,
-    FOREIGN KEY (cve_proveedor) REFERENCES coproveedor(cve)
-) ENGINE=InnoDB;
-
--- Tabla de detalles de pedido
-CREATE TABLE IF NOT EXISTS codetalle_pedido (
-    num_pedido INT UNSIGNED NOT NULL,
-    num_detalle INT UNSIGNED NOT NULL,
-    cantidad INT UNSIGNED NOT NULL,
-    precio_unitario DECIMAL(20,2) NOT NULL,
-    total_cotizado DECIMAL(20,2) NOT NULL,
-    id_componente VARCHAR(50) NOT NULL,
-    PRIMARY KEY (num_pedido, num_detalle),
-    FOREIGN KEY (num_pedido) REFERENCES copedido(num_pedido) ON DELETE CASCADE,
-    FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente)
-) ENGINE=InnoDB;
-
 -- Crear índices para mejorar el rendimiento
 CREATE INDEX idx_componente_tipo ON cocomponente (id_tipo_componente);
 CREATE INDEX idx_promocion ON cocomponente (id_promocion);
