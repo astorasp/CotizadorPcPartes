@@ -8,6 +8,14 @@ services:
     image: apache/kafka:4.0.0
     container_name: cotizador-kafka
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'          # Está usando 121.53% CPU (>1 core)
+          memory: 768M         # Buffer sobre 424MB actuales
+        reservations:
+          cpus: '1.0'          # Garantía mínima
+          memory: 512M
     environment:
       # Configuración KRaft (sin Zookeeper)
       KAFKA_NODE_ID: 1
@@ -47,6 +55,14 @@ services:
     image: debezium/connect:2.5
     container_name: cotizador-kafka-connect
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 6.78% CPU
+          memory: 768M         # Buffer sobre 461MB actuales
+        reservations:
+          cpus: '0.5'          # Garantía mínima
+          memory: 256M
     environment:
       BOOTSTRAP_SERVERS: kafka:9092
       GROUP_ID: cotizador-connect
@@ -84,6 +100,14 @@ services:
     image: mysql:8.4.4
     container_name: seguridad-mysql
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 0.48% CPU
+          memory: 768M         # Buffer sobre 452MB actuales
+        reservations:
+          cpus: '0.25'         # Garantía mínima
+          memory: 256M
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_SEGURIDAD_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_SEGURIDAD_DATABASE}
@@ -116,6 +140,14 @@ services:
     image: mysql:8.4.4
     container_name: componentes-mysql
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 0.47% CPU
+          memory: 768M         # Buffer sobre 452MB actuales
+        reservations:
+          cpus: '0.25'         # Garantía mínima
+          memory: 256M
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: cotizador_componentes_db
@@ -148,6 +180,14 @@ services:
     image: mysql:8.4.4
     container_name: cotizaciones-mysql
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 0.45% CPU
+          memory: 768M         # Buffer sobre 444MB actuales
+        reservations:
+          cpus: '0.25'         # Garantía mínima
+          memory: 256M
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: cotizador_cotizaciones_db
@@ -180,6 +220,14 @@ services:
     image: mysql:8.4.4
     container_name: pedidos-mysql
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 0.48% CPU
+          memory: 768M         # Buffer sobre 441MB actuales
+        reservations:
+          cpus: '0.25'         # Garantía mínima
+          memory: 256M
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: cotizador_pedidos_db
@@ -218,6 +266,14 @@ services:
       dockerfile: Dockerfile
     container_name: ms-seguridad
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 0.42% CPU
+          memory: 1G           # Buffer sobre 431MB actuales (Java app)
+        reservations:
+          cpus: '0.25'         # Garantía mínima
+          memory: 256M
     environment:
       # Base de datos
       DB_HOST: mysql-seguridad
@@ -264,6 +320,14 @@ services:
       dockerfile: Dockerfile
     container_name: ms-cotizador-componentes
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 0.12% CPU
+          memory: 1G           # Buffer sobre 618MB actuales (Java app)
+        reservations:
+          cpus: '0.25'         # Garantía mínima
+          memory: 256M
     environment:
       # Base de datos
       DB_HOST: mysql-componentes
@@ -315,6 +379,14 @@ services:
       dockerfile: Dockerfile
     container_name: ms-cotizador-cotizaciones
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'          # Está usando 0.43% CPU
+          memory: 1G           # Buffer sobre 623MB actuales (Java app)
+        reservations:
+          cpus: '0.25'         # Garantía mínima
+          memory: 256M
     environment:
       # Base de datos
       DB_HOST: mysql-cotizaciones
@@ -366,6 +438,14 @@ services:
       dockerfile: Dockerfile
     container_name: ms-cotizador-pedidos
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'          # Está usando 9.68% CPU (el más activo)
+          memory: 1G           # Buffer sobre 648MB actuales (Java app)
+        reservations:
+          cpus: '0.5'          # Garantía mínima mayor
+          memory: 256M
     environment:
       # Base de datos
       DB_HOST: mysql-pedidos
@@ -420,6 +500,14 @@ services:
       dockerfile: Dockerfile
     container_name: cotizador-frontend-vue
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'          # Está usando 0.00% CPU
+          memory: 128M         # Buffer sobre 10MB actuales
+        reservations:
+          cpus: '0.1'          # Garantía mínima
+          memory: 32M
     environment:
       # Timezone
       TZ: America/Mazatlan
@@ -449,6 +537,14 @@ services:
       dockerfile: Dockerfile
     container_name: cotizador-gateway
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'          # Está usando 0.00% CPU
+          memory: 128M         # Buffer sobre 10MB actuales
+        reservations:
+          cpus: '0.1'          # Garantía mínima
+          memory: 32M
     environment:
       # Timezone
       TZ: America/Mazatlan
