@@ -2,12 +2,8 @@
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SET CHARACTER SET utf8mb4;
 
--- Crear base de datos
-CREATE DATABASE IF NOT EXISTS cotizador
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
-USE cotizador;
+-- Usar base de datos creada por docker-compose
+USE cotizador_componentes_db;
 
 -- Tabla para tipos de componentes
 CREATE TABLE cotipo_componente (

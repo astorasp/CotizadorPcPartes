@@ -19,7 +19,8 @@ spring:
   
 server:
   port: 8084
-  context-path: /api/v1
+  servlet:
+    context-path: /api/v1
 # Configuración de Seguridad
 security:
   basic:
@@ -32,7 +33,7 @@ security:
 jwt:
   ms-seguridad:
     base-url: ${JWT_MS_SEGURIDAD_BASE_URL:http://localhost:8080}
-    context-path: ${JWT_MS_SEGURIDAD_CONTEXT_PATH:/seguridad/v1/api}
+    context-path: ${JWT_MS_SEGURIDAD_CONTEXT_PATH:/api/v1/seguridad}
     timeout: ${JWT_MS_SEGURIDAD_TIMEOUT:10000}
     connect-timeout: ${JWT_MS_SEGURIDAD_CONNECT_TIMEOUT:5000}
   expected-issuer: ${JWT_EXPECTED_ISSUER:ms-seguridad}

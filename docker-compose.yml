@@ -164,7 +164,8 @@ services:
       - --server-id=184054
     # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
-      - ./kafka-config/sql/componentes-ddl.sql:/docker-entrypoint-initdb.d/01-componentes-ddl.sql
+      - ./ms-cotizador-componentes/sql/ddl.sql:/docker-entrypoint-initdb.d/01-componentes-ddl.sql
+      - ./ms-cotizador-componentes/sql/dml.sql:/docker-entrypoint-initdb.d/02-componentes-dml.sql
       - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network
@@ -204,7 +205,8 @@ services:
       - --server-id=184055
     # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
-      - ./kafka-config/sql/cotizaciones-ddl.sql:/docker-entrypoint-initdb.d/01-cotizaciones-ddl.sql
+      - ./ms-cotizador-cotizaciones/sql/ddl.sql:/docker-entrypoint-initdb.d/01-cotizaciones-ddl.sql
+      - ./ms-cotizador-cotizaciones/sql/dml.sql:/docker-entrypoint-initdb.d/02-cotizaciones-dml.sql
       - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network
@@ -244,7 +246,8 @@ services:
       - --server-id=184056
     # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
-      - ./kafka-config/sql/pedidos-ddl.sql:/docker-entrypoint-initdb.d/01-pedidos-ddl.sql
+      - ./ms-cotizador-pedidos/sql/ddl.sql:/docker-entrypoint-initdb.d/01-pedidos-ddl.sql
+      - ./ms-cotizador-pedidos/sql/dml.sql:/docker-entrypoint-initdb.d/02-pedidos-dml.sql
       - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network
@@ -320,6 +323,8 @@ services:
       dockerfile: Dockerfile
     container_name: ms-cotizador-componentes
     restart: unless-stopped
+    ports:
+      - "8082:8082"
     deploy:
       resources:
         limits:
@@ -339,7 +344,7 @@ services:
       SECURITY_PASSWORD: ${SECURITY_PASSWORD}
       # JWT Configuration
       JWT_MS_SEGURIDAD_BASE_URL: http://ms-seguridad:8081
-      JWT_MS_SEGURIDAD_CONTEXT_PATH: /seguridad/v1/api
+      JWT_MS_SEGURIDAD_CONTEXT_PATH: /api/v1/seguridad
       JWT_EXPECTED_ISSUER: ${JWT_ISSUER}
       JWT_CACHE_TIMEOUT_MS: ${JWT_CACHE_TIMEOUT_MS}
       JWT_JWKS_REFRESH_INTERVAL_MS: ${JWT_JWKS_REFRESH_INTERVAL_MS}
@@ -379,6 +384,8 @@ services:
       dockerfile: Dockerfile
     container_name: ms-cotizador-cotizaciones
     restart: unless-stopped
+    ports:
+      - "8085:8083"
     deploy:
       resources:
         limits:
@@ -398,7 +405,7 @@ services:
       SECURITY_PASSWORD: ${SECURITY_PASSWORD}
       # JWT Configuration
       JWT_MS_SEGURIDAD_BASE_URL: http://ms-seguridad:8081
-      JWT_MS_SEGURIDAD_CONTEXT_PATH: /seguridad/v1/api
+      JWT_MS_SEGURIDAD_CONTEXT_PATH: /api/v1/seguridad
       JWT_EXPECTED_ISSUER: ${JWT_ISSUER}
       JWT_CACHE_TIMEOUT_MS: ${JWT_CACHE_TIMEOUT_MS}
       JWT_JWKS_REFRESH_INTERVAL_MS: ${JWT_JWKS_REFRESH_INTERVAL_MS}
@@ -438,6 +445,8 @@ services:
       dockerfile: Dockerfile
     container_name: ms-cotizador-pedidos
     restart: unless-stopped
+    ports:
+      - "8084:8084"
     deploy:
       resources:
         limits:
@@ -457,7 +466,7 @@ services:
       SECURITY_PASSWORD: ${SECURITY_PASSWORD}
       # JWT Configuration
       JWT_MS_SEGURIDAD_BASE_URL: http://ms-seguridad:8081
-      JWT_MS_SEGURIDAD_CONTEXT_PATH: /seguridad/v1/api
+      JWT_MS_SEGURIDAD_CONTEXT_PATH: /api/v1/seguridad
       JWT_EXPECTED_ISSUER: ${JWT_ISSUER}
       JWT_CACHE_TIMEOUT_MS: ${JWT_CACHE_TIMEOUT_MS}
       JWT_JWKS_REFRESH_INTERVAL_MS: ${JWT_JWKS_REFRESH_INTERVAL_MS}
