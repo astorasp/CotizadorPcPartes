@@ -11,6 +11,7 @@ package mx.com.qtx.cotizador.kafka.dto;
 public class ComponenteChangeEvent extends BaseChangeEvent {
     
     private String descripcion;
+    private Double costo;
     private Double precioBase;
     private String marca;
     private String modelo;
@@ -39,11 +40,12 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
      * Constructor completo para creación/actualización
      */
     public ComponenteChangeEvent(OperationType operationType, String entityId, String descripcion, 
-                                Double precioBase, String marca, String modelo, 
+                                Double costo, Double precioBase, String marca, String modelo, 
                                 String tipoComponente, Long promocionId, String capacidadAlm, 
                                 String memoria, Boolean activo) {
         this(operationType, entityId);
         this.descripcion = descripcion;
+        this.costo = costo;
         this.precioBase = precioBase;
         this.marca = marca;
         this.modelo = modelo;
@@ -61,6 +63,14 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+    
+    public Double getCosto() {
+        return costo;
+    }
+    
+    public void setCosto(Double costo) {
+        this.costo = costo;
     }
     
     public Double getPrecioBase() {

@@ -138,7 +138,7 @@ public class ComponenteEventProducer {
      * @return Clave del evento
      */
     private String generateEventKey(BaseChangeEvent event) {
-        return String.format("%s_%s_%d",
+        return String.format("%s_%s_%s",
                 event.getEventType().name(),
                 event.getOperationType().name(),
                 event.getEntityId());

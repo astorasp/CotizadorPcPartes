@@ -68,6 +68,7 @@ class ComponenteEventProducerTest {
             BaseChangeEvent.OperationType.CREATE,
             "1",
             "Test Component",
+            0.0,
             150.0,
             "TestBrand",
             "TestModel",
@@ -96,7 +97,8 @@ class ComponenteEventProducerTest {
         ComponenteChangeEvent event = new ComponenteChangeEvent(
             BaseChangeEvent.OperationType.UPDATE,
             "2",
-            "Updated Component",
+            "Updated Component", 
+            0.0,
             200.0,
             "UpdatedBrand",
             "UpdatedModel",

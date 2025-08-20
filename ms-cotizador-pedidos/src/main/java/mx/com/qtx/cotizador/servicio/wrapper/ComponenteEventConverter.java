@@ -39,9 +39,11 @@ public class ComponenteEventConverter {
         if (event.getPrecioBase() != null) {
             BigDecimal precioBase = BigDecimal.valueOf(event.getPrecioBase());
             componente.setPrecioBase(precioBase);
-            
-            // Calcular costo como 70% del precio base (regla de negocio típica)
-            BigDecimal costo = precioBase.multiply(BigDecimal.valueOf(0.7));
+        }
+        
+        // Costo - usar directamente del evento
+        if (event.getCosto() != null) {
+            BigDecimal costo = BigDecimal.valueOf(event.getCosto());
             componente.setCosto(costo);
         }
         

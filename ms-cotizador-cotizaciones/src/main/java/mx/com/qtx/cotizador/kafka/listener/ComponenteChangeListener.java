@@ -4,6 +4,7 @@ import mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent;
 import mx.com.qtx.cotizador.kafka.service.KafkaMonitorService;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.repositorio.TipoComponenteRepositorio;
+import mx.com.qtx.cotizador.repositorio.PromocionRepositorio;
 import mx.com.qtx.cotizador.entidad.Componente;
 import mx.com.qtx.cotizador.entidad.TipoComponente;
 import mx.com.qtx.cotizador.servicio.wrapper.ComponenteEventConverter;
@@ -41,6 +42,9 @@ public class ComponenteChangeListener {
     
     @Autowired
     private TipoComponenteRepositorio tipoComponenteRepositorio;
+    
+    @Autowired
+    private PromocionRepositorio promocionRepositorio;
     
     @Autowired
     private KafkaMonitorService monitorService;
@@ -117,7 +121,7 @@ public class ComponenteChangeListener {
      */
     private void handleComponenteCreated(ComponenteChangeEvent event) {
         logger.info("Procesando creación de componente: id={}, nombre={}, precio={}", 
-                   event.getEntityId(), event.getNombre(), event.getPrecio());
+                   event.getEntityId(), event.getNombre(), event.getPrecioBase());
         
         try {
             // Buscar el tipo de componente correspondiente
@@ -129,7 +133,7 @@ public class ComponenteChangeListener {
             }
             
             // Convertir evento a entidad y persistir
-            Componente componente = ComponenteEventConverter.toEntity(event, tipoComponente);
+            Componente componente = ComponenteEventConverter.toEntity(event, tipoComponente, promocionRepositorio);
             componenteRepositorio.save(componente);
             
             logger.info("Componente creado y persistido localmente: id={}, tipo={}", 
@@ -148,7 +152,7 @@ public class ComponenteChangeListener {
      */
     private void handleComponenteUpdated(ComponenteChangeEvent event) {
         logger.info("Procesando actualización de componente: id={}, nombre={}, precio={}", 
-                   event.getEntityId(), event.getNombre(), event.getPrecio());
+                   event.getEntityId(), event.getNombre(), event.getPrecioBase());
         
         try {
             // Buscar el tipo de componente correspondiente
@@ -160,7 +164,7 @@ public class ComponenteChangeListener {
             }
             
             // Convertir evento a entidad y persistir (save hace upsert por ID)
-            Componente componente = ComponenteEventConverter.toEntity(event, tipoComponente);
+            Componente componente = ComponenteEventConverter.toEntity(event, tipoComponente, promocionRepositorio);
             componenteRepositorio.save(componente);
             
             logger.info("Componente actualizado y persistido localmente: id={}, tipo={}", 

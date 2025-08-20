@@ -32,14 +32,14 @@ public class ProveedorChangeEvent extends BaseChangeEvent {
     /**
      * Constructor con parámetros básicos
      */
-    public ProveedorChangeEvent(OperationType operationType, Long entityId) {
-        super(EventType.PROVEEDOR_CHANGE, operationType, String.valueOf(entityId));
+    public ProveedorChangeEvent(OperationType operationType, String entityId) {
+        super(EventType.PROVEEDOR_CHANGE, operationType, entityId);
     }
     
     /**
      * Constructor completo para creación/actualización
      */
-    public ProveedorChangeEvent(OperationType operationType, Long entityId, String nombre, 
+    public ProveedorChangeEvent(OperationType operationType, String entityId, String nombre, 
                                String telefono, String email, String contacto, String direccion, 
                                String ciudad, String estado, String pais, String codigoPostal, Boolean activo) {
         this(operationType, entityId);

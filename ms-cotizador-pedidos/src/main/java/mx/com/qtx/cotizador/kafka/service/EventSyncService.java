@@ -7,10 +7,14 @@ import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
 import mx.com.qtx.cotizador.repositorio.PedidoRepositorio;
 import mx.com.qtx.cotizador.repositorio.ProveedorRepositorio;
+import mx.com.qtx.cotizador.repositorio.PromocionRepositorio;
+import mx.com.qtx.cotizador.repositorio.TipoComponenteRepositorio;
 import mx.com.qtx.cotizador.entidad.Componente;
 import mx.com.qtx.cotizador.entidad.Cotizacion;
 import mx.com.qtx.cotizador.entidad.Pedido;
 import mx.com.qtx.cotizador.entidad.Proveedor;
+import mx.com.qtx.cotizador.entidad.Promocion;
+import mx.com.qtx.cotizador.entidad.TipoComponente;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +56,12 @@ public class EventSyncService {
     
     @Autowired
     private PedidoRepositorio pedidoRepositorio;
+    
+    @Autowired
+    private PromocionRepositorio promocionRepositorio;
+    
+    @Autowired
+    private TipoComponenteRepositorio tipoComponenteRepositorio;
     
     @Autowired
     private ConflictResolutionService conflictResolutionService;
@@ -113,8 +123,16 @@ public class EventSyncService {
                 // Conflicto: componente ya existe
                 conflictResolutionService.resolveComponenteConflict(existingComponente.get(), event);
             } else {
+                // Buscar el tipo de componente correspondiente
+                String tipoNombre = mapearTipoComponente(event.getTipoComponente());
+                TipoComponente tipoComponente = tipoComponenteRepositorio.findByNombre(tipoNombre);
+                
+                if (tipoComponente == null) {
+                    logger.warn("Tipo de componente no encontrado: {}. Creando componente sin tipo.", tipoNombre);
+                }
+                
                 // Crear nuevo componente local
-                Componente nuevoComponente = mapToComponenteEntity(event);
+                Componente nuevoComponente = mapToComponenteEntity(event, tipoComponente);
                 componenteRepositorio.save(nuevoComponente);
                 logger.info("Componente sincronizado exitosamente: id={}", event.getEntityId());
             }
@@ -137,11 +155,19 @@ public class EventSyncService {
             if (existingComponente.isPresent()) {
                 Componente componente = existingComponente.get();
                 
+                // Buscar el tipo de componente correspondiente
+                String tipoNombre = mapearTipoComponente(event.getTipoComponente());
+                TipoComponente tipoComponente = tipoComponenteRepositorio.findByNombre(tipoNombre);
+                
+                if (tipoComponente == null) {
+                    logger.warn("Tipo de componente no encontrado: {}. Actualizando componente sin tipo.", tipoNombre);
+                }
+                
                 // Resolver conflictos antes de actualizar
                 if (conflictResolutionService.hasConflict(componente, event)) {
                     conflictResolutionService.resolveComponenteConflict(componente, event);
                 } else {
-                    updateComponenteFromEvent(componente, event);
+                    updateComponenteFromEvent(componente, event, tipoComponente);
                     componenteRepositorio.save(componente);
                     logger.info("Componente actualizado exitosamente: id={}", event.getEntityId());
                 }
@@ -333,22 +359,22 @@ public class EventSyncService {
     
     // === MÉTODOS DE VALIDACIÓN Y NOTIFICACIÓN ===
     
-    public void validatePendingOrdersWithNewComponent(Long componenteId) {
+    public void validatePendingOrdersWithNewComponent(String componenteId) {
         logger.debug("Validando pedidos pendientes con nuevo componente: {}", componenteId);
         // Implementar lógica de validación
     }
     
-    public void validatePendingOrdersWithUpdatedComponent(Long componenteId, Double precio) {
+    public void validatePendingOrdersWithUpdatedComponent(String componenteId, Double precio) {
         logger.debug("Validando pedidos pendientes con componente actualizado: {}, precio: {}", componenteId, precio);
         // Implementar lógica de validación
     }
     
-    public void notifyPriceChangeToOrders(Long componenteId, Double precio) {
+    public void notifyPriceChangeToOrders(String componenteId, Double precio) {
         logger.debug("Notificando cambio de precio a pedidos: {}, precio: {}", componenteId, precio);
         // Implementar lógica de notificación
     }
     
-    public void handleOrdersWithDeletedComponent(Long componenteId) {
+    public void handleOrdersWithDeletedComponent(String componenteId) {
         logger.debug("Manejando pedidos con componente eliminado: {}", componenteId);
         // Implementar lógica para manejar pedidos afectados
     }
@@ -415,27 +441,65 @@ public class EventSyncService {
     
     // === MÉTODOS DE MAPEO ===
     
-    private Componente mapToComponenteEntity(ComponenteChangeEvent event) {
+    private Componente mapToComponenteEntity(ComponenteChangeEvent event, TipoComponente tipoComponente) {
         Componente componente = new Componente();
         componente.setId(event.getEntityId());
         componente.setDescripcion(event.getDescripcion());
         if (event.getPrecioBase() != null) {
             componente.setPrecioBase(BigDecimal.valueOf(event.getPrecioBase()));
         }
+        // Agregar campo costo que faltaba
+        if (event.getCosto() != null) {
+            componente.setCosto(BigDecimal.valueOf(event.getCosto()));
+        }
         componente.setMarca(event.getMarca());
         componente.setModelo(event.getModelo());
         componente.setCapacidadAlm(event.getCapacidadAlm());
         componente.setMemoria(event.getMemoria());
+        
+        // Relación con TipoComponente
+        componente.setTipoComponente(tipoComponente);
+        
+        // Promoción - buscar por ID si viene en el evento
+        if (event.getPromocionId() != null) {
+            try {
+                Promocion promocion = promocionRepositorio.findById(event.getPromocionId().intValue()).orElse(null);
+                componente.setPromocion(promocion);
+            } catch (Exception e) {
+                // Si no se encuentra la promoción, dejar como null
+                componente.setPromocion(null);
+            }
+        } else {
+            componente.setPromocion(null);
+        }
         return componente;
     }
     
-    private void updateComponenteFromEvent(Componente componente, ComponenteChangeEvent event) {
+    private void updateComponenteFromEvent(Componente componente, ComponenteChangeEvent event, TipoComponente tipoComponente) {
         if (event.getDescripcion() != null) componente.setDescripcion(event.getDescripcion());
         if (event.getPrecioBase() != null) componente.setPrecioBase(BigDecimal.valueOf(event.getPrecioBase()));
+        // Agregar campo costo que faltaba
+        if (event.getCosto() != null) componente.setCosto(BigDecimal.valueOf(event.getCosto()));
         if (event.getMarca() != null) componente.setMarca(event.getMarca());
         if (event.getModelo() != null) componente.setModelo(event.getModelo());
         if (event.getCapacidadAlm() != null) componente.setCapacidadAlm(event.getCapacidadAlm());
         if (event.getMemoria() != null) componente.setMemoria(event.getMemoria());
+        
+        // Actualizar relación con TipoComponente si es necesario
+        if (tipoComponente != null) {
+            componente.setTipoComponente(tipoComponente);
+        }
+        
+        // Promoción - buscar por ID si viene en el evento
+        if (event.getPromocionId() != null) {
+            try {
+                Promocion promocion = promocionRepositorio.findById(event.getPromocionId().intValue()).orElse(null);
+                componente.setPromocion(promocion);
+            } catch (Exception e) {
+                // Si no se encuentra la promoción, dejar como null
+                componente.setPromocion(null);
+            }
+        }
     }
     
     private Cotizacion mapToCotizacionEntity(CotizacionChangeEvent event) {
@@ -472,5 +536,41 @@ public class EventSyncService {
     private void updateProveedorFromEvent(Proveedor proveedor, ProveedorChangeEvent event) {
         if (event.getNombre() != null) proveedor.setNombre(event.getNombre());
         // Solo actualizar campos que existen en la entidad
+    }
+    
+    /**
+     * Mapea el nombre del tipo de componente desde el evento al nombre usado en la BD local.
+     * 
+     * @param tipoComponenteEvent Tipo de componente desde el evento
+     * @return Nombre normalizado para buscar en la BD local
+     */
+    private String mapearTipoComponente(String tipoComponenteEvent) {
+        if (tipoComponenteEvent == null) {
+            return "MONITOR"; // Tipo por defecto
+        }
+        
+        switch (tipoComponenteEvent.toUpperCase().trim()) {
+            case "DISCO_DURO":
+            case "HDD":
+            case "SSD":
+                return "DISCO_DURO";
+            case "TARJETA_VIDEO":
+            case "TARJETA_GRAFICA": 
+            case "GPU":
+                return "TARJETA_VIDEO";
+            case "MONITOR":
+            case "PANTALLA":
+                return "MONITOR";
+            case "PC":
+                return "PC";
+            case "RAM":
+            case "MEMORIA":
+                return "RAM";
+            case "CPU":
+            case "PROCESADOR":
+                return "CPU";
+            default:
+                return "MONITOR"; // Tipo por defecto para tipos no reconocidos
+        }
     }
 }

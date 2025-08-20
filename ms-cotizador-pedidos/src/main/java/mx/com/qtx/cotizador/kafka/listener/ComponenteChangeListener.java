@@ -128,7 +128,7 @@ public class ComponenteChangeListener {
             eventSyncService.syncComponenteCreated(event);
             
             // Verificar impacto en pedidos existentes
-            eventSyncService.validatePendingOrdersWithNewComponent(Long.parseLong(event.getEntityId()));
+            eventSyncService.validatePendingOrdersWithNewComponent(event.getEntityId());
             
             logger.debug("Componente creado registrado: id={}, tipo={}, activo={}", 
                         event.getEntityId(), event.getTipoComponente(), event.getActivo());
@@ -150,11 +150,11 @@ public class ComponenteChangeListener {
             eventSyncService.syncComponenteUpdated(event);
             
             // Verificar impacto en pedidos pendientes
-            eventSyncService.validatePendingOrdersWithUpdatedComponent(Long.parseLong(event.getEntityId()), event.getPrecioBase());
+            eventSyncService.validatePendingOrdersWithUpdatedComponent(event.getEntityId(), event.getPrecioBase());
             
             // Notificar cambios de precio si es relevante
             if (event.getPrecioBase() != null) {
-                eventSyncService.notifyPriceChangeToOrders(Long.parseLong(event.getEntityId()), event.getPrecioBase());
+                eventSyncService.notifyPriceChangeToOrders(event.getEntityId(), event.getPrecioBase());
             }
             
             logger.debug("Componente actualizado registrado: id={}, tipo={}, activo={}", 
@@ -176,7 +176,7 @@ public class ComponenteChangeListener {
             eventSyncService.syncComponenteDeleted(event);
             
             // Verificar pedidos afectados por la eliminación
-            eventSyncService.handleOrdersWithDeletedComponent(Long.parseLong(event.getEntityId()));
+            eventSyncService.handleOrdersWithDeletedComponent(event.getEntityId());
             
             logger.debug("Componente eliminado registrado: id={}", event.getEntityId());
         } catch (Exception e) {

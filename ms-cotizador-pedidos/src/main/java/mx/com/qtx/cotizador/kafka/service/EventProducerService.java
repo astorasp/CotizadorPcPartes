@@ -188,7 +188,7 @@ public class EventProducerService {
         logger.info("Enviando evento de eliminación de proveedor: id={}", proveedorId);
         
         try {
-            ProveedorChangeEvent event = new ProveedorChangeEvent(BaseChangeEvent.OperationType.DELETE, proveedorId);
+            ProveedorChangeEvent event = new ProveedorChangeEvent(BaseChangeEvent.OperationType.DELETE, String.valueOf(proveedorId));
             sendEventAsync(proveedoresTopic, event.getEntityId().toString(), event);
         } catch (Exception e) {
             logger.error("Error enviando evento de eliminación de proveedor: {}", e.getMessage(), e);
@@ -258,7 +258,7 @@ public class EventProducerService {
     private ProveedorChangeEvent createProveedorChangeEvent(BaseChangeEvent.OperationType operationType, Proveedor proveedor) {
         return new ProveedorChangeEvent(
             operationType,
-            Long.parseLong(proveedor.getCve()),
+            proveedor.getCve(),
             proveedor.getNombre(),
             null, // No hay telefono en la entidad
             null, // No hay email en la entidad

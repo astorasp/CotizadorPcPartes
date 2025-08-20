@@ -83,7 +83,7 @@ public class ConflictResolutionService {
         } catch (Exception e) {
             logger.error("Error resolviendo conflicto de componente: {}", e.getMessage(), e);
             // En caso de error, mantener datos locales y registrar para revisión manual
-            logConflictForManualResolution("COMPONENTE", Long.parseLong(localComponente.getId()), event.getEventId(), e.getMessage());
+            logConflictForManualResolution("COMPONENTE", localComponente.getId(), event.getEventId(), e.getMessage());
         }
     }
     
@@ -122,7 +122,7 @@ public class ConflictResolutionService {
             }
         } catch (Exception e) {
             logger.error("Error resolviendo conflicto de cotización: {}", e.getMessage(), e);
-            logConflictForManualResolution("COTIZACION", (long) localCotizacion.getFolio(), event.getEventId(), e.getMessage());
+            logConflictForManualResolution("COTIZACION", String.valueOf(localCotizacion.getFolio()), event.getEventId(), e.getMessage());
         }
     }
     
@@ -167,7 +167,7 @@ public class ConflictResolutionService {
             }
         } catch (Exception e) {
             logger.error("Error resolviendo conflicto de proveedor: {}", e.getMessage(), e);
-            logConflictForManualResolution("PROVEEDOR", Long.parseLong(localProveedor.getCve()), event.getEventId(), e.getMessage());
+            logConflictForManualResolution("PROVEEDOR", localProveedor.getCve(), event.getEventId(), e.getMessage());
         }
     }
     
@@ -281,7 +281,7 @@ public class ConflictResolutionService {
     /**
      * Registra conflicto para resolución manual.
      */
-    private void logConflictForManualResolution(String entityType, Long entityId, String eventId, String error) {
+    private void logConflictForManualResolution(String entityType, String entityId, String eventId, String error) {
         logger.error("CONFLICTO REQUIERE RESOLUCIÓN MANUAL: entityType={}, entityId={}, eventId={}, error={}", 
                     entityType, entityId, eventId, error);
         

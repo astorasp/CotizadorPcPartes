@@ -2,7 +2,9 @@ package mx.com.qtx.cotizador.servicio.wrapper;
 
 import mx.com.qtx.cotizador.entidad.Componente;
 import mx.com.qtx.cotizador.entidad.TipoComponente;
+import mx.com.qtx.cotizador.entidad.Promocion;
 import mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent;
+import mx.com.qtx.cotizador.repositorio.PromocionRepositorio;
 import java.math.BigDecimal;
 
 /**
@@ -16,9 +18,10 @@ public class ComponenteEventConverter {
      * 
      * @param event Evento de cambio de componente desde Kafka
      * @param tipoComponente Entidad TipoComponente ya cargada desde la BD local
+     * @param promocionRepositorio Repositorio para buscar promociones por ID
      * @return Entidad Componente lista para persistir
      */
-    public static Componente toEntity(ComponenteChangeEvent event, TipoComponente tipoComponente) {
+    public static Componente toEntity(ComponenteChangeEvent event, TipoComponente tipoComponente, PromocionRepositorio promocionRepositorio) {
         if (event == null) {
             return null;
         }
@@ -38,20 +41,32 @@ public class ComponenteEventConverter {
         }
         
         // Precios - convertir Double a BigDecimal
-        if (event.getPrecio() != null) {
-            BigDecimal precio = BigDecimal.valueOf(event.getPrecio());
-            componente.setPrecioBase(precio);
-            
-            // Calcular costo como 70% del precio base (regla de negocio típica)
-            BigDecimal costo = precio.multiply(BigDecimal.valueOf(0.7));
+        if (event.getPrecioBase() != null) {
+            BigDecimal precioBase = BigDecimal.valueOf(event.getPrecioBase());
+            componente.setPrecioBase(precioBase);
+        }
+        
+        // Costo - usar directamente del evento
+        if (event.getCosto() != null) {
+            BigDecimal costo = BigDecimal.valueOf(event.getCosto());
             componente.setCosto(costo);
         }
         
         // Relación con TipoComponente
         componente.setTipoComponente(tipoComponente);
         
-        // TODO: Mapear promoción si es necesario
-        // componente.setPromocion(null); // Se puede establecer después según reglas de negocio
+        // Promoción - buscar por ID si viene en el evento
+        if (event.getPromocionId() != null && promocionRepositorio != null) {
+            try {
+                Promocion promocion = promocionRepositorio.findById(event.getPromocionId().intValue()).orElse(null);
+                componente.setPromocion(promocion);
+            } catch (Exception e) {
+                // Si no se encuentra la promoción, dejar como null
+                componente.setPromocion(null);
+            }
+        } else {
+            componente.setPromocion(null);
+        }
         
         return componente;
     }

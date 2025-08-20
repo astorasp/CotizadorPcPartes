@@ -12,10 +12,12 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     
     private String nombre;
     private String descripcion;
-    private Double precio;
+    private Double costo;
+    private Double precioBase;
     private String marca;
     private String modelo;
     private String tipoComponente;
+    private Long promocionId;
     private Long proveedorId;
     private String especificaciones;
     private Boolean activo;
@@ -39,15 +41,17 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
      * Constructor completo para creación/actualización
      */
     public ComponenteChangeEvent(OperationType operationType, String entityId, String nombre, 
-                                String descripcion, Double precio, String marca, String modelo, 
-                                String tipoComponente, Long proveedorId, String especificaciones, Boolean activo) {
+                                String descripcion, Double costo, Double precioBase, String marca, String modelo, 
+                                String tipoComponente, Long promocionId, Long proveedorId, String especificaciones, Boolean activo) {
         this(operationType, entityId);
         this.nombre = nombre;
         this.descripcion = descripcion;
-        this.precio = precio;
+        this.costo = costo;
+        this.precioBase = precioBase;
         this.marca = marca;
         this.modelo = modelo;
         this.tipoComponente = tipoComponente;
+        this.promocionId = promocionId;
         this.proveedorId = proveedorId;
         this.especificaciones = especificaciones;
         this.activo = activo;
@@ -70,12 +74,20 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
         this.descripcion = descripcion;
     }
     
-    public Double getPrecio() {
-        return precio;
+    public Double getCosto() {
+        return costo;
     }
     
-    public void setPrecio(Double precio) {
-        this.precio = precio;
+    public void setCosto(Double costo) {
+        this.costo = costo;
+    }
+    
+    public Double getPrecioBase() {
+        return precioBase;
+    }
+    
+    public void setPrecioBase(Double precioBase) {
+        this.precioBase = precioBase;
     }
     
     public String getMarca() {
@@ -100,6 +112,14 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     
     public void setTipoComponente(String tipoComponente) {
         this.tipoComponente = tipoComponente;
+    }
+    
+    public Long getPromocionId() {
+        return promocionId;
+    }
+    
+    public void setPromocionId(Long promocionId) {
+        this.promocionId = promocionId;
     }
     
     public Long getProveedorId() {
