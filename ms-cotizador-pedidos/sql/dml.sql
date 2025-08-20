@@ -3,8 +3,9 @@
 -- Microservicio: ms-cotizador-pedidos
 -- =================================================================
 
--- TestContainers ya configuró la base de datos, no necesitamos USE
--- Solo insertar los datos directamente
+-- Configurar UTF-8 explícitamente
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
 
 -- =================================================================
 -- DATOS BÁSICOS (SIN DEPENDENCIAS)

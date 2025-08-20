@@ -1,3 +1,7 @@
+-- Configurar UTF-8 explícitamente
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 -- Insertar valores iniciales para tipos de componente
 INSERT INTO cotipo_componente (nombre) VALUES 
     ('PC'), ('DISCO_DURO'), ('MONITOR'), ('TARJETA_VIDEO');

@@ -162,6 +162,7 @@ INSERT INTO rol (nombre, activo) VALUES
 -- Insertar usuarios por defecto del sistema
 INSERT INTO usuario (usuario, password, activo) VALUES 
 ('admin', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE),     -- password: password
+('aastorga', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE),     -- password: password
 ('gerente', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE),   -- password: password
 ('vendedor', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE),  -- password: password
 ('inventario', '$2a$12$mNCUbRx1w1hTLmB/07lNmuHqbblsqsn3wzTxMY34Uz2w4TGpXC.4u', TRUE), -- password: password
