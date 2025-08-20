@@ -22,7 +22,7 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // Componentes
   COMPONENTES: {
-    BASE: '/componentes',
+    BASE: '',
     BY_ID: (id) => `/${id}`,
     BY_TYPE: (tipo) => `/tipo/${tipo}`,
     EXISTS: (id) => `/${id}/existe`
