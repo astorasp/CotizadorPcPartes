@@ -791,14 +791,17 @@ export const usePcsStore = defineStore('pcs', () => {
       isEditMode.value = false
       isViewMode.value = true
       
-      // Configurar formulario con datos de la PC
+      // Calcular costo total sumando los subComponentes
+      const costoTotal = (pc.subComponentes || []).reduce((total, comp) => total + (comp.costo || 0), 0)
+      
+      // Configurar formulario con datos de la PC (mapeo correcto de API individual)
       formData.value = {
         id: pc.id,
         descripcion: pc.descripcion,
         marca: pc.marca,
         modelo: pc.modelo,
-        costo: pc.costo,
-        precioBase: pc.precioBase
+        costo: costoTotal,           // Calculado desde subComponentes
+        precioBase: pc.precio || 0   // El campo precio de la API individual
       }
       
       showCreateModal.value = true
@@ -830,14 +833,17 @@ export const usePcsStore = defineStore('pcs', () => {
       isEditMode.value = true
       isViewMode.value = false
       
-      // Configurar formulario con datos de la PC
+      // Calcular costo total sumando los subComponentes
+      const costoTotal = (pc.subComponentes || []).reduce((total, comp) => total + (comp.costo || 0), 0)
+      
+      // Configurar formulario con datos de la PC (mapeo correcto de API individual)
       formData.value = {
         id: pc.id,
         descripcion: pc.descripcion,
         marca: pc.marca,
         modelo: pc.modelo,
-        costo: pc.costo,
-        precioBase: pc.precioBase
+        costo: costoTotal,           // Calculado desde subComponentes
+        precioBase: pc.precio || 0   // El campo precio de la API individual
       }
       
       showCreateModal.value = true

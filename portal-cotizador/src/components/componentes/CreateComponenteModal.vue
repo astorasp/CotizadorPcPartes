@@ -174,90 +174,39 @@
               Características Específicas
             </h4>
             
-            <!-- Monitor -->
-            <div v-if="componentesStore.formData.tipoComponente === 'MONITOR'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Tamaño (pulgadas)
-                </label>
-                <input
-                  v-model.number="componentesStore.formData.tamano"
-                  type="number"
-                  min="1"
-                  placeholder="24"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Resolución
-                </label>
-                <input
-                  v-model="componentesStore.formData.resolucion"
-                  type="text"
-                  placeholder="1920x1080"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-              </div>
-            </div>
-
             <!-- Disco Duro -->
-            <div v-if="componentesStore.formData.tipoComponente === 'DISCO_DURO'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-if="componentesStore.formData.tipoComponente === 'DISCO_DURO'" class="grid grid-cols-1 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Capacidad (GB)
+                  Capacidad de Almacenamiento
                 </label>
                 <input
-                  v-model.number="componentesStore.formData.capacidad"
-                  type="number"
-                  min="1"
-                  placeholder="1000"
+                  v-model="componentesStore.formData.capacidadAlm"
+                  type="text"
+                  placeholder="Ej: 1TB, 500GB, 2TB"
                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Conexión
-                </label>
-                <select
-                  v-model="componentesStore.formData.tipoConexion"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="SATA">SATA</option>
-                  <option value="SAS">SAS</option>
-                  <option value="NVME">NVMe</option>
-                </select>
+                <div class="text-xs text-gray-500 mt-1">
+                  Formato sugerido: 1TB, 500GB, etc.
+                </div>
               </div>
             </div>
 
             <!-- Tarjeta de Video -->
-            <div v-if="componentesStore.formData.tipoComponente === 'TARJETA_VIDEO'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-if="componentesStore.formData.tipoComponente === 'TARJETA_VIDEO'" class="grid grid-cols-1 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Memoria GPU (GB)
+                  Memoria
                 </label>
                 <input
-                  v-model.number="componentesStore.formData.memoriaGpu"
-                  type="number"
-                  min="1"
-                  placeholder="8"
+                  v-model="componentesStore.formData.memoria"
+                  type="text"
+                  placeholder="Ej: 8GB, 12GB, 16GB"
                   class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Memoria
-                </label>
-                <select
-                  v-model="componentesStore.formData.tipoMemoria"
-                  class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                >
-                  <option value="">Seleccione...</option>
-                  <option value="GDDR6">GDDR6</option>
-                  <option value="GDDR6X">GDDR6X</option>
-                  <option value="HBM2">HBM2</option>
-                </select>
+                <div class="text-xs text-gray-500 mt-1">
+                  Formato sugerido: 8GB, 12GB, etc.
+                </div>
               </div>
             </div>
           </div>

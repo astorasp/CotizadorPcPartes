@@ -93,39 +93,19 @@
               Características Específicas
             </h4>
             
-            <!-- Monitor -->
-            <div v-if="componente.tipoComponente === 'MONITOR'" class="grid grid-cols-2 gap-3 text-sm">
-              <div v-if="componente.tamano">
-                <span class="text-purple-700 font-medium">Tamaño:</span>
-                <div class="text-gray-900">{{ componente.tamano }}"</div>
-              </div>
-              <div v-if="componente.resolucion">
-                <span class="text-purple-700 font-medium">Resolución:</span>
-                <div class="text-gray-900">{{ componente.resolucion }}</div>
-              </div>
-            </div>
-
             <!-- Disco Duro -->
-            <div v-if="componente.tipoComponente === 'DISCO_DURO'" class="grid grid-cols-2 gap-3 text-sm">
-              <div v-if="componente.capacidad">
-                <span class="text-purple-700 font-medium">Capacidad:</span>
-                <div class="text-gray-900">{{ formatCapacity(componente.capacidad) }}</div>
-              </div>
-              <div v-if="componente.tipoConexion">
-                <span class="text-purple-700 font-medium">Conexión:</span>
-                <div class="text-gray-900">{{ componente.tipoConexion }}</div>
+            <div v-if="componente.tipoComponente === 'DISCO_DURO'" class="grid grid-cols-1 gap-3 text-sm">
+              <div v-if="componente.capacidadAlm">
+                <span class="text-purple-700 font-medium">Capacidad de Almacenamiento:</span>
+                <div class="text-gray-900">{{ componente.capacidadAlm }}</div>
               </div>
             </div>
 
             <!-- Tarjeta de Video -->
-            <div v-if="componente.tipoComponente === 'TARJETA_VIDEO'" class="grid grid-cols-2 gap-3 text-sm">
-              <div v-if="componente.memoriaGpu">
-                <span class="text-purple-700 font-medium">Memoria GPU:</span>
-                <div class="text-gray-900">{{ componente.memoriaGpu }} GB</div>
-              </div>
-              <div v-if="componente.tipoMemoria">
-                <span class="text-purple-700 font-medium">Tipo de Memoria:</span>
-                <div class="text-gray-900">{{ componente.tipoMemoria }}</div>
+            <div v-if="componente.tipoComponente === 'TARJETA_VIDEO'" class="grid grid-cols-1 gap-3 text-sm">
+              <div v-if="componente.memoria">
+                <span class="text-purple-700 font-medium">Memoria:</span>
+                <div class="text-gray-900">{{ componente.memoria }}</div>
               </div>
             </div>
           </div>
@@ -197,13 +177,6 @@ const formatCurrency = (amount) => {
   })
 }
 
-const formatCapacity = (capacity) => {
-  if (!capacity) return ''
-  if (capacity >= 1000) {
-    return `${(capacity / 1000).toFixed(0)} TB`
-  }
-  return `${capacity} GB`
-}
 
 const calculateMargin = (costo, precio) => {
   if (!costo || !precio || costo <= 0) return 0
@@ -224,12 +197,10 @@ const hasSpecificFields = (componente) => {
   if (!componente) return false
   
   switch (componente.tipoComponente) {
-    case 'MONITOR':
-      return componente.tamano || componente.resolucion
     case 'DISCO_DURO':
-      return componente.capacidad || componente.tipoConexion
+      return componente.capacidadAlm
     case 'TARJETA_VIDEO':
-      return componente.memoriaGpu || componente.tipoMemoria
+      return componente.memoria
     default:
       return false
   }
