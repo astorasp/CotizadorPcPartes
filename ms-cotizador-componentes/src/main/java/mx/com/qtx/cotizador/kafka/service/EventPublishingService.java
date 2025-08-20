@@ -54,8 +54,7 @@ public class EventPublishingService {
                 componente.getTipoComponente() != null ? componente.getTipoComponente().getNombre() : null,
                 componente.getPromocion() != null ? componente.getPromocion().getIdPromocion().longValue() : null,
                 componente.getCapacidadAlm(),
-                componente.getMemoria(),
-                true // activo - asumir true para componentes creados
+                componente.getMemoria()
             );
 
             eventProducer.sendComponenteChangeEvent(event);
@@ -90,8 +89,7 @@ public class EventPublishingService {
                 componente.getTipoComponente() != null ? componente.getTipoComponente().getNombre() : null,
                 componente.getPromocion() != null ? componente.getPromocion().getIdPromocion().longValue() : null,
                 componente.getCapacidadAlm(),
-                componente.getMemoria(),
-                true // activo - asumir true para componentes actualizados
+                componente.getMemoria()
             );
 
             eventProducer.sendComponenteChangeEvent(event);
@@ -260,10 +258,19 @@ public class EventPublishingService {
     @Async
     public void publishPcCreated(String pcId, String nombre, String descripcion, Double precio, Boolean activa) {
         try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de PC no enviado: ID={}", pcId);
+                return;
+            }
+            
             PcChangeEvent event = new PcChangeEvent(
                 BaseChangeEvent.OperationType.CREATE,
                 pcId
             );
+            event.setNombre(nombre);
+            event.setDescripcion(descripcion);
+            event.setPrecio(precio);
+            event.setActiva(activa);
 
             eventProducer.sendPcChangeEvent(event);
             logger.info("Evento de creación de PC enviado: ID={}", pcId);
@@ -285,10 +292,19 @@ public class EventPublishingService {
     @Async
     public void publishPcUpdated(String pcId, String nombre, String descripcion, Double precio, Boolean activa) {
         try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de PC no enviado: ID={}", pcId);
+                return;
+            }
+            
             PcChangeEvent event = new PcChangeEvent(
                 BaseChangeEvent.OperationType.UPDATE,
                 pcId
             );
+            event.setNombre(nombre);
+            event.setDescripcion(descripcion);
+            event.setPrecio(precio);
+            event.setActiva(activa);
 
             eventProducer.sendPcChangeEvent(event);
             logger.info("Evento de actualización de PC enviado: ID={}", pcId);
@@ -306,6 +322,11 @@ public class EventPublishingService {
     @Async
     public void publishPcDeleted(String pcId) {
         try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de PC no enviado: ID={}", pcId);
+                return;
+            }
+            
             PcChangeEvent event = new PcChangeEvent(
                 BaseChangeEvent.OperationType.DELETE,
                 pcId

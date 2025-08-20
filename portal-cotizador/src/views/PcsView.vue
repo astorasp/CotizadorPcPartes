@@ -287,6 +287,7 @@
       :modal-title="modalTitle"
       :is-form-valid="isFormValid"
       :current-pc="currentPc"
+      :available-components="availableComponents"
       @close="closeCreateModal"
       @submit="submitPc"
     />
@@ -325,7 +326,8 @@ const {
   formData,
   modalTitle,
   isFormValid,
-  currentPc
+  currentPc,
+  availableComponents
 } = storeToRefs(pcsStore)
 
 // Estado local para los inputs

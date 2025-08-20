@@ -40,6 +40,9 @@ public class ComponenteEventProducer {
 
     @Value("${kafka.topics.promociones-changes}")
     private String promocionesChangesTopic;
+    
+    @Value("${kafka.topics.pcs-changes}")
+    private String pcsChangesTopic;
 
     /**
      * Envía un evento de cambio de componente al topic correspondiente.
@@ -125,7 +128,8 @@ public class ComponenteEventProducer {
      */
     private String determineTopicName(BaseChangeEvent event) {
         return switch (event.getEventType()) {
-            case COMPONENTE_CHANGE, PC_CHANGE -> componentesChangesTopic;
+            case COMPONENTE_CHANGE -> componentesChangesTopic;
+            case PC_CHANGE -> pcsChangesTopic;
             case PROMOCION_CHANGE -> promocionesChangesTopic;
             default -> componentesChangesTopic;
         };

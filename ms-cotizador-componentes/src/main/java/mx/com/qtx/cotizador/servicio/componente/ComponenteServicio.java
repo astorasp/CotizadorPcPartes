@@ -318,7 +318,10 @@ public class ComponenteServicio {
      */
     public ApiResponse<List<ComponenteResponse>> obtenerTodosLosComponentes() {
         try {
-            var compEntities = compRepo.findAllWithTipoComponente();
+            var compEntities = compRepo.findAllWithTipoComponente()
+                .stream()
+                .filter(entity -> !TipoComponenteEnum.PC.name().equals(entity.getTipoComponente().getNombre()))
+                .collect(Collectors.toList());
             List<ComponenteResponse> componentes = compEntities.stream()
                 .map(entity -> {
                     Componente componente = ComponenteEntityConverter.convertToComponente(entity, null);
@@ -447,34 +450,19 @@ public class ComponenteServicio {
                 
             pcEntity.setPromocion(promo);
             pcEntity.setTipoComponente(tipo);
-            pcEntity = compRepo.save(pcEntity);        
+            pcEntity = compRepo.save(pcEntity);  
             
             // 2. Procesar componentes y crear asociaciones
             for (Componente comp : pc.getSubComponentes()) {
-                // Mapear categoría desde el enum para consistencia
-                String tipoComponenteMapeado = mapearCategoriaATipo(comp.getCategoria());
-                
-                // Convertir componente a DTO y usar el método refactorizado
-                ComponenteCreateRequest compRequest = ComponenteCreateRequest.builder()
-                    .id(comp.getId())
-                    .descripcion(comp.getDescripcion())
-                    .marca(comp.getMarca())
-                    .modelo(comp.getModelo())
-                    .costo(comp.getCosto())
-                    .precioBase(comp.getPrecioBase())
-                    .tipoComponente(tipoComponenteMapeado)
-                    .build();
-                    
-                ApiResponse<ComponenteResponse> response = guardarComponente(compRequest);
-                if ("0".equals(response.getCodigo())) {
-                    PcParte pcParte = new PcParte(pcEntity.getId(), response.getDatos().getId());
-                    pcPartesRepo.save(pcParte);
-                } else {
-                    // Si falla algún sub-componente, retornar el error
-                    return new ApiResponse<>(response.getCodigo(), 
-                                           "Error guardando sub-componente " + comp.getId() + ": " + response.getMensaje());
+                if (!compRepo.existsById(comp.getId())) {
+                    return new ApiResponse<>(Errores.RECURSO_NO_ENCONTRADO.getCodigo(),
+                                            "El componente " + comp.getId() + " no existe en el inventario");
                 }
-            }
+
+                // Solo crear la asociación PC-Componente
+                PcParte pcParte = new PcParte(pcEntity.getId(), comp.getId());
+                pcPartesRepo.save(pcParte);
+            }                                
 
             // Obtener la PC completa con sus componentes asociados y convertir a DTO
             ApiResponse<PcResponse> pcCompleta = buscarPcCompleto(pcEntity.getId());

@@ -30,8 +30,6 @@ public class PcCreateRequest {
     @Size(max = 500, message = "La descripción no puede exceder 500 caracteres")
     private String descripcion;
     
-    @NotNull(message = "La lista de sub-componentes es requerida")
-    @Size(min = 1, message = "Una PC debe tener al menos un sub-componente")
     @Size(max = 10, message = "Una PC no puede tener más de 10 sub-componentes")
     @Valid
     private List<ComponenteCreateRequest> subComponentes;

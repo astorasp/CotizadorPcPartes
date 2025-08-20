@@ -15,10 +15,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.kafka.retrytopic.TopicSuffixingStrategy;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 /**
@@ -53,27 +56,29 @@ public class ComponenteChangeListener {
     private String componentesTopic;
 
     /**
-     * Procesa eventos de cambio de componentes.
+     * Procesa eventos de cambio de componentes con Dead Letter Topic.
+     * 
+     * Configuración de reintentos:
+     * - 3 intentos máximo con backoff exponencial (1s, 2s, 4s)
+     * - Después de 3 fallos → mensaje va al Dead Letter Topic
+     * - Consumer continúa procesando siguientes mensajes (NO SE BLOQUEA)
      * 
      * @param event Evento de cambio de componente
-     * @param partition Partición del mensaje
-     * @param offset Offset del mensaje
-     * @param key Clave del mensaje
-     * @param acknowledgment Acknowledgment para confirmar procesamiento
      */
+    @RetryableTopic(
+        attempts = "3",
+        backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 10000),
+        retryTopicSuffix = "-retry",
+        dltTopicSuffix = "-dlt",
+        topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE,
+        include = {Exception.class}
+    )
     @KafkaListener(
         topics = "${kafka.topics.componentes-changes}",
         groupId = "${kafka.consumer.group-id}",
         containerFactory = "kafkaListenerContainerFactory"
     )
-    @Retryable(
-        value = {Exception.class},
-        maxAttempts = 3,
-        backoff = @Backoff(delay = 1000, multiplier = 2.0)
-    )
-    public void handleComponenteChangeEvent(
-            @Payload ComponenteChangeEvent event,
-            Acknowledgment acknowledgment) {
+    public void handleComponenteChangeEvent(@Payload ComponenteChangeEvent event) {
         
         try {
             logger.info("Procesando evento de componente: eventId={}, operationType={}, entityId={}", 
@@ -94,9 +99,6 @@ public class ComponenteChangeListener {
                     logger.warn("Tipo de operación no reconocido: {}", event.getOperationType());
             }
             
-            // Confirmar procesamiento exitoso
-            acknowledgment.acknowledge();
-            
             // Registrar métricas de procesamiento exitoso
             monitorService.recordMessageProcessed(componentesTopic);
             
@@ -110,9 +112,45 @@ public class ComponenteChangeListener {
             // Registrar error en métricas
             monitorService.recordError(componentesTopic, e);
             
-            // No hacer acknowledge para que el mensaje sea reprocessado
+            // Re-lanzar excepción para activar RetryableTopic
             throw e;
         }
+    }
+    
+    /**
+     * Maneja mensajes que fallaron después de todos los reintentos.
+     * 
+     * Estos mensajes se envían al Dead Letter Topic para investigación manual.
+     * El consumer principal continúa procesando normalmente.
+     * 
+     * @param event Evento que falló después de 3 reintentos
+     * @param exception Última excepción que causó el fallo
+     * @param partition Partición del mensaje
+     * @param offset Offset del mensaje
+     * @param topic Topic original del mensaje
+     */
+    @DltHandler
+    public void handleDltMessage(
+            @Payload ComponenteChangeEvent event,
+            Exception exception,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) long offset,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        
+        logger.error("MENSAJE ENVIADO A DEAD LETTER TOPIC después de 3 fallos: " +
+                    "topic={}, partition={}, offset={}, eventId={}, entityId={}, error={}", 
+                    topic, partition, offset, event.getEventId(), event.getEntityId(), 
+                    exception.getMessage(), exception);
+        
+        // TODO: Persistir en tabla de errores para investigación
+        // TODO: Enviar alerta a equipo de desarrollo
+        // TODO: Considerar compensación manual si es crítico
+        
+        // Registrar métricas de mensaje enviado a DLT
+        monitorService.recordError(componentesTopic + "-dlt", exception);
+        
+        logger.warn("Mensaje registrado en DLT. Requiere investigación manual: eventId={}, entityId={}", 
+                   event.getEventId(), event.getEntityId());
     }
     
     /**

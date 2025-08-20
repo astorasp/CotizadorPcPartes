@@ -2,10 +2,8 @@ package mx.com.qtx.cotizador.kafka.service;
 
 import mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent;
 import mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent;
-import mx.com.qtx.cotizador.kafka.dto.ProveedorChangeEvent;
 import mx.com.qtx.cotizador.entidad.Componente;
 import mx.com.qtx.cotizador.entidad.Cotizacion;
-import mx.com.qtx.cotizador.entidad.Proveedor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +36,6 @@ public class ConflictResolutionService {
      */
     private static final String COMPONENTE_AUTHORITATIVE_SOURCE = "ms-cotizador-componentes";
     private static final String COTIZACION_AUTHORITATIVE_SOURCE = "ms-cotizador-cotizaciones";
-    private static final String PROVEEDOR_AUTHORITATIVE_SOURCE = "ms-cotizador-pedidos";
     
     // === CONFLICTOS DE COMPONENTES ===
     
@@ -128,48 +125,6 @@ public class ConflictResolutionService {
     
     // === CONFLICTOS DE PROVEEDORES ===
     
-    /**
-     * Verifica si existe conflicto entre proveedor local y evento.
-     */
-    public boolean hasConflict(Proveedor localProveedor, ProveedorChangeEvent event) {
-        // Simplificar verificación - solo verificar CVE por ahora
-        boolean hasConflict = !localProveedor.getCve().equals(event.getEntityId().toString());
-        
-        if (hasConflict) {
-            logger.warn("Conflicto detectado en proveedor: localCve={}, eventId={}", 
-                       localProveedor.getCve(), event.getEntityId());
-        }
-        
-        return hasConflict;
-    }
-    
-    /**
-     * Resuelve conflicto de proveedor usando estrategia de fuente autoritativa.
-     */
-    public void resolveProveedorConflict(Proveedor localProveedor, ProveedorChangeEvent event) {
-        logger.info("Resolviendo conflicto de proveedor: id={}, source={}", 
-                   event.getEntityId(), event.getSource());
-        
-        try {
-            // Estrategia: ms-cotizador-pedidos es autoritativo para proveedores
-            if (PROVEEDOR_AUTHORITATIVE_SOURCE.equals(event.getSource())) {
-                logger.info("Evento de fuente local ignorado para evitar bucle");
-                return;
-            }
-            
-            // Si viene de otra fuente, usar Last-Write-Wins
-            if (isEventNewer(event.getTimestamp())) {
-                logger.info("Aplicando evento más reciente: timestamp={}", event.getTimestamp());
-                updateProveedorFromEvent(localProveedor, event);
-            } else {
-                logger.info("Manteniendo datos locales por ser más recientes");
-                notifyProveedorConflictResolution(localProveedor);
-            }
-        } catch (Exception e) {
-            logger.error("Error resolviendo conflicto de proveedor: {}", e.getMessage(), e);
-            logConflictForManualResolution("PROVEEDOR", localProveedor.getCve(), event.getEventId(), e.getMessage());
-        }
-    }
     
     // === MÉTODOS DE APOYO ===
     
@@ -254,13 +209,6 @@ public class ConflictResolutionService {
         return "APROBADA".equals(estado) || "RECHAZADA".equals(estado) || "CANCELADA".equals(estado);
     }
     
-    /**
-     * Actualiza proveedor desde evento.
-     */
-    private void updateProveedorFromEvent(Proveedor proveedor, ProveedorChangeEvent event) {
-        if (event.getNombre() != null) proveedor.setNombre(event.getNombre());
-        // Solo usar campos que existen en la entidad Proveedor
-    }
     
     /**
      * Notifica resolución de conflicto de componente.
@@ -270,13 +218,6 @@ public class ConflictResolutionService {
         // TODO: Implementar envío de evento de sincronización
     }
     
-    /**
-     * Notifica resolución de conflicto de proveedor.
-     */
-    private void notifyProveedorConflictResolution(Proveedor proveedor) {
-        logger.info("Notificando resolución de conflicto de proveedor: cve={}", proveedor.getCve());
-        // TODO: Implementar envío de evento de sincronización
-    }
     
     /**
      * Registra conflicto para resolución manual.

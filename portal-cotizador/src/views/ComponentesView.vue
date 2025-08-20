@@ -56,7 +56,6 @@
             <option value="MONITOR">Monitor</option>
             <option value="DISCO_DURO">Disco Duro</option>
             <option value="TARJETA_VIDEO">Tarjeta de Video</option>
-            <option value="PC">PC Completa</option>
           </select>
         </div>
         

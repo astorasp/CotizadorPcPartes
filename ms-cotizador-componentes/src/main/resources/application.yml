@@ -83,6 +83,7 @@ kafka:
   topics:
     componentes-changes: ${KAFKA_TOPIC_COMPONENTES_CHANGES:componentes.changes}
     promociones-changes: ${KAFKA_TOPIC_PROMOCIONES_CHANGES:promociones.changes}
+    pcs-changes: ${KAFKA_TOPIC_PCS_CHANGES:pcs.changes}
   monitoring:
     log-events: ${KAFKA_LOG_EVENTS:true}
     log-level: ${KAFKA_LOG_LEVEL:INFO}

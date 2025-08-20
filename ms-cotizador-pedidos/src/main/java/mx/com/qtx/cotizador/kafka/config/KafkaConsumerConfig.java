@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * Configuración del consumidor Kafka para ms-cotizador-pedidos.
  * 
- * Configura el consumidor Kafka para recibir eventos de componentes, cotizaciones y proveedores
+ * Configura el consumidor Kafka para recibir eventos de componentes, cotizaciones, promociones y PCs
  * desde otros microservicios con:
  * - Deserialización JSON automática
  * - Manual acknowledgment para garantizar procesamiento
@@ -86,8 +86,8 @@ public class KafkaConsumerConfig {
         configProps.put(JsonDeserializer.TYPE_MAPPINGS, 
             "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent," +
             "CotizacionChangeEvent:mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent," +
-            "ProveedorChangeEvent:mx.com.qtx.cotizador.kafka.dto.ProveedorChangeEvent," +
-            "PedidoChangeEvent:mx.com.qtx.cotizador.kafka.dto.PedidoChangeEvent");
+            "PromocionChangeEvent:mx.com.qtx.cotizador.kafka.dto.PromocionChangeEvent," +
+            "PcChangeEvent:mx.com.qtx.cotizador.kafka.dto.PcChangeEvent");
         configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, BaseChangeEvent.class);
         
         return new DefaultKafkaConsumerFactory<>(configProps);

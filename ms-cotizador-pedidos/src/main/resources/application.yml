@@ -88,7 +88,7 @@ kafka:
     max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:10}
     properties:
       spring.json.trusted.packages: "mx.com.qtx.cotizador.kafka.dto"
-      spring.json.type.mapping: "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent,CotizacionChangeEvent:mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent,ProveedorChangeEvent:mx.com.qtx.cotizador.kafka.dto.ProveedorChangeEvent"
+      spring.json.type.mapping: "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent,CotizacionChangeEvent:mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent,PromocionChangeEvent:mx.com.qtx.cotizador.kafka.dto.PromocionChangeEvent,PcChangeEvent:mx.com.qtx.cotizador.kafka.dto.PcChangeEvent"
   producer:
     key-serializer: org.apache.kafka.common.serialization.StringSerializer
     value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -100,8 +100,8 @@ kafka:
   topics:
     componentes-changes: ${KAFKA_TOPIC_COMPONENTES_CHANGES:componentes.changes}
     cotizaciones-changes: ${KAFKA_TOPIC_COTIZACIONES_CHANGES:cotizaciones.changes}
-    proveedores-changes: ${KAFKA_TOPIC_PROVEEDORES_CHANGES:proveedores.changes}
-    pedidos-changes: ${KAFKA_TOPIC_PEDIDOS_CHANGES:pedidos.changes}
+    promociones-changes: ${KAFKA_TOPIC_PROMOCIONES_CHANGES:promociones.changes}
+    pcs-changes: ${KAFKA_TOPIC_PCS_CHANGES:pcs.changes}
   retry:
     attempts: ${KAFKA_RETRY_ATTEMPTS:3}
     delay-ms: ${KAFKA_RETRY_DELAY_MS:1000}

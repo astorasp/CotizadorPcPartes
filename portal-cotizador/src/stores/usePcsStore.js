@@ -137,8 +137,8 @@ export const usePcsStore = defineStore('pcs', () => {
            formData.value.descripcion &&
            formData.value.marca &&
            formData.value.modelo &&
-           formData.value.costo > 0 &&
-           formData.value.precioBase > 0
+           formData.value.selectedComponents &&
+           formData.value.selectedComponents.length > 0
   })
 
   // Computed para el título del modal de PC
@@ -232,7 +232,35 @@ export const usePcsStore = defineStore('pcs', () => {
         throw new Error(validationErrors.join('\n'))
       }
       
-      const response = await pcsApi.create(pcData)
+      // Mapear datos al formato que espera el backend (PcCreateRequest)
+      const pcPayload = {
+        id: pcData.id,
+        nombre: pcData.descripcion,        // ✅ Mapeo correcto: descripcion → nombre
+        precio: pcData.selectedComponents.reduce((total, comp) => {
+          return total + (comp.precioBase * (comp.cantidad || 1))
+        }, 0),                            // ✅ Precio calculado desde componentes
+        descripcion: `PC ${pcData.marca} ${pcData.modelo}`, // Descripción opcional
+        marca: pcData.marca,
+        modelo: pcData.modelo,
+        cantidad: 1,
+        subComponentes: pcData.selectedComponents.map(comp => ({
+          id: comp.id,
+          descripcion: comp.descripcion,
+          marca: comp.marca,
+          modelo: comp.modelo,
+          costo: comp.costo,
+          precioBase: comp.precioBase,
+          tipoComponente: comp.tipoComponente,
+          capacidadAlm: comp.capacidadAlm || null,
+          memoria: comp.memoria || null
+        }))
+      }
+      
+      if (DEBUG_CONFIG.ENABLED) {
+        console.log('[PcsStore] Sending PC payload:', pcPayload)
+      }
+      
+      const response = await pcsApi.create(pcPayload)
       
       // Recargar PCs para obtener datos actualizados
       await fetchPcs()
@@ -684,12 +712,10 @@ export const usePcsStore = defineStore('pcs', () => {
       errors.push('Modelo es requerido')
     }
     
-    if (!validatePrice(data.costo)) {
-      errors.push('Costo debe ser un número válido mayor a 0')
-    }
-    
-    if (!validatePrice(data.precioBase)) {
-      errors.push('Precio base debe ser un número válido mayor a 0')
+    if (!data.selectedComponents || data.selectedComponents.length === 0) {
+      errors.push('Debe seleccionar al menos un componente para armar la PC')
+    } else if (data.selectedComponents.length > 10) {
+      errors.push('Una PC no puede tener más de 10 componentes')
     }
 
     return errors
@@ -761,8 +787,12 @@ export const usePcsStore = defineStore('pcs', () => {
         marca: '',
         modelo: '',
         costo: 0,
-        precioBase: 0
+        precioBase: 0,
+        selectedComponents: []
       }
+      
+      // Cargar componentes disponibles para la selección
+      loadAvailableComponents()
       
       showCreateModal.value = true
       
@@ -801,7 +831,8 @@ export const usePcsStore = defineStore('pcs', () => {
         marca: pc.marca,
         modelo: pc.modelo,
         costo: costoTotal,           // Calculado desde subComponentes
-        precioBase: pc.precio || 0   // El campo precio de la API individual
+        precioBase: pc.precio || 0,  // El campo precio de la API individual
+        selectedComponents: pc.subComponentes || []
       }
       
       showCreateModal.value = true
@@ -843,7 +874,8 @@ export const usePcsStore = defineStore('pcs', () => {
         marca: pc.marca,
         modelo: pc.modelo,
         costo: costoTotal,           // Calculado desde subComponentes
-        precioBase: pc.precio || 0   // El campo precio de la API individual
+        precioBase: pc.precio || 0,  // El campo precio de la API individual
+        selectedComponents: pc.subComponentes || []
       }
       
       showCreateModal.value = true
@@ -873,7 +905,8 @@ export const usePcsStore = defineStore('pcs', () => {
       marca: '',
       modelo: '',
       costo: 0,
-      precioBase: 0
+      precioBase: 0,
+      selectedComponents: []
     }
     
     if (DEBUG_CONFIG.ENABLED) {

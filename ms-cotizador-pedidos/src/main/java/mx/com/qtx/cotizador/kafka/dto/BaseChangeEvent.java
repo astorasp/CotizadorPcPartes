@@ -23,9 +23,8 @@ import java.util.UUID;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ComponenteChangeEvent.class, name = "COMPONENTE_CHANGE"),
     @JsonSubTypes.Type(value = CotizacionChangeEvent.class, name = "COTIZACION_CHANGE"),
-    @JsonSubTypes.Type(value = ProveedorChangeEvent.class, name = "PROVEEDOR_CHANGE"),
-    @JsonSubTypes.Type(value = PedidoChangeEvent.class, name = "PEDIDO_CHANGE"),
-    @JsonSubTypes.Type(value = PromocionChangeEvent.class, name = "PROMOCION_CHANGE")
+    @JsonSubTypes.Type(value = PromocionChangeEvent.class, name = "PROMOCION_CHANGE"),
+    @JsonSubTypes.Type(value = PcChangeEvent.class, name = "PC_CHANGE")
 })
 public abstract class BaseChangeEvent {
     
@@ -40,7 +39,7 @@ public abstract class BaseChangeEvent {
      * Tipos de eventos disponibles
      */
     public enum EventType {
-        COMPONENTE_CHANGE, COTIZACION_CHANGE, PROVEEDOR_CHANGE, PEDIDO_CHANGE, PROMOCION_CHANGE
+        COMPONENTE_CHANGE, COTIZACION_CHANGE, PROMOCION_CHANGE, PC_CHANGE
     }
     
     private String eventId;

@@ -19,7 +19,6 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     private Long promocionId;
     private String capacidadAlm;
     private String memoria;
-    private Boolean activo;
     
     /**
      * Constructor por defecto
@@ -42,7 +41,7 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     public ComponenteChangeEvent(OperationType operationType, String entityId, String descripcion, 
                                 Double costo, Double precioBase, String marca, String modelo, 
                                 String tipoComponente, Long promocionId, String capacidadAlm, 
-                                String memoria, Boolean activo) {
+                                String memoria) {
         this(operationType, entityId);
         this.descripcion = descripcion;
         this.costo = costo;
@@ -53,7 +52,6 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
         this.promocionId = promocionId;
         this.capacidadAlm = capacidadAlm;
         this.memoria = memoria;
-        this.activo = activo;
     }
     
     // Getters y Setters
@@ -127,13 +125,5 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     
     public void setMemoria(String memoria) {
         this.memoria = memoria;
-    }
-    
-    public Boolean getActivo() {
-        return activo;
-    }
-    
-    public void setActivo(Boolean activo) {
-        this.activo = activo;
     }
 }

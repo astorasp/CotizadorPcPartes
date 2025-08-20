@@ -55,6 +55,7 @@ public class KafkaConsumerConfig {
     @Value("${kafka.consumer.max-poll-records}")
     private int maxPollRecords;
 
+
     /**
      * Configuración del consumidor Kafka optimizada para eventos de cambio.
      * 
@@ -116,4 +117,7 @@ public class KafkaConsumerConfig {
         
         return factory;
     }
+
+    // Configuración de RetryTopic se maneja directamente en @RetryableTopic
+    // No necesitamos bean separado para RetryTopicConfiguration
 }

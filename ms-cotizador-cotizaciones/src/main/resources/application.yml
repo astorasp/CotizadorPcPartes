@@ -95,10 +95,12 @@ kafka:
     max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:10}
     properties:
       spring.json.trusted.packages: "mx.com.qtx.cotizador.kafka.dto"
-      spring.json.type.mapping: "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent,PromocionChangeEvent:mx.com.qtx.cotizador.kafka.dto.PromocionChangeEvent"
+      spring.json.type.mapping: "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent,PromocionChangeEvent:mx.com.qtx.cotizador.kafka.dto.PromocionChangeEvent,PcChangeEvent:mx.com.qtx.cotizador.kafka.dto.PcChangeEvent,CotizacionChangeEvent:mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent"
   topics:
     componentes-changes: ${KAFKA_TOPIC_COMPONENTES_CHANGES:componentes.changes}
     promociones-changes: ${KAFKA_TOPIC_PROMOCIONES_CHANGES:promociones.changes}
+    pcs-changes: ${KAFKA_TOPIC_PCS_CHANGES:pcs.changes}
+    cotizaciones-changes: ${KAFKA_TOPIC_COTIZACIONES_CHANGES:cotizaciones.changes}
   retry:
     attempts: ${KAFKA_RETRY_ATTEMPTS:3}
     delay-ms: ${KAFKA_RETRY_DELAY_MS:1000}

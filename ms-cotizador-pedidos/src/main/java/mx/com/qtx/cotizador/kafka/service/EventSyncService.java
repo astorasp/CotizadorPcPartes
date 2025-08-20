@@ -2,7 +2,6 @@ package mx.com.qtx.cotizador.kafka.service;
 
 import mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent;
 import mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent;
-import mx.com.qtx.cotizador.kafka.dto.ProveedorChangeEvent;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
 import mx.com.qtx.cotizador.repositorio.PedidoRepositorio;
@@ -66,8 +65,6 @@ public class EventSyncService {
     @Autowired
     private ConflictResolutionService conflictResolutionService;
     
-    @Autowired
-    private EventProducerService eventProducerService;
     
     // Cache para eventos procesados (evitar duplicados)
     private final Map<String, ProcessedEvent> processedEvents = new ConcurrentHashMap<>();
@@ -281,81 +278,8 @@ public class EventSyncService {
     
     // === SINCRONIZACIÓN DE PROVEEDORES ===
     
-    /**
-     * Sincroniza la creación de un proveedor.
-     */
-    public void syncProveedorCreated(ProveedorChangeEvent event) {
-        logger.info("Sincronizando creación de proveedor: id={}, nombre={}", 
-                   event.getEntityId(), event.getNombre());
-        
-        try {
-            Optional<Proveedor> existingProveedor = proveedorRepositorio.findById(event.getEntityId().toString());
-            
-            if (existingProveedor.isPresent()) {
-                // Conflicto: proveedor ya existe
-                conflictResolutionService.resolveProveedorConflict(existingProveedor.get(), event);
-            } else {
-                // Crear nuevo proveedor local
-                Proveedor nuevoProveedor = mapToProveedorEntity(event);
-                proveedorRepositorio.save(nuevoProveedor);
-                logger.info("Proveedor sincronizado exitosamente: id={}", event.getEntityId());
-            }
-        } catch (Exception e) {
-            logger.error("Error sincronizando creación de proveedor: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
     
-    /**
-     * Sincroniza la actualización de un proveedor.
-     */
-    public void syncProveedorUpdated(ProveedorChangeEvent event) {
-        logger.info("Sincronizando actualización de proveedor: id={}, nombre={}", 
-                   event.getEntityId(), event.getNombre());
-        
-        try {
-            Optional<Proveedor> existingProveedor = proveedorRepositorio.findById(event.getEntityId().toString());
-            
-            if (existingProveedor.isPresent()) {
-                Proveedor proveedor = existingProveedor.get();
-                
-                // Resolver conflictos antes de actualizar
-                if (conflictResolutionService.hasConflict(proveedor, event)) {
-                    conflictResolutionService.resolveProveedorConflict(proveedor, event);
-                } else {
-                    updateProveedorFromEvent(proveedor, event);
-                    proveedorRepositorio.save(proveedor);
-                    logger.info("Proveedor actualizado exitosamente: id={}", event.getEntityId());
-                }
-            } else {
-                // Proveedor no existe localmente, crear
-                syncProveedorCreated(event);
-            }
-        } catch (Exception e) {
-            logger.error("Error sincronizando actualización de proveedor: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
     
-    /**
-     * Sincroniza la eliminación de un proveedor.
-     */
-    public void syncProveedorDeleted(ProveedorChangeEvent event) {
-        logger.info("Sincronizando eliminación de proveedor: id={}", event.getEntityId());
-        
-        try {
-            Optional<Proveedor> existingProveedor = proveedorRepositorio.findById(event.getEntityId().toString());
-            
-            if (existingProveedor.isPresent()) {
-                // Para simplificar, solo loggear la eliminación
-                logger.info("Proveedor marcado como eliminado: id={}", event.getEntityId());
-                logger.info("Proveedor marcado como inactivo: id={}", event.getEntityId());
-            }
-        } catch (Exception e) {
-            logger.error("Error sincronizando eliminación de proveedor: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
     
     // === MÉTODOS DE VALIDACIÓN Y NOTIFICACIÓN ===
     
@@ -525,18 +449,6 @@ public class EventSyncService {
         }
     }
     
-    private Proveedor mapToProveedorEntity(ProveedorChangeEvent event) {
-        Proveedor proveedor = new Proveedor();
-        proveedor.setCve(event.getEntityId().toString());
-        proveedor.setNombre(event.getNombre());
-        // Solo usar campos que existen en la entidad
-        return proveedor;
-    }
-    
-    private void updateProveedorFromEvent(Proveedor proveedor, ProveedorChangeEvent event) {
-        if (event.getNombre() != null) proveedor.setNombre(event.getNombre());
-        // Solo actualizar campos que existen en la entidad
-    }
     
     /**
      * Mapea el nombre del tipo de componente desde el evento al nombre usado en la BD local.
