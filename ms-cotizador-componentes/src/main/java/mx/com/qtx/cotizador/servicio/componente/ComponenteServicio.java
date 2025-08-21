@@ -472,9 +472,16 @@ public class ComponenteServicio {
             }
             PcResponse pcResponse = pcCompleta.getDatos();
             
-            // Publicar evento de creación de PC
+            // Publicar evento de creación de PC con componenteIds
+            List<String> componenteIds = pc.getSubComponentes().stream()
+                .map(Componente::getId)
+                .collect(Collectors.toList());
+                
+            // Obtener el ID de la promoción asignada a la PC
+            Integer promocionId = pcEntity.getPromocion() != null ? pcEntity.getPromocion().getIdPromocion() : null;
+            
             eventPublishingService.publishPcCreated(pcEntity.getId(), pc.getId(), "PC completa", 
-                                                   1000.0, true);
+                                                   1000.0, true, componenteIds, promocionId);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC guardada exitosamente", pcResponse);
         } catch (Exception e) {
@@ -611,6 +618,9 @@ public class ComponenteServicio {
                 PcParte pcParte = new PcParte(pcId, request.getId());
                 pcPartesRepo.save(pcParte);
                 
+                // Publicar evento de componente agregado a PC
+                eventPublishingService.publishPcComponentAdded(pcId, request.getId());
+                
                 // Obtener el componente existente y convertir a DTO
                 var componenteEntity = compRepo.findByIdWithTipoComponente(request.getId());
                 Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteEntity, null);
@@ -642,6 +652,9 @@ public class ComponenteServicio {
                 // Crear la asociación
                 PcParte pcParte = new PcParte(pcId, request.getId());
                 pcPartesRepo.save(pcParte);
+                
+                // Publicar evento de componente agregado a PC
+                eventPublishingService.publishPcComponentAdded(pcId, request.getId());
                 
                 componenteResponse = crearResponse.getDatos();
             }
@@ -675,6 +688,9 @@ public class ComponenteServicio {
             
             // Eliminar la asociación
             pcPartesRepo.deleteByPcIdAndComponenteId(pcId, componenteId);
+            
+            // Publicar evento de componente removido de PC
+            eventPublishingService.publishPcComponentRemoved(pcId, componenteId);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente removido de la PC exitosamente");
         } catch (Exception e) {

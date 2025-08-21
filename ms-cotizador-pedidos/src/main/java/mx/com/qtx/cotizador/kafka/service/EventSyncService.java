@@ -63,6 +63,9 @@ public class EventSyncService {
     private TipoComponenteRepositorio tipoComponenteRepositorio;
     
     @Autowired
+    private mx.com.qtx.cotizador.repositorio.PcRepositorio pcRepositorio;
+    
+    @Autowired
     private ConflictResolutionService conflictResolutionService;
     
     
@@ -281,6 +284,146 @@ public class EventSyncService {
     
     
     
+    // === SINCRONIZACIÓN DE PCs ===
+    
+    /**
+     * Sincroniza la creación de una PC.
+     */
+    public void syncPcCreated(mx.com.qtx.cotizador.kafka.dto.PcChangeEvent event) {
+        logger.info("Sincronizando creación de PC: id={}, nombre={}", event.getEntityId(), event.getNombre());
+        
+        try {
+            String pcId = event.getEntityId().toString();
+            
+            // 1. CREAR la PC como componente si no existe
+            if (!componenteRepositorio.existsById(pcId)) {
+                // Crear PC como componente (necesario para foreign key)
+                mx.com.qtx.cotizador.entidad.Componente pcComponente = new mx.com.qtx.cotizador.entidad.Componente();
+                pcComponente.setId(pcId);
+                pcComponente.setDescripcion(event.getNombre() != null ? event.getNombre() : "PC Completa");
+                pcComponente.setCosto(event.getPrecio() != null ? java.math.BigDecimal.valueOf(event.getPrecio()) : java.math.BigDecimal.ZERO);
+                pcComponente.setPrecioBase(event.getPrecio() != null ? java.math.BigDecimal.valueOf(event.getPrecio()) : java.math.BigDecimal.ZERO);
+                pcComponente.setMarca("PC Ensamblada");
+                pcComponente.setModelo(pcId);
+                
+                // Asignar tipo de componente "PC" (id = 1)
+                mx.com.qtx.cotizador.entidad.TipoComponente tipoPC = new mx.com.qtx.cotizador.entidad.TipoComponente();
+                tipoPC.setId((short) 1);
+                pcComponente.setTipoComponente(tipoPC);
+                
+                // Asignar promoción usando el promocionId del evento
+                if (event.getPromocionId() != null) {
+                    mx.com.qtx.cotizador.entidad.Promocion promocion = new mx.com.qtx.cotizador.entidad.Promocion();
+                    promocion.setIdPromocion(event.getPromocionId());
+                    pcComponente.setPromocion(promocion);
+                } else {
+                    // Fallback a promoción Regular (id = 1) si no se especifica
+                    mx.com.qtx.cotizador.entidad.Promocion promocionDefault = new mx.com.qtx.cotizador.entidad.Promocion();
+                    promocionDefault.setIdPromocion(1);
+                    pcComponente.setPromocion(promocionDefault);
+                }
+                
+                componenteRepositorio.save(pcComponente);
+                logger.info("PC {} creada como componente en cocomponente", pcId);
+            }
+            
+            // 2. Eliminar relaciones existentes por idempotencia
+            pcRepositorio.deleteByIdPc(pcId);
+            
+            // Si el evento incluye componenteIds, crear las relaciones
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    // Verificar que el componente existe localmente antes de crear la relación
+                    if (componenteRepositorio.existsById(componenteId)) {
+                        mx.com.qtx.cotizador.entidad.PcParte pcParte = new mx.com.qtx.cotizador.entidad.PcParte(pcId, componenteId);
+                        pcRepositorio.save(pcParte);
+                        logger.debug("Relación PC-Componente creada: PC={}, Componente={}", pcId, componenteId);
+                    } else {
+                        logger.warn("Componente {} no encontrado localmente para PC {}, saltando relación", componenteId, pcId);
+                    }
+                }
+                
+                logger.info("PC creada y sincronizada: id={}, relaciones creadas={}", 
+                           pcId, event.getComponenteIds().size());
+            } else {
+                logger.info("PC registrada sin componentes en evento: id={}, nombre={}, precio={}, activa={}", 
+                           pcId, event.getNombre(), event.getPrecio(), event.getActiva());
+            }
+                       
+            // TODO: Verificar si hay pedidos pendientes que requieren esta PC
+            
+        } catch (Exception e) {
+            logger.error("Error sincronizando creación de PC: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Sincroniza la actualización de una PC.
+     */
+    public void syncPcUpdated(mx.com.qtx.cotizador.kafka.dto.PcChangeEvent event) {
+        logger.info("Sincronizando actualización de PC: id={}, nombre={}", event.getEntityId(), event.getNombre());
+        
+        try {
+            String pcId = event.getEntityId().toString();
+            
+            // Actualizar relaciones PC-Componente si se incluyen en el evento
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                // Eliminar relaciones existentes
+                pcRepositorio.deleteByIdPc(pcId);
+                
+                // Crear nuevas relaciones
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    if (componenteRepositorio.existsById(componenteId)) {
+                        mx.com.qtx.cotizador.entidad.PcParte pcParte = new mx.com.qtx.cotizador.entidad.PcParte(pcId, componenteId);
+                        pcRepositorio.save(pcParte);
+                        logger.debug("Relación PC-Componente actualizada: PC={}, Componente={}", pcId, componenteId);
+                    } else {
+                        logger.warn("Componente {} no encontrado localmente para PC actualizada {}", componenteId, pcId);
+                    }
+                }
+                
+                logger.info("PC actualizada y sincronizada: id={}, relaciones actualizadas={}", 
+                           pcId, event.getComponenteIds().size());
+            } else {
+                logger.info("PC actualizada sin componentes en evento: id={}, nombre={}, precio={}, activa={}", 
+                           pcId, event.getNombre(), event.getPrecio(), event.getActiva());
+            }
+                       
+            // TODO: Verificar impacto en pedidos pendientes
+            if (event.getPrecio() != null) {
+                // TODO: Notificar cambios de precio para recálculo de pedidos si es necesario
+                logger.info("Cambio de precio en PC: {} -> precio={}", pcId, event.getPrecio());
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error sincronizando actualización de PC: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Sincroniza la eliminación de una PC.
+     */
+    public void syncPcDeleted(mx.com.qtx.cotizador.kafka.dto.PcChangeEvent event) {
+        logger.info("Sincronizando eliminación de PC: id={}", event.getEntityId());
+        
+        try {
+            String pcId = event.getEntityId().toString();
+            
+            // Eliminar relaciones PC-Componente de esta PC
+            pcRepositorio.deleteByIdPc(pcId);
+            
+            logger.info("PC eliminada y relaciones removidas: id={}", pcId);
+            
+        } catch (Exception e) {
+            logger.error("Error sincronizando eliminación de PC: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+    
     // === MÉTODOS DE VALIDACIÓN Y NOTIFICACIÓN ===
     
     public void validatePendingOrdersWithNewComponent(String componenteId) {
@@ -483,6 +626,83 @@ public class EventSyncService {
                 return "CPU";
             default:
                 return "MONITOR"; // Tipo por defecto para tipos no reconocidos
+        }
+    }
+    
+    /**
+     * Sincroniza la adición de un componente a una PC existente.
+     */
+    @Transactional
+    public void syncPcComponentAdded(mx.com.qtx.cotizador.kafka.dto.PcChangeEvent event) {
+        logger.info("Sincronizando agregado de componente a PC: pcId={}, componenteIds={}", 
+                   event.getEntityId(), event.getComponenteIds());
+        
+        try {
+            String pcId = event.getEntityId().toString();
+            
+            // Si el evento incluye componenteIds, crear las relaciones
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    // Verificar que el componente existe localmente antes de crear la relación
+                    if (componenteRepositorio.existsById(componenteId)) {
+                        // Verificar si la relación ya existe (idempotencia)
+                        List<mx.com.qtx.cotizador.entidad.PcParte> relaciones = pcRepositorio.findByPcId(pcId);
+                        boolean relacionExiste = relaciones.stream()
+                            .anyMatch(pc -> pc.getIdComponente().equals(componenteId));
+                            
+                        if (!relacionExiste) {
+                            mx.com.qtx.cotizador.entidad.PcParte pcParte = 
+                                new mx.com.qtx.cotizador.entidad.PcParte(pcId, componenteId);
+                            pcRepositorio.save(pcParte);
+                            logger.info("Componente agregado a PC: PC={}, Componente={}", pcId, componenteId);
+                        } else {
+                            logger.debug("Componente {} ya asociado a PC {}, operación idempotente", componenteId, pcId);
+                        }
+                    } else {
+                        logger.warn("Componente {} no encontrado localmente para agregar a PC {}", componenteId, pcId);
+                    }
+                }
+            } else {
+                logger.warn("Evento ADD_COMPONENT sin componenteIds: pcId={}", pcId);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error sincronizando agregado de componente a PC: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Sincroniza la remoción de un componente de una PC existente.
+     */
+    @Transactional
+    public void syncPcComponentRemoved(mx.com.qtx.cotizador.kafka.dto.PcChangeEvent event) {
+        logger.info("Sincronizando remoción de componente de PC: pcId={}, componenteIds={}", 
+                   event.getEntityId(), event.getComponenteIds());
+        
+        try {
+            String pcId = event.getEntityId().toString();
+            
+            // Si el evento incluye componenteIds, eliminar las relaciones específicas
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    // Buscar la relación específica y eliminarla
+                    List<mx.com.qtx.cotizador.entidad.PcParte> relaciones = pcRepositorio.findByPcId(pcId);
+                    relaciones.stream()
+                        .filter(pc -> pc.getIdComponente().equals(componenteId))
+                        .forEach(pcRepositorio::delete);
+                        
+                    logger.info("Componente removido de PC: PC={}, Componente={}", pcId, componenteId);
+                }
+            } else {
+                logger.warn("Evento REMOVE_COMPONENT sin componenteIds: pcId={}", pcId);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error sincronizando remoción de componente de PC: {}", e.getMessage(), e);
+            throw e;
         }
     }
 }

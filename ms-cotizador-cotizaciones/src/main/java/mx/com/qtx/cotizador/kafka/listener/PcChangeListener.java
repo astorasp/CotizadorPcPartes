@@ -2,6 +2,13 @@ package mx.com.qtx.cotizador.kafka.listener;
 
 import mx.com.qtx.cotizador.kafka.dto.PcChangeEvent;
 import mx.com.qtx.cotizador.kafka.service.KafkaMonitorService;
+import mx.com.qtx.cotizador.repositorio.PcRepositorio;
+import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
+import mx.com.qtx.cotizador.entidad.PcParte;
+import mx.com.qtx.cotizador.entidad.Componente;
+import mx.com.qtx.cotizador.entidad.TipoComponente;
+import mx.com.qtx.cotizador.entidad.Promocion;
+import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +23,9 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.kafka.retrytopic.TopicSuffixingStrategy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Listener para eventos de cambio de PCs desde ms-cotizador-componentes.
@@ -31,6 +41,11 @@ public class PcChangeListener {
 
     private static final Logger logger = LoggerFactory.getLogger(PcChangeListener.class);
     
+    @Autowired
+    private PcRepositorio pcRepositorio;
+    
+    @Autowired
+    private ComponenteRepositorio componenteRepositorio;
     
     @Autowired
     private KafkaMonitorService monitorService;
@@ -75,6 +90,12 @@ public class PcChangeListener {
                 case DELETE:
                     handlePcDeleted(event);
                     break;
+                case ADD_COMPONENT:
+                    handlePcComponentAdded(event);
+                    break;
+                case REMOVE_COMPONENT:
+                    handlePcComponentRemoved(event);
+                    break;
                 default:
                     logger.warn("Tipo de operación no reconocido: {}", event.getOperationType());
             }
@@ -102,16 +123,70 @@ public class PcChangeListener {
     /**
      * Procesa la creación de una nueva PC.
      */
+    @Transactional
     private void handlePcCreated(PcChangeEvent event) {
         logger.info("Procesando creación de PC: id={}, nombre={}, precio={}", 
                    event.getEntityId(), event.getNombre(), event.getPrecio());
         
         try {
-            // TODO: Sincronizar PC localmente para cotizaciones
-            logger.info("PC creada recibida: {}", event.getEntityId());
+            String pcId = event.getEntityId().toString();
             
-            logger.debug("PC creada registrada: id={}, activa={}", 
-                        event.getEntityId(), event.getActiva());
+            // 1. CREAR la PC como componente si no existe
+            if (!componenteRepositorio.existsById(pcId)) {
+                // Crear PC como componente (necesario para foreign key)
+                Componente pcComponente = new Componente();
+                pcComponente.setId(pcId);
+                pcComponente.setDescripcion(event.getNombre() != null ? event.getNombre() : "PC Completa");
+                pcComponente.setCosto(event.getPrecio() != null ? BigDecimal.valueOf(event.getPrecio()) : BigDecimal.ZERO);
+                pcComponente.setPrecioBase(event.getPrecio() != null ? BigDecimal.valueOf(event.getPrecio()) : BigDecimal.ZERO);
+                pcComponente.setMarca("PC Ensamblada");
+                pcComponente.setModelo(pcId);
+                
+                // Asignar tipo de componente "PC" (id = 1)
+                TipoComponente tipoPC = new TipoComponente();
+                tipoPC.setId((short) 1);
+                pcComponente.setTipoComponente(tipoPC);
+                
+                // Asignar promoción usando el promocionId del evento
+                if (event.getPromocionId() != null) {
+                    Promocion promocion = new Promocion();
+                    promocion.setIdPromocion(event.getPromocionId());
+                    pcComponente.setPromocion(promocion);
+                } else {
+                    // Fallback a promoción Regular (id = 1) si no se especifica
+                    Promocion promocionDefault = new Promocion();
+                    promocionDefault.setIdPromocion(1);
+                    pcComponente.setPromocion(promocionDefault);
+                }
+                
+                componenteRepositorio.save(pcComponente);
+                logger.info("PC {} creada como componente en cocomponente", pcId);
+            }
+            
+            // 2. Eliminar relaciones existentes por idempotencia
+            pcRepositorio.deleteByIdPc(pcId);
+            
+            // Si el evento incluye componenteIds, crear las relaciones
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    // Verificar que el componente existe localmente antes de crear la relación
+                    if (componenteRepositorio.existsById(componenteId)) {
+                        PcParte pcParte = new PcParte(pcId, componenteId);
+                        pcRepositorio.save(pcParte);
+                        logger.debug("Relación PC-Componente creada: PC={}, Componente={}", pcId, componenteId);
+                    } else {
+                        logger.warn("Componente {} no encontrado localmente para PC {}, saltando relación", componenteId, pcId);
+                    }
+                }
+                
+                logger.info("PC creada y sincronizada: id={}, relaciones creadas={}", 
+                           pcId, event.getComponenteIds().size());
+            } else {
+                logger.info("PC registrada sin componentes en evento: id={}, nombre={}, precio={}, activa={}", 
+                           pcId, event.getNombre(), event.getPrecio(), event.getActiva());
+            }
+            
         } catch (Exception e) {
             logger.error("Error procesando creación de PC: {}", e.getMessage(), e);
             throw e;
@@ -121,21 +196,43 @@ public class PcChangeListener {
     /**
      * Procesa la actualización de una PC existente.
      */
+    @Transactional
     private void handlePcUpdated(PcChangeEvent event) {
         logger.info("Procesando actualización de PC: id={}, nombre={}, precio={}", 
                    event.getEntityId(), event.getNombre(), event.getPrecio());
         
         try {
-            // TODO: Sincronizar cambios de la PC
-            logger.info("PC actualizada recibida: {}", event.getEntityId());
+            String pcId = event.getEntityId().toString();
             
-            // TODO: Verificar impacto en cotizaciones existentes
-            if (event.getPrecio() != null) {
-                logger.info("Cambio de precio en PC: {} -> {}", event.getEntityId(), event.getPrecio());
+            // Actualizar relaciones PC-Componente si se incluyen en el evento
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                // Eliminar relaciones existentes
+                pcRepositorio.deleteByIdPc(pcId);
+                
+                // Crear nuevas relaciones
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    if (componenteRepositorio.existsById(componenteId)) {
+                        PcParte pcParte = new PcParte(pcId, componenteId);
+                        pcRepositorio.save(pcParte);
+                        logger.debug("Relación PC-Componente actualizada: PC={}, Componente={}", pcId, componenteId);
+                    } else {
+                        logger.warn("Componente {} no encontrado localmente para PC actualizada {}", componenteId, pcId);
+                    }
+                }
+                
+                logger.info("PC actualizada y sincronizada: id={}, relaciones actualizadas={}", 
+                           pcId, event.getComponenteIds().size());
+            } else {
+                logger.info("PC actualizada sin componentes en evento: id={}, nombre={}, precio={}, activa={}", 
+                           pcId, event.getNombre(), event.getPrecio(), event.getActiva());
             }
             
-            logger.debug("PC actualizada registrada: id={}, activa={}", 
-                        event.getEntityId(), event.getActiva());
+            // TODO: Verificar impacto en cotizaciones existentes que usen esta PC
+            if (event.getPrecio() != null) {
+                logger.info("Cambio de precio en PC: {} -> precio={}", pcId, event.getPrecio());
+            }
+            
         } catch (Exception e) {
             logger.error("Error procesando actualización de PC: {}", e.getMessage(), e);
             throw e;
@@ -145,16 +242,20 @@ public class PcChangeListener {
     /**
      * Procesa la eliminación de una PC.
      */
+    @Transactional
     private void handlePcDeleted(PcChangeEvent event) {
         logger.info("Procesando eliminación de PC: id={}", event.getEntityId());
         
         try {
-            // TODO: Marcar PC como inactiva localmente
-            logger.info("PC eliminada recibida: {}", event.getEntityId());
+            String pcId = event.getEntityId().toString();
+            
+            // Eliminar relaciones PC-Componente de esta PC
+            pcRepositorio.deleteByIdPc(pcId);
+            
+            logger.info("PC eliminada y relaciones removidas: id={}", pcId);
             
             // TODO: Verificar cotizaciones afectadas por la eliminación
             
-            logger.debug("PC eliminada registrada: id={}", event.getEntityId());
         } catch (Exception e) {
             logger.error("Error procesando eliminación de PC: {}", e.getMessage(), e);
             throw e;
@@ -182,5 +283,80 @@ public class PcChangeListener {
         
         logger.warn("Mensaje registrado en DLT. Requiere investigación manual: eventId={}, entityId={}", 
                    event.getEventId(), event.getEntityId());
+    }
+    
+    /**
+     * Procesa la adición de un componente a una PC existente.
+     */
+    @Transactional
+    private void handlePcComponentAdded(PcChangeEvent event) {
+        logger.info("Procesando agregado de componente a PC: pcId={}, componenteIds={}", 
+                   event.getEntityId(), event.getComponenteIds());
+        
+        try {
+            String pcId = event.getEntityId().toString();
+            
+            // Si el evento incluye componenteIds, crear las relaciones
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    // Verificar que el componente existe localmente antes de crear la relación
+                    if (componenteRepositorio.existsById(componenteId)) {
+                        // Verificar si la relación ya existe (idempotencia)
+                        if (!pcRepositorio.existsByPcId(pcId) || 
+                            pcRepositorio.findByPcId(pcId).stream()
+                                .noneMatch(pc -> pc.getIdComponente().equals(componenteId))) {
+                            
+                            PcParte pcParte = new PcParte(pcId, componenteId);
+                            pcRepositorio.save(pcParte);
+                            logger.info("Componente agregado a PC: PC={}, Componente={}", pcId, componenteId);
+                        } else {
+                            logger.debug("Componente {} ya asociado a PC {}, operación idempotente", componenteId, pcId);
+                        }
+                    } else {
+                        logger.warn("Componente {} no encontrado localmente para agregar a PC {}", componenteId, pcId);
+                    }
+                }
+            } else {
+                logger.warn("Evento ADD_COMPONENT sin componenteIds: pcId={}", pcId);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error procesando agregado de componente a PC: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Procesa la remoción de un componente de una PC existente.
+     */
+    @Transactional
+    private void handlePcComponentRemoved(PcChangeEvent event) {
+        logger.info("Procesando remoción de componente de PC: pcId={}, componenteIds={}", 
+                   event.getEntityId(), event.getComponenteIds());
+        
+        try {
+            String pcId = event.getEntityId().toString();
+            
+            // Si el evento incluye componenteIds, eliminar las relaciones específicas
+            if (event.getComponenteIds() != null && !event.getComponenteIds().isEmpty()) {
+                for (String componenteId : event.getComponenteIds()) {
+                    
+                    // Buscar la relación específica y eliminarla
+                    List<PcParte> relaciones = pcRepositorio.findByPcId(pcId);
+                    relaciones.stream()
+                        .filter(pc -> pc.getIdComponente().equals(componenteId))
+                        .forEach(pcRepositorio::delete);
+                        
+                    logger.info("Componente removido de PC: PC={}, Componente={}", pcId, componenteId);
+                }
+            } else {
+                logger.warn("Evento REMOVE_COMPONENT sin componenteIds: pcId={}", pcId);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error procesando remoción de componente de PC: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 }

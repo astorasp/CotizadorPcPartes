@@ -1,6 +1,5 @@
 package mx.com.qtx.cotizador.kafka.config;
 
-import mx.com.qtx.cotizador.kafka.dto.BaseChangeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +10,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.retry.annotation.EnableRetry;
 
@@ -61,7 +61,7 @@ public class KafkaConsumerConfig {
      * @return ConsumerFactory configurado para deserialización JSON
      */
     @Bean
-    public ConsumerFactory<String, BaseChangeEvent> consumerFactory() {
+    public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         
         // Configuración básica de conexión
@@ -69,9 +69,11 @@ public class KafkaConsumerConfig {
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
         
-        // Configuración de deserialización
-        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        // Configuración de deserialización con ErrorHandlingDeserializer
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        configProps.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
+        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
         
         // Configuración de commit manual para garantizar procesamiento
         configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, enableAutoCommit);
@@ -81,14 +83,10 @@ public class KafkaConsumerConfig {
         configProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, fetchMaxWait);
         configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
         
-        // Configuración específica para deserialización JSON
+        // Configuración específica para deserialización JSON sin polimorfismo
         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "mx.com.qtx.cotizador.kafka.dto");
-        configProps.put(JsonDeserializer.TYPE_MAPPINGS, 
-            "ComponenteChangeEvent:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent," +
-            "CotizacionChangeEvent:mx.com.qtx.cotizador.kafka.dto.CotizacionChangeEvent," +
-            "PromocionChangeEvent:mx.com.qtx.cotizador.kafka.dto.PromocionChangeEvent," +
-            "PcChangeEvent:mx.com.qtx.cotizador.kafka.dto.PcChangeEvent");
-        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, BaseChangeEvent.class);
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "mx.com.qtx.cotizador.kafka.dto.PcChangeEvent");
+        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
@@ -99,8 +97,8 @@ public class KafkaConsumerConfig {
      * @return ConcurrentKafkaListenerContainerFactory configurado
      */
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, BaseChangeEvent> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, BaseChangeEvent> factory = 
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = 
             new ConcurrentKafkaListenerContainerFactory<>();
         
         factory.setConsumerFactory(consumerFactory());

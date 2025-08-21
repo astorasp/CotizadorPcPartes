@@ -82,6 +82,12 @@ public class PcChangeListener {
                 case DELETE:
                     handlePcDeleted(event);
                     break;
+                case ADD_COMPONENT:
+                    handlePcComponentAdded(event);
+                    break;
+                case REMOVE_COMPONENT:
+                    handlePcComponentRemoved(event);
+                    break;
                 default:
                     logger.warn("Tipo de operación no reconocido: {}", event.getOperationType());
             }
@@ -115,10 +121,11 @@ public class PcChangeListener {
                    event.getEntityId(), event.getNombre(), event.getPrecio());
         
         try {
-            // TODO: Sincronizar PC localmente para pedidos
-            logger.info("PC creada recibida: {}", event.getEntityId());
+            // Sincronizar PC localmente usando EventSyncService
+            eventSyncService.syncPcCreated(event);
             
-            // TODO: Verificar impacto en pedidos existentes
+            // Verificar impacto en pedidos existentes
+            eventSyncService.validatePendingOrdersWithNewComponent(event.getEntityId().toString());
             
             logger.debug("PC creada registrada: id={}, activa={}", 
                         event.getEntityId(), event.getActiva());
@@ -136,13 +143,15 @@ public class PcChangeListener {
                    event.getEntityId(), event.getNombre(), event.getPrecio());
         
         try {
-            // TODO: Sincronizar cambios de la PC
-            logger.info("PC actualizada recibida: {}", event.getEntityId());
+            // Sincronizar cambios de la PC usando EventSyncService
+            eventSyncService.syncPcUpdated(event);
             
-            // TODO: Verificar impacto en pedidos pendientes
+            // Verificar impacto en pedidos pendientes
+            eventSyncService.validatePendingOrdersWithUpdatedComponent(event.getEntityId().toString(), event.getPrecio());
             
-            // TODO: Notificar cambios de precio si es relevante
+            // Notificar cambios de precio si es relevante
             if (event.getPrecio() != null) {
+                eventSyncService.notifyPriceChangeToOrders(event.getEntityId().toString(), event.getPrecio());
                 logger.info("Cambio de precio en PC: {} -> {}", event.getEntityId(), event.getPrecio());
             }
             
@@ -161,10 +170,11 @@ public class PcChangeListener {
         logger.info("Procesando eliminación de PC: id={}", event.getEntityId());
         
         try {
-            // TODO: Marcar PC como inactiva localmente
-            logger.info("PC eliminada recibida: {}", event.getEntityId());
+            // Marcar PC como inactiva localmente usando EventSyncService
+            eventSyncService.syncPcDeleted(event);
             
-            // TODO: Verificar pedidos afectados por la eliminación
+            // Verificar pedidos afectados por la eliminación
+            eventSyncService.handleOrdersWithDeletedComponent(event.getEntityId().toString());
             
             logger.debug("PC eliminada registrada: id={}", event.getEntityId());
         } catch (Exception e) {
@@ -194,5 +204,43 @@ public class PcChangeListener {
         
         logger.warn("Mensaje registrado en DLT. Requiere investigación manual: eventId={}, entityId={}", 
                    event.getEventId(), event.getEntityId());
+    }
+    
+    /**
+     * Procesa la adición de un componente a una PC existente.
+     */
+    private void handlePcComponentAdded(PcChangeEvent event) {
+        logger.info("Procesando agregado de componente a PC: pcId={}, componenteIds={}", 
+                   event.getEntityId(), event.getComponenteIds());
+        
+        try {
+            // Sincronizar agregado de componente usando EventSyncService
+            eventSyncService.syncPcComponentAdded(event);
+            
+            logger.debug("Componente agregado a PC procesado: PC={}, componentes={}", 
+                        event.getEntityId(), event.getComponenteIds());
+        } catch (Exception e) {
+            logger.error("Error procesando agregado de componente a PC: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Procesa la remoción de un componente de una PC existente.
+     */
+    private void handlePcComponentRemoved(PcChangeEvent event) {
+        logger.info("Procesando remoción de componente de PC: pcId={}, componenteIds={}", 
+                   event.getEntityId(), event.getComponenteIds());
+        
+        try {
+            // Sincronizar remoción de componente usando EventSyncService
+            eventSyncService.syncPcComponentRemoved(event);
+            
+            logger.debug("Componente removido de PC procesado: PC={}, componentes={}", 
+                        event.getEntityId(), event.getComponenteIds());
+        } catch (Exception e) {
+            logger.error("Error procesando remoción de componente de PC: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 }

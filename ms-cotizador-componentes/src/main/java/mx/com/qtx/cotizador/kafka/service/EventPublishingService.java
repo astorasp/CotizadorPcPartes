@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * Servicio simplificado para publicar eventos de cambio en Kafka.
  * 
@@ -254,9 +256,10 @@ public class EventPublishingService {
      * @param descripcion Descripción de la PC
      * @param precio Precio de la PC
      * @param activa Estado activo de la PC
+     * @param componenteIds Lista de IDs de componentes de la PC
      */
     @Async
-    public void publishPcCreated(String pcId, String nombre, String descripcion, Double precio, Boolean activa) {
+    public void publishPcCreated(String pcId, String nombre, String descripcion, Double precio, Boolean activa, List<String> componenteIds, Integer promocionId) {
         try {
             if (!eventProducer.isKafkaEnabled()) {
                 logger.debug("Kafka desactivado - Evento de PC no enviado: ID={}", pcId);
@@ -271,13 +274,30 @@ public class EventPublishingService {
             event.setDescripcion(descripcion);
             event.setPrecio(precio);
             event.setActiva(activa);
+            
+            // Asignar componenteIds directamente como List<String>
+            if (componenteIds != null && !componenteIds.isEmpty()) {
+                event.setComponenteIds(componenteIds);
+                event.setCantidadComponentes(componenteIds.size());
+            }
+            
+            // Asignar promocionId
+            event.setPromocionId(promocionId);
 
             eventProducer.sendPcChangeEvent(event);
-            logger.info("Evento de creación de PC enviado: ID={}", pcId);
+            logger.info("Evento de creación de PC enviado: ID={}, componentes={}", pcId, componenteIds != null ? componenteIds.size() : 0);
 
         } catch (Exception e) {
             logger.error("Error publicando evento de creación de PC {}: {}", pcId, e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Publica evento de creación de PC (método legacy sin componentes).
+     */
+    @Async
+    public void publishPcCreated(String pcId, String nombre, String descripcion, Double precio, Boolean activa) {
+        publishPcCreated(pcId, nombre, descripcion, precio, activa, null, null);
     }
 
     /**
@@ -337,6 +357,68 @@ public class EventPublishingService {
 
         } catch (Exception e) {
             logger.error("Error publicando evento de eliminación de PC {}: {}", pcId, e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Publica evento de agregar componente a PC existente.
+     * 
+     * @param pcId ID de la PC
+     * @param componenteId ID del componente agregado
+     */
+    @Async
+    public void publishPcComponentAdded(String pcId, String componenteId) {
+        try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de agregar componente no enviado: PC={}, Componente={}", pcId, componenteId);
+                return;
+            }
+            
+            PcChangeEvent event = new PcChangeEvent(
+                BaseChangeEvent.OperationType.ADD_COMPONENT,
+                pcId
+            );
+            
+            // Agregar el componente específico al evento
+            event.setComponenteIds(List.of(componenteId));
+
+            eventProducer.sendPcChangeEvent(event);
+            logger.info("Evento de agregar componente enviado: PC={}, Componente={}", pcId, componenteId);
+
+        } catch (Exception e) {
+            logger.error("Error publicando evento de agregar componente: PC={}, Componente={}, Error={}", 
+                        pcId, componenteId, e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Publica evento de quitar componente de PC existente.
+     * 
+     * @param pcId ID de la PC
+     * @param componenteId ID del componente removido
+     */
+    @Async
+    public void publishPcComponentRemoved(String pcId, String componenteId) {
+        try {
+            if (!eventProducer.isKafkaEnabled()) {
+                logger.debug("Kafka desactivado - Evento de quitar componente no enviado: PC={}, Componente={}", pcId, componenteId);
+                return;
+            }
+            
+            PcChangeEvent event = new PcChangeEvent(
+                BaseChangeEvent.OperationType.REMOVE_COMPONENT,
+                pcId
+            );
+            
+            // Agregar el componente específico al evento
+            event.setComponenteIds(List.of(componenteId));
+
+            eventProducer.sendPcChangeEvent(event);
+            logger.info("Evento de quitar componente enviado: PC={}, Componente={}", pcId, componenteId);
+
+        } catch (Exception e) {
+            logger.error("Error publicando evento de quitar componente: PC={}, Componente={}, Error={}", 
+                        pcId, componenteId, e.getMessage(), e);
         }
     }
 }

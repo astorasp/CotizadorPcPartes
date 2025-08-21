@@ -1,8 +1,6 @@
 package mx.com.qtx.cotizador.kafka.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,24 +13,13 @@ import java.util.UUID;
  * 
  * @author Subagente3E - [2025-01-17 18:30:00 MST] - DTOs para eventos Kafka en consumidor
  */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.NAME,
-    include = JsonTypeInfo.As.EXISTING_PROPERTY,
-    property = "eventType"
-)
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = ComponenteChangeEvent.class, name = "COMPONENTE_CHANGE"),
-    @JsonSubTypes.Type(value = CotizacionChangeEvent.class, name = "COTIZACION_CHANGE"),
-    @JsonSubTypes.Type(value = PromocionChangeEvent.class, name = "PROMOCION_CHANGE"),
-    @JsonSubTypes.Type(value = PcChangeEvent.class, name = "PC_CHANGE")
-})
 public abstract class BaseChangeEvent {
     
     /**
      * Tipos de operaciones que pueden generar eventos
      */
     public enum OperationType {
-        CREATE, UPDATE, DELETE
+        CREATE, UPDATE, DELETE, ADD_COMPONENT, REMOVE_COMPONENT
     }
     
     /**

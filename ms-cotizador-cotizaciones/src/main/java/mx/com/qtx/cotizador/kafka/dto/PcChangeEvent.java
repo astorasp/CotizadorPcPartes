@@ -16,8 +16,9 @@ public class PcChangeEvent extends BaseChangeEvent {
     private String descripcion;
     private Double precio;
     private Boolean activa;
-    private List<Long> componenteIds;
+    private List<String> componenteIds;
     private Integer cantidadComponentes;
+    private Integer promocionId;
     
     /**
      * Constructor por defecto
@@ -71,11 +72,11 @@ public class PcChangeEvent extends BaseChangeEvent {
         this.activa = activa;
     }
     
-    public List<Long> getComponenteIds() {
+    public List<String> getComponenteIds() {
         return componenteIds;
     }
     
-    public void setComponenteIds(List<Long> componenteIds) {
+    public void setComponenteIds(List<String> componenteIds) {
         this.componenteIds = componenteIds;
     }
     
@@ -85,6 +86,14 @@ public class PcChangeEvent extends BaseChangeEvent {
     
     public void setCantidadComponentes(Integer cantidadComponentes) {
         this.cantidadComponentes = cantidadComponentes;
+    }
+    
+    public Integer getPromocionId() {
+        return promocionId;
+    }
+    
+    public void setPromocionId(Integer promocionId) {
+        this.promocionId = promocionId;
     }
     
     @Override

@@ -31,7 +31,7 @@ public abstract class BaseChangeEvent {
      * Tipos de operaciones que pueden generar eventos
      */
     public enum OperationType {
-        CREATE, UPDATE, DELETE
+        CREATE, UPDATE, DELETE, ADD_COMPONENT, REMOVE_COMPONENT
     }
     
     /**
