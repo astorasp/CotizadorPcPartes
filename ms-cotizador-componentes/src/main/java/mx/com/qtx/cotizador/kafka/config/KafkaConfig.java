@@ -95,8 +95,8 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
         configProps.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeoutMs);
         
-        // Configuración adicional para JSON
-        configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
+        // Configuración adicional para JSON con type headers para polimorfismo
+        configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);
         
         return new DefaultKafkaProducerFactory<>(configProps);
     }

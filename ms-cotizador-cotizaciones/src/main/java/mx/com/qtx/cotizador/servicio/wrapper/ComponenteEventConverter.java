@@ -34,11 +34,9 @@ public class ComponenteEventConverter {
         componente.setMarca(event.getMarca());
         componente.setModelo(event.getModelo());
         
-        // Campos específicos del evento
-        if (event.getEspecificaciones() != null) {
-            componente.setCapacidadAlm(extractEspecificacion(event.getEspecificaciones(), "capacidad"));
-            componente.setMemoria(extractEspecificacion(event.getEspecificaciones(), "memoria"));
-        }
+        // Campos específicos del evento - usar campos directos
+        componente.setCapacidadAlm(event.getCapacidadAlm());
+        componente.setMemoria(event.getMemoria());
         
         // Precios - convertir Double a BigDecimal
         if (event.getPrecioBase() != null) {

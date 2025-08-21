@@ -84,10 +84,13 @@ public class KafkaConsumerConfig {
         configProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, fetchMaxWait);
         configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
         
-        // Configuración específica para deserialización JSON sin polimorfismo
+        // Configuración específica para deserialización JSON con polimorfismo
         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "mx.com.qtx.cotizador.kafka.dto");
-        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "mx.com.qtx.cotizador.kafka.dto.PcChangeEvent");
-        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, true);
+        configProps.put(JsonDeserializer.TYPE_MAPPINGS, 
+            "COMPONENTE_CHANGE:mx.com.qtx.cotizador.kafka.dto.ComponenteChangeEvent," +
+            "PC_CHANGE:mx.com.qtx.cotizador.kafka.dto.PcChangeEvent," +
+            "PROMOCION_CHANGE:mx.com.qtx.cotizador.kafka.dto.PromocionChangeEvent");
         
         return new DefaultKafkaConsumerFactory<>(configProps);
     }

@@ -188,15 +188,22 @@ public class EventSyncService {
         logger.info("Sincronizando eliminación de componente: id={}", event.getEntityId());
         
         try {
-            Optional<Componente> existingComponente = componenteRepositorio.findById(event.getEntityId());
+            String componenteId = event.getEntityId().toString();
             
-            if (existingComponente.isPresent()) {
-                // Para simplificar, solo loggear la eliminación
-                logger.info("Componente marcado como eliminado: id={}", event.getEntityId());
-                logger.info("Componente marcado como inactivo: id={}", event.getEntityId());
+            // Verificar si el componente existe antes de eliminarlo
+            if (componenteRepositorio.existsById(componenteId)) {
+                componenteRepositorio.deleteById(componenteId);
+                logger.info("Componente eliminado de la base de datos local: id={}", componenteId);
+            } else {
+                logger.warn("Componente a eliminar no encontrado en BD local: id={}", componenteId);
             }
+            
+            // TODO: Verificar impacto en pedidos pendientes que usen este componente
+            // TODO: Notificar si hay pedidos afectados que requieran revisión
+            
         } catch (Exception e) {
-            logger.error("Error sincronizando eliminación de componente: {}", e.getMessage(), e);
+            logger.error("Error sincronizando eliminación de componente: id={}, error={}", 
+                        event.getEntityId(), e.getMessage(), e);
             throw e;
         }
     }

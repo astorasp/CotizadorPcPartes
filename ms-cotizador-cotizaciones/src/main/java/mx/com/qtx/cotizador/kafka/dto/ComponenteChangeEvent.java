@@ -21,6 +21,8 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     private Long proveedorId;
     private String especificaciones;
     private Boolean activo;
+    private String capacidadAlm;
+    private String memoria;
     
     /**
      * Constructor por defecto
@@ -136,6 +138,22 @@ public class ComponenteChangeEvent extends BaseChangeEvent {
     
     public void setEspecificaciones(String especificaciones) {
         this.especificaciones = especificaciones;
+    }
+    
+    public String getCapacidadAlm() {
+        return capacidadAlm;
+    }
+    
+    public void setCapacidadAlm(String capacidadAlm) {
+        this.capacidadAlm = capacidadAlm;
+    }
+    
+    public String getMemoria() {
+        return memoria;
+    }
+    
+    public void setMemoria(String memoria) {
+        this.memoria = memoria;
     }
     
     public Boolean getActivo() {
