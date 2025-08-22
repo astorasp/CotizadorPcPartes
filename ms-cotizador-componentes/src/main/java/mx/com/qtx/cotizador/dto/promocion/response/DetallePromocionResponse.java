@@ -133,7 +133,12 @@ public class DetallePromocionResponse {
         
         switch (tipoBase) {
             case SIN_DESCUENTO:
-                descripcionTipo = "Promoción regular sin descuento";
+                // DETECTAR DATOS LEGACY: Si tiene porcentaje > 0, es descuento legacy mal configurado
+                if (porcentajeDescuentoPlano != null && porcentajeDescuentoPlano > 0) {
+                    descripcionTipo = String.format("Descuento plano del %.1f%% (legacy)", porcentajeDescuentoPlano);
+                } else {
+                    descripcionTipo = "Promoción estándar (precio normal)";
+                }
                 break;
             case NXM:
                 if (llevent != null && paguen != null) {

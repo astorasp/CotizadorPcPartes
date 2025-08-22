@@ -139,42 +139,78 @@ export const promocionesApi = {
   },
 
   /**
-   * Crear detalle de promoción según el tipo
+   * Crear detalles de promoción según el tipo (arquitectura base + acumulable)
    */
-  createDetalleForType(tipoData) {
-    const detalle = {
-      nombre: `Detalle ${tipoData.tipo}`,
-      esBase: true
-    }
+  createDetallesForType(tipoData) {
+    const detalles = []
 
     switch(tipoData.tipo) {
+      case 'SIN_DESCUENTO':
+        // No crear detalles - promoción sin descuento se guarda solo en tabla principal
+        break
+        
       case 'DESCUENTO_PLANO':
-        detalle.tipoAcumulable = 'DESCUENTO_PLANO'
-        detalle.porcentajeDescuentoPlano = parseFloat(tipoData.montoDescuento) || 0
-        break
       case 'DESCUENTO_PORCENTUAL':
-        detalle.tipoAcumulable = 'DESCUENTO_PLANO'
-        detalle.porcentajeDescuentoPlano = parseFloat(tipoData.porcentajeDescuento) || 0
+        // Crear detalle base obligatorio
+        detalles.push({
+          nombre: 'Base Sin Descuento',
+          esBase: true,
+          tipoBase: 'SIN_DESCUENTO'
+        })
+        
+        // Crear detalle acumulable con el descuento
+        detalles.push({
+          nombre: `Descuento Plano ${tipoData.porcentajeDescuento}%`,
+          esBase: false,
+          tipoAcumulable: 'DESCUENTO_PLANO',
+          porcentajeDescuentoPlano: parseFloat(tipoData.porcentajeDescuento) || 0
+        })
         break
+        
       case 'POR_CANTIDAD':
-        detalle.tipoBase = 'DESCUENTO_ESCALONADO'
-        detalle.escalasDescuento = [{
-          cantidad: parseInt(tipoData.cantidadMinima) || 1,
-          descuento: parseFloat(tipoData.porcentajeDescuento) || 0
-        }]
+        // Crear detalle base obligatorio
+        detalles.push({
+          nombre: 'Base Sin Descuento',
+          esBase: true,
+          tipoBase: 'SIN_DESCUENTO'
+        })
+        
+        // Crear detalle acumulable por cantidad
+        detalles.push({
+          nombre: `Descuento por Cantidad (${tipoData.cantidadMinima}+ unidades)`,
+          esBase: false,
+          tipoAcumulable: 'DESCUENTO_POR_CANTIDAD',
+          escalasDescuento: [{
+            cantidadMinima: parseInt(tipoData.cantidadMinima) || 1,
+            cantidadMaxima: 999,
+            porcentajeDescuento: parseFloat(tipoData.porcentajeDescuento) || 0
+          }]
+        })
         break
+        
       case 'NXM':
-        detalle.tipoBase = 'NXM'
-        detalle.parametrosNxM = {
-          llevent: parseInt(tipoData.nCompras) || 1,
-          paguen: parseInt(tipoData.mPago) || 1
-        }
+        // Solo crear detalle base para NXM
+        detalles.push({
+          nombre: `Promoción ${tipoData.nCompras}x${tipoData.mPago}`,
+          esBase: true,
+          tipoBase: 'NXM',
+          parametrosNxM: {
+            llevent: parseInt(tipoData.nCompras) || 1,
+            paguen: parseInt(tipoData.mPago) || 1
+          }
+        })
         break
+        
       default:
-        detalle.tipoBase = 'SIN_DESCUENTO'
+        // Promoción sin descuento
+        detalles.push({
+          nombre: 'Base Sin Descuento',
+          esBase: true,
+          tipoBase: 'SIN_DESCUENTO'
+        })
     }
 
-    return detalle
+    return detalles
   },
 
   /**
@@ -189,11 +225,11 @@ export const promocionesApi = {
       detalles: []
     }
 
-    // Crear detalle base según el tipo
+    // Crear detalles según el tipo (puede generar múltiples detalles)
     if (formData.tipo) {
-      const detalleBase = this.createDetalleForType(formData)
-      if (detalleBase) {
-        payload.detalles.push(detalleBase)
+      const detalles = this.createDetallesForType(formData)
+      if (detalles && detalles.length > 0) {
+        payload.detalles.push(...detalles)
       }
     }
 
@@ -306,7 +342,8 @@ export const promocionesApi = {
       'DESCUENTO_PORCENTUAL': 'Descuento Porcentual',
       'POR_CANTIDAD': 'Por Cantidad',
       'NXM': 'N x M',
-      'DESCUENTO_ESCALONADO': 'Descuento Escalonado'
+      'DESCUENTO_ESCALONADO': 'Descuento Escalonado',
+      'SIN_DESCUENTO': 'Sin Descuento'
     }
     return tipos[tipo] || tipo
   },
@@ -316,6 +353,7 @@ export const promocionesApi = {
    */
   getTiposPromocion() {
     return [
+      { value: 'SIN_DESCUENTO', label: 'Sin Descuento', description: 'Promoción regular sin descuentos' },
       { value: 'DESCUENTO_PLANO', label: 'Descuento Plano', description: 'Descuento fijo en dinero' },
       { value: 'DESCUENTO_PORCENTUAL', label: 'Descuento Porcentual', description: 'Descuento por porcentaje' },
       { value: 'POR_CANTIDAD', label: 'Por Cantidad', description: 'Descuento por cantidad mínima' },
@@ -389,11 +427,30 @@ export const promocionesApi = {
         <div><strong>Tipo:</strong> ${this.getTipoDisplayName(formData.tipo)}</div>
     `
 
-    // Agregar detalles específicos del tipo
+    // Generar detalles para preview
+    if (formData.tipo) {
+      const detalles = this.createDetallesForType(formData)
+      if (detalles && detalles.length > 0) {
+        content += `<div><strong>Detalles:</strong></div>`
+        detalles.forEach((detalle, index) => {
+          content += `<div class="ml-4 text-sm">`
+          content += `<strong>${index + 1}.</strong> ${detalle.nombre}`
+          if (detalle.esBase) {
+            content += ` <span class="text-blue-600">(Base)</span>`
+          } else {
+            content += ` <span class="text-green-600">(Acumulable)</span>`
+          }
+          content += `</div>`
+        })
+      }
+    }
+
+    // Agregar detalles específicos del tipo (información adicional)
     switch(formData.tipo) {
-      case 'DESCUENTO_PLANO':
-        content += `<div><strong>Monto Descuento:</strong> $${parseFloat(formData.montoDescuento || 0).toFixed(2)}</div>`
+      case 'SIN_DESCUENTO':
+        content += `<div><strong>Tipo:</strong> Promoción regular sin descuentos</div>`
         break
+      case 'DESCUENTO_PLANO':
       case 'DESCUENTO_PORCENTUAL':
         content += `<div><strong>Porcentaje:</strong> ${formData.porcentajeDescuento}%</div>`
         break
@@ -421,9 +478,12 @@ export const promocionesApi = {
     const errors = []
     
     switch(tipoData.tipo) {
+      case 'SIN_DESCUENTO':
+        // No hay validaciones específicas para promociones sin descuento
+        break
       case 'DESCUENTO_PLANO':
-        if (!tipoData.montoDescuento || tipoData.montoDescuento <= 0) {
-          errors.push('El monto de descuento debe ser mayor a 0')
+        if (!tipoData.porcentajeDescuento || tipoData.porcentajeDescuento <= 0 || tipoData.porcentajeDescuento > 100) {
+          errors.push('El porcentaje debe estar entre 0.01 y 100')
         }
         break
       case 'DESCUENTO_PORCENTUAL':

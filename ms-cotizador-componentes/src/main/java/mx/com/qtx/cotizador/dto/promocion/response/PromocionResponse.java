@@ -164,7 +164,7 @@ public class PromocionResponse {
     
     private void calcularTipoPromocionPrincipal() {
         if (detalles == null || detalles.isEmpty()) {
-            tipoPromocionPrincipal = "Sin configurar";
+            tipoPromocionPrincipal = "Promoción sin descuento";
             return;
         }
         

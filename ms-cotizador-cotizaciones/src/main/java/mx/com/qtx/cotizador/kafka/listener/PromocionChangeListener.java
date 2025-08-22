@@ -113,13 +113,24 @@ public class PromocionChangeListener {
     
     /**
      * Procesa la creación de una nueva promoción.
-     * Persistir la nueva promoción en la base de datos local.
+     * Implementa persistencia idempotente para evitar conflictos de concurrencia.
      */
     private void handlePromocionCreated(PromocionChangeEvent event) {
         logger.info("Procesando creación de promoción: id={}, nombre={}", 
                    event.getEntityId(), event.getNombre());
         
         try {
+            Integer promocionId = Integer.valueOf(event.getEntityId());
+            
+            // Verificar si la promoción ya existe (operación idempotente)
+            if (promocionRepositorio.existsById(promocionId)) {
+                logger.info("Promoción ya existe, actualizando datos: id={}, nombre={}", 
+                           promocionId, event.getNombre());
+                // Si ya existe, actualizar en lugar de crear
+                handlePromocionUpdated(event);
+                return;
+            }
+            
             // Convertir evento a entidad y persistir
             Promocion promocion = PromocionEventConverter.toEntity(event);
             promocionRepositorio.save(promocion);

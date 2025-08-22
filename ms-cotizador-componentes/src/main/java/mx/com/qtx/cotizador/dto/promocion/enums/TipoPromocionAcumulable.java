@@ -36,13 +36,38 @@ public enum TipoPromocionAcumulable {
     
     /**
      * Busca un tipo de promoción acumulable por su código
+     * Incluye compatibilidad con datos existentes en BD
      */
     public static TipoPromocionAcumulable fromCodigo(String codigo) {
+        if (codigo == null) {
+            return null;
+        }
+        
+        // Buscar por código exacto
         for (TipoPromocionAcumulable tipo : values()) {
             if (tipo.codigo.equals(codigo)) {
                 return tipo;
             }
         }
-        throw new IllegalArgumentException("Tipo de promoción acumulable no válido: " + codigo);
+        
+        // Compatibilidad con códigos existentes en BD
+        switch (codigo.toUpperCase()) {
+            case "PLANO":
+            case "DESCUENTO_PLANO":
+            case "DSCTO_PLANO":
+                return DESCUENTO_PLANO;
+                
+            case "POR_CANTIDAD":
+            case "DESCUENTO_POR_CANTIDAD":
+            case "DSCTO_CANTIDAD":
+            case "DSCTO_X_CANTIDAD":
+            case "VOLUME":
+            case "VOLUMEN":
+            case "CANTIDAD":
+                return DESCUENTO_POR_CANTIDAD;
+                
+            default:
+                throw new IllegalArgumentException("Tipo de promoción acumulable no válido: " + codigo);
+        }
     }
 } 

@@ -282,18 +282,83 @@ public class PromocionMapper {
      * Configura response para promoción base
      */
     private static void configurarResponseBase(DetallePromocionResponse response, DetallePromocion entidad) {
-        if (entidad.getTipoPromBase() != null) {
-            try {
-                response.setTipoBase(TipoPromocionBase.fromCodigo(entidad.getTipoPromBase()));
-                
-                if (response.getTipoBase() == TipoPromocionBase.NXM) {
-                    response.setLlevent(entidad.getLlevent());
-                    response.setPaguen(entidad.getPaguen());
+        // Detectar automáticamente el tipo basándose en los datos
+        TipoPromocionBase tipoDetectado = detectarTipoPromocionBase(entidad);
+        
+        if (tipoDetectado != null) {
+            response.setTipoBase(tipoDetectado);
+            
+            if (tipoDetectado == TipoPromocionBase.NXM) {
+                response.setLlevent(entidad.getLlevent());
+                response.setPaguen(entidad.getPaguen());
+            }
+        } else {
+            // Fallback: manejar datos legacy mal configurados
+            if (entidad.getTipoPromBase() != null) {
+                try {
+                    TipoPromocionBase tipoFromBD = TipoPromocionBase.fromCodigo(entidad.getTipoPromBase());
+                    
+                    // LÓGICA ESPECIAL PARA DATOS LEGACY:
+                    // Si en BD dice "BASE" pero tiene descuento > 0, es promoción legacy mal configurada
+                    if (tipoFromBD == TipoPromocionBase.SIN_DESCUENTO && 
+                        entidad.getPorcDctoPlano() != null && entidad.getPorcDctoPlano() > 0) {
+                        
+                        // Tratar como descuento plano legacy - simular estructura acumulable
+                        response.setTipoBase(TipoPromocionBase.SIN_DESCUENTO); // Base sin descuento
+                        // Pasar el porcentaje para que se detecte como descuento legacy
+                        response.setPorcentajeDescuentoPlano(entidad.getPorcDctoPlano());
+                        
+                    } else {
+                        response.setTipoBase(tipoFromBD);
+                        
+                        if (response.getTipoBase() == TipoPromocionBase.NXM) {
+                            response.setLlevent(entidad.getLlevent());
+                            response.setPaguen(entidad.getPaguen());
+                        }
+                    }
+                } catch (IllegalArgumentException e) {
+                    // Tipo no reconocido, se maneja en calcularDescripcionTipo()
                 }
-            } catch (IllegalArgumentException e) {
-                // Tipo no reconocido, se maneja en calcularDescripcionTipo()
             }
         }
+    }
+    
+    /**
+     * Detecta automáticamente el tipo de promoción basándose en los datos
+     * Aplica lógica mejorada para distinguir datos legacy mal configurados
+     */
+    private static TipoPromocionBase detectarTipoPromocionBase(DetallePromocion entidad) {
+        // Detectar NXM por patrón llevent > paguen > 0
+        if (entidad.getLlevent() != null && entidad.getPaguen() != null &&
+            entidad.getLlevent() > 0 && entidad.getPaguen() > 0 &&
+            entidad.getLlevent() > entidad.getPaguen()) {
+            return TipoPromocionBase.NXM;
+        }
+        
+        // NUEVA LÓGICA: Detectar promociones con descuento legacy mal configuradas
+        // Si tiene porc_dcto_plano > 0 con llevent=1, paguen=1 = es descuento plano legacy
+        if (entidad.getPorcDctoPlano() != null && entidad.getPorcDctoPlano() > 0 &&
+            entidad.getLlevent() != null && entidad.getPaguen() != null &&
+            entidad.getLlevent() == 1 && entidad.getPaguen() == 1) {
+            // Datos legacy: promoción con descuento pero mal configurada como BASE
+            // La tratamos como promoción con descuento, no como SIN_DESCUENTO
+            return null; // Deja que la lógica de fallback maneje esto
+        }
+        
+        // Detectar SIN_DESCUENTO REAL: llevent=1, paguen=1 Y porc_dcto_plano=0
+        if (entidad.getLlevent() != null && entidad.getPaguen() != null &&
+            entidad.getLlevent() == 1 && entidad.getPaguen() == 1 &&
+            (entidad.getPorcDctoPlano() == null || entidad.getPorcDctoPlano() == 0)) {
+            return TipoPromocionBase.SIN_DESCUENTO;
+        }
+        
+        // Detectar SIN_DESCUENTO por patrón llevent=0, paguen=0
+        if (entidad.getLlevent() != null && entidad.getPaguen() != null &&
+            entidad.getLlevent() == 0 && entidad.getPaguen() == 0) {
+            return TipoPromocionBase.SIN_DESCUENTO;
+        }
+        
+        return null; // No se pudo detectar automáticamente
     }
     
     /**

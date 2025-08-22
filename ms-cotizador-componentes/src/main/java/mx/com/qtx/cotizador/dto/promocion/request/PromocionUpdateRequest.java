@@ -32,7 +32,6 @@ public class PromocionUpdateRequest {
     @NotNull(message = "La fecha de fin de vigencia es requerida")
     private LocalDate vigenciaHasta;
     
-    @NotEmpty(message = "La promoción debe tener al menos un detalle")
     @Valid
     private List<DetallePromocionRequest> detalles;
     
@@ -119,7 +118,7 @@ public class PromocionUpdateRequest {
         return nombre != null && !nombre.trim().isEmpty() &&
                descripcion != null && !descripcion.trim().isEmpty() &&
                vigenciaDesde != null && vigenciaHasta != null &&
-               detalles != null && !detalles.isEmpty();
+               detalles != null; // Permitir lista vacía para promociones sin descuento
     }
     
     private boolean validarFechas() {
@@ -128,6 +127,11 @@ public class PromocionUpdateRequest {
     }
     
     private boolean validarDetalles() {
+        // CASO ESPECIAL: Promoción sin descuento (sin detalles)
+        if (detalles.isEmpty()) {
+            return true; // Válido para promociones "Sin Descuento"
+        }
+        
         // Debe tener exactamente un detalle base
         long detallesBase = detalles.stream()
             .filter(detalle -> detalle.getEsBase() != null && detalle.getEsBase())

@@ -38,13 +38,31 @@ public enum TipoPromocionBase {
     
     /**
      * Busca un tipo de promoción por su código
+     * Incluye compatibilidad con datos existentes en BD
      */
     public static TipoPromocionBase fromCodigo(String codigo) {
+        if (codigo == null) {
+            return null;
+        }
+        
+        // Buscar por código exacto
         for (TipoPromocionBase tipo : values()) {
             if (tipo.codigo.equals(codigo)) {
                 return tipo;
             }
         }
-        throw new IllegalArgumentException("Tipo de promoción base no válido: " + codigo);
+        
+        // Compatibilidad con códigos existentes en BD
+        switch (codigo.toUpperCase()) {
+            case "BASE":
+                return SIN_DESCUENTO; // Mapear "BASE" a SIN_DESCUENTO por defecto
+            case "SIN_DSCTO":
+            case "SIN_DESCUENTO":
+                return SIN_DESCUENTO;
+            case "NXM":
+                return NXM;
+            default:
+                throw new IllegalArgumentException("Tipo de promoción base no válido: " + codigo);
+        }
     }
 } 

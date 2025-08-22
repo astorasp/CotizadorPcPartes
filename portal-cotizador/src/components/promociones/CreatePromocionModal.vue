@@ -143,18 +143,28 @@
 
                 <!-- Configuración específica por tipo -->
                 <div v-if="promocionesStore.formData.tipo" class="space-y-4">
+                  <!-- Sin Descuento -->
+                  <div v-if="promocionesStore.showTipoConfig('SIN_DESCUENTO')" class="bg-gray-50 p-3 rounded-md">
+                    <h5 class="font-medium text-gray-900 mb-2">Promoción Sin Descuento</h5>
+                    <div class="text-sm text-gray-600">
+                      <p>Esta promoción no aplicará ningún tipo de descuento.</p>
+                      <p>Se guardará únicamente la información básica de la promoción.</p>
+                    </div>
+                  </div>
+
                   <!-- Descuento Plano -->
                   <div v-if="promocionesStore.showTipoConfig('DESCUENTO_PLANO')" class="bg-green-50 p-3 rounded-md">
                     <h5 class="font-medium text-green-900 mb-2">Descuento Plano</h5>
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Monto del Descuento ($) *
+                        Porcentaje de Descuento (%) *
                       </label>
                       <input
-                        v-model.number="promocionesStore.formData.montoDescuento"
+                        v-model.number="promocionesStore.formData.porcentajeDescuento"
                         @input="handleInputChange"
                         type="number"
-                        min="0"
+                        min="0.01"
+                        max="100"
                         step="0.01"
                         placeholder="0.00"
                         class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
