@@ -82,7 +82,8 @@ public abstract class BaseIntegrationTest {
         
         // Configurar RestAssured para cada test
         RestAssured.port = port;
-        // No configurar basePath - se maneja a nivel de cada test con constantes
+        // Configurar basePath para coincidir con server.servlet.context-path en application.yml
+        RestAssured.basePath = "/api/v1";
         RestAssured.authentication = RestAssured.basic(USER_ADMIN, PASSWORD_ADMIN);
     }
     

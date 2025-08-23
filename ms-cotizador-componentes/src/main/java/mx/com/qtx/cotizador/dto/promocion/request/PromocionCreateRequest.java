@@ -161,7 +161,7 @@ public class PromocionCreateRequest {
     public List<DetallePromocionRequest> getDetallesAcumulables() {
         return detalles.stream()
             .filter(detalle -> detalle.getEsBase() != null && !detalle.getEsBase())
-            .toList();
+            .collect(java.util.stream.Collectors.toList());
     }
     
     @Override

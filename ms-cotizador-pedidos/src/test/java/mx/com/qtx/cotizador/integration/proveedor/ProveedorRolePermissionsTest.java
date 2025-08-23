@@ -36,7 +36,7 @@ public class ProveedorRolePermissionsTest extends BaseIntegrationTest {
     private ProveedorCreateRequest validCreateRequest;
     private ProveedorUpdateRequest validUpdateRequest;
     private static final String TEST_PROVEEDOR_CVE = "PERM_TEST_001";
-    private static final String PROVEEDORES_API_PATH = "/proveedores";
+    private static final String PROVEEDORES_API_PATH = "/api/v1/proveedores";
 
     @BeforeEach
     protected void setUp() {

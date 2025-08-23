@@ -32,6 +32,11 @@ public class DetallePromDsctoXCant implements Serializable {
     @JoinColumn(name = "num_det_promocion", nullable = false)
     private DetallePromocion detallePromocion;
     
+    @ManyToOne
+    @MapsId("numPromocion")
+    @JoinColumn(name = "num_promocion", nullable = false)
+    private Promocion promocion;
+    
     // Constructores
     public DetallePromDsctoXCant() {
         // Constructor vacío requerido por JPA
@@ -78,6 +83,17 @@ public class DetallePromDsctoXCant implements Serializable {
         this.detallePromocion = detallePromocion;
         if (detallePromocion != null && this.id != null) {
             this.id.setNumDetPromocion(detallePromocion.getIdDetallePromocion());
+        }
+    }
+    
+    public Promocion getPromocion() {
+        return promocion;
+    }
+    
+    public void setPromocion(Promocion promocion) {
+        this.promocion = promocion;
+        if (promocion != null && this.id != null) {
+            this.id.setNumPromocion(promocion.getIdPromocion());
         }
     }
     

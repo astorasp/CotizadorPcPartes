@@ -11,6 +11,7 @@ import mx.com.qtx.cotizador.dto.promocion.request.PromocionCreateRequest;
 import mx.com.qtx.cotizador.dto.promocion.request.PromocionUpdateRequest;
 import mx.com.qtx.cotizador.dto.promocion.response.DetallePromocionResponse;
 import mx.com.qtx.cotizador.dto.promocion.response.EscalaDescuentoResponse;
+import mx.com.qtx.cotizador.dto.promocion.response.ParametrosNxMResponse;
 import mx.com.qtx.cotizador.dto.promocion.response.PromocionResponse;
 import mx.com.qtx.cotizador.entidad.DetallePromDsctoXCant;
 import mx.com.qtx.cotizador.entidad.DetallePromocion;
@@ -223,13 +224,14 @@ public class PromocionMapper {
                 detalle.setLlevent(0);
                 detalle.setPaguen(0);
                 
-                // Convertir escalas de descuento
+                // ✅ ENFOQUE IDEAL JPA: Usar método helper para relaciones bidireccionales
                 if (request.getEscalasDescuento() != null) {
-                    List<DetallePromDsctoXCant> escalasEntidad = request.getEscalasDescuento().stream()
-                        .map(escala -> toEscalaEntity(escala, detalle))
-                        .collect(Collectors.toList());
-                    
-                    detalle.setDescuentosPorCantidad(escalasEntidad);
+                    for (EscalaDescuentoRequest escalaRequest : request.getEscalasDescuento()) {
+                        DetallePromDsctoXCant escalaEntidad = toEscalaEntity(escalaRequest, detalle);
+                        if (escalaEntidad != null) {
+                            detalle.addDescuentoPorCantidad(escalaEntidad); // Usa método helper
+                        }
+                    }
                 }
                 break;
         }
@@ -237,6 +239,7 @@ public class PromocionMapper {
     
     /**
      * Convierte EscalaDescuentoRequest a DetallePromDsctoXCant
+     * Enfoque ideal JPA: Solo datos de negocio, las relaciones las maneja addDescuentoPorCantidad()
      */
     private static DetallePromDsctoXCant toEscalaEntity(EscalaDescuentoRequest request, DetallePromocion detalle) {
         if (request == null) {
@@ -244,9 +247,19 @@ public class PromocionMapper {
         }
         
         DetallePromDsctoXCant escala = new DetallePromDsctoXCant();
-        escala.setCantidad(request.getCantidad());
+        
+        // Solo datos de negocio - las relaciones las maneja el método helper
+        Integer cantidadEfectiva = request.getCantidadMinimaEfectiva();
+        escala.setCantidad(cantidadEfectiva);
         escala.setDscto(request.getDescuento());
-        escala.setDetallePromocion(detalle);
+        
+        // numDscto secuencial para identificar cada escala
+        Integer numDscto = detalle.getDescuentosPorCantidad() != null ? 
+                          detalle.getDescuentosPorCantidad().size() + 1 : 1;
+        escala.setNumDscto(numDscto);
+        
+        // ✅ Las relaciones (detalle, promocion) las establece addDescuentoPorCantidad()
+        // ✅ JPA maneja automáticamente los IDs de las claves compuestas
         
         return escala;
     }
@@ -291,6 +304,14 @@ public class PromocionMapper {
             if (tipoDetectado == TipoPromocionBase.NXM) {
                 response.setLlevent(entidad.getLlevent());
                 response.setPaguen(entidad.getPaguen());
+                
+                // Crear objeto anidado para mantener compatibilidad con tests
+                if (entidad.getLlevent() != null && entidad.getPaguen() != null) {
+                    response.setParametrosNxM(new ParametrosNxMResponse(
+                        entidad.getLlevent(), 
+                        entidad.getPaguen()
+                    ));
+                }
             }
         } else {
             // Fallback: manejar datos legacy mal configurados

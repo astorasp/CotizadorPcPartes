@@ -27,14 +27,24 @@ public class PromDsctoXcantidad extends PromAcumulable {
 		
 		BigDecimal baseCalculo = this.promoBase.calcularImportePromocion(cant, precioBase);
 		
+		// Si no hay cantidad, devolver el precio base sin descuento
+		if (cant <= 0) {
+			return baseCalculo;
+		}
 		
-		int keyDscto = this.mapCantidadVsDscto.keySet()
+		// Buscar la escala de descuento aplicable
+		Integer keyDscto = this.mapCantidadVsDscto.keySet()
 											  .stream()
 											  .sorted()                           // ordena asc
 											  .filter(k -> k <= cant)             // elimina llaves mayores que la cantidad
 											  .sorted((n,n2) -> n <= n2 ? 1 : -1) // Ordena elementos filtrados dsc
 											  .findFirst()                        // toma el primero, devuele optional
-											  .get();                             // toma el valor
+											  .orElse(null);                      // devuelve null si no hay escala aplicable
+		
+		// Si no hay escala aplicable, devolver precio base sin descuento
+		if (keyDscto == null) {
+			return baseCalculo;
+		}
 		
 		BigDecimal porcDscto = new BigDecimal(mapCantidadVsDscto.get(keyDscto)).divide(new BigDecimal(100));
 

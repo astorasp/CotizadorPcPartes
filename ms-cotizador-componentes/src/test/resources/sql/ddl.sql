@@ -1,5 +1,8 @@
 -- TestContainers ya creó la base de datos, no necesitamos crear ni usar
 -- Solo crear las tablas directamente
+-- Configurar UTF-8 explícitamente al inicio
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
 
 -- Tabla para tipos de componentes
 CREATE TABLE IF NOT EXISTS cotipo_componente (
@@ -20,10 +23,10 @@ CREATE TABLE IF NOT EXISTS copromocion (
 CREATE TABLE IF NOT EXISTS codetalle_promocion (
     id_detalle_promocion INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     es_base BOOLEAN NOT NULL DEFAULT FALSE,
-    llevent INT NOT NULL,
+    llevent INT,
     nombre VARCHAR(100) NOT NULL,
-    paguen INT NOT NULL,
-    porc_dcto_plano DOUBLE NOT NULL,
+    paguen INT,
+    porc_dcto_plano DOUBLE,
     tipo_prom_acumulable VARCHAR(50),
     tipo_prom_base VARCHAR(50),
     id_promocion INT UNSIGNED NOT NULL,
@@ -66,63 +69,13 @@ CREATE TABLE IF NOT EXISTS copc_parte (
     FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Tabla de cotizaciones
-CREATE TABLE IF NOT EXISTS cocotizacion (
-    folio INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    fecha VARCHAR(20) NOT NULL,    
-    impuestos DECIMAL(20,2) NOT NULL,
-    subtotal DECIMAL(20,2) NOT NULL,
-    total DECIMAL(20,2) NOT NULL
-) ENGINE=InnoDB;
-
--- Tabla de detalles de cotización
-CREATE TABLE IF NOT EXISTS codetalle_cotizacion (
-    folio INT UNSIGNED NOT NULL,
-    num_detalle INT UNSIGNED NOT NULL,
-    cantidad INT UNSIGNED NOT NULL,
-    descripcion VARCHAR(255) NOT NULL,
-    id_componente VARCHAR(50) NOT NULL,
-    precio_base DECIMAL(20,2) NOT NULL,
-    PRIMARY KEY (folio, num_detalle),
-    FOREIGN KEY (folio) REFERENCES cocotizacion(folio) ON DELETE CASCADE,
-    FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente)
-) ENGINE=InnoDB;
-
--- Tabla de proveedores
-CREATE TABLE IF NOT EXISTS coproveedor (
-    cve VARCHAR(50) PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    razon_social VARCHAR(255) NOT NULL
-) ENGINE=InnoDB;
-
--- Tabla de pedidos
-CREATE TABLE IF NOT EXISTS copedido (
-    num_pedido INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    cve_proveedor VARCHAR(50) NOT NULL,
-    fecha_emision DATE NOT NULL,
-    fecha_entrega DATE NOT NULL,
-    nivel_surtido INT NOT NULL,
-    total DECIMAL(20,2) NOT NULL,
-    FOREIGN KEY (cve_proveedor) REFERENCES coproveedor(cve)
-) ENGINE=InnoDB;
-
--- Tabla de detalles de pedido
-CREATE TABLE IF NOT EXISTS codetalle_pedido (
-    num_pedido INT UNSIGNED NOT NULL,
-    num_detalle INT UNSIGNED NOT NULL,
-    cantidad INT UNSIGNED NOT NULL,
-    precio_unitario DECIMAL(20,2) NOT NULL,
-    total_cotizado DECIMAL(20,2) NOT NULL,
-    id_componente VARCHAR(50) NOT NULL,
-    PRIMARY KEY (num_pedido, num_detalle),
-    FOREIGN KEY (num_pedido) REFERENCES copedido(num_pedido) ON DELETE CASCADE,
-    FOREIGN KEY (id_componente) REFERENCES cocomponente(id_componente)
-) ENGINE=InnoDB;
+-- ===================================================================
+-- MICROSERVICIO: ms-cotizador-componentes
+-- RESPONSABILIDAD: Gestión de componentes, tipos, promociones y PCs
+-- ===================================================================
 
 -- Crear índices para mejorar el rendimiento
 CREATE INDEX idx_componente_tipo ON cocomponente (id_tipo_componente);
 CREATE INDEX idx_promocion ON cocomponente (id_promocion);
 CREATE INDEX idx_pcpartes_pc ON copc_parte (id_pc);
-CREATE INDEX idx_detalle_cotizacion_cotizacion ON codetalle_cotizacion (folio, num_detalle);
-CREATE INDEX idx_detalle_pedido_pedido ON codetalle_pedido (num_pedido);
 CREATE INDEX idx_detalle_promocion_promocion ON codetalle_promocion (id_promocion);

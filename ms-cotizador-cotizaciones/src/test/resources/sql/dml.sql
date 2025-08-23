@@ -1,21 +1,10 @@
+-- Configurar UTF-8 explícitamente
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 -- Insertar valores iniciales para tipos de componente
 INSERT INTO cotipo_componente (nombre) VALUES 
     ('PC'), ('DISCO_DURO'), ('MONITOR'), ('TARJETA_VIDEO');
-
--- Los tipos de componentes ya están insertados en el DDL
-
--- Insertar proveedores
-INSERT INTO coproveedor (cve, nombre, razon_social) VALUES
-('TECH001', 'TechSupply SA', 'TechSupply Sociedad Anónima de Capital Variable'),
-('HARD002', 'Hardware Express', 'Hardware Express S.A. de C.V.'),
-('COMP003', 'ComponentesMX', 'Componentes Mexicanos S.A.'),
-('GLOB004', 'Global PC Parts', 'Global PC Parts México S.A. de C.V.'),
-('MICR005', 'MicroTech Solutions', 'MicroTech Solutions Internacional S.A.'),
-('ELEC006', 'Electrónicos Del Valle', 'Electrónicos del Valle S.A. de C.V.'),
-('PCWA007', 'PC Warehouse', 'PC Warehouse Internacional S.A. de C.V.'),
-('DIGI008', 'Digital Components', 'Digital Components S. de R.L.'),
-('TECH009', 'Tech Imports', 'Tech Imports México S.A. de C.V.'),
-('HARD010', 'Hardware Depot', 'Hardware Depot Internacional S.A.');
 
 -- Insertar promociones
 INSERT INTO copromocion (id_promocion, descripcion, nombre, vigencia_desde, vigencia_hasta) VALUES
@@ -25,28 +14,30 @@ INSERT INTO copromocion (id_promocion, descripcion, nombre, vigencia_desde, vige
 (4, 'Descuento del 20% en componentes para PC', 'PC Componentes', '2025-05-01', '2025-07-31'),
 (5, 'Promoción compra 3 paga 2 en discos duros', 'HDD 3x2', '2025-06-01', '2025-06-30');
 
--- Insertar detalles de promoción
+-- Insertar detalles de promoción (compatible con nueva estructura JPA)
 INSERT INTO codetalle_promocion (id_detalle_promocion, es_base, llevent, nombre, paguen, porc_dcto_plano, tipo_prom_acumulable, tipo_prom_base, id_promocion) VALUES
--- Promoción Regular (sin promoción)
-(1, TRUE, 1, 'Precio Regular', 1, 0.00, NULL, 'BASE', 1),
+-- Promoción Regular (sin promoción) - solo detalle base
+(1, TRUE, NULL, 'Base Regular', NULL, NULL, NULL, 'SIN_DESCUENTO', 1),
 
--- Promoción de Monitores por Volumen (descuento por cantidad)
-(2, TRUE, 1, 'Descuento por Volumen Monitores', 1, 0.00, NULL, 'BASE', 2),
+-- Promoción de Monitores por Volumen - base + acumulable por cantidad  
+(2, TRUE, NULL, 'Base Monitores', NULL, NULL, NULL, 'SIN_DESCUENTO', 2),
+(3, FALSE, NULL, 'Descuento por Cantidad Monitores', NULL, NULL, 'DESCUENTO_POR_CANTIDAD', NULL, 2),
 
--- Promoción Tarjetas 3x2 (compra N lleva M)
-(3, TRUE, 3, 'Compra 3 Paga 2 - Tarjetas', 2, 33.33, NULL, 'BASE', 3),
+-- Promoción Tarjetas 3x2 - solo detalle base NxM
+(4, TRUE, 3, 'Compra 3 Paga 2 - Tarjetas', 2, NULL, NULL, 'NXM', 3),
 
--- Promoción PC Componentes (descuento general)
-(4, TRUE, 1, 'Descuento en PC Componentes', 1, 20.00, NULL, 'BASE', 4),
+-- Promoción PC Componentes - base + acumulable descuento plano
+(5, TRUE, NULL, 'Base PC Componentes', NULL, NULL, NULL, 'SIN_DESCUENTO', 4),
+(6, FALSE, NULL, 'Descuento Plano 20%', NULL, 20.0, 'DESCUENTO_PLANO', NULL, 4),
 
--- Promoción HDD 3x2 (compra N lleva M)
-(5, TRUE, 3, 'Compra 3 Paga 2 - Discos', 2, 33.33, NULL, 'BASE', 5);
+-- Promoción HDD 3x2 - solo detalle base NxM  
+(7, TRUE, 3, 'Compra 3 Paga 2 - Discos', 2, NULL, NULL, 'NXM', 5);
 
 -- Insertar detalles de promoción por documento y cantidad
 INSERT INTO codetalle_prom_dscto_x_cant (num_dscto, cantidad, dscto, num_det_promocion, num_promocion) VALUES
 -- Detalle Promoción Monitores por Volumen - escalado por cantidad
-(1, 3, 5.00, 2, 2),  -- 5% para 3-5 monitores
-(2, 6, 10.00, 2, 2); -- 10% para 6+ monitores
+(1, 3, 5.00, 3, 2),  -- 5% para 3+ monitores
+(2, 6, 10.00, 3, 2); -- 10% para 6+ monitores
 
 -- Insertar componentes - Monitores
 INSERT INTO cocomponente (id_componente, descripcion, marca, modelo, costo, precio_base, id_tipo_componente, id_promocion) VALUES

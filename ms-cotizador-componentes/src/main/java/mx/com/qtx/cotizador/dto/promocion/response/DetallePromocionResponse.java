@@ -20,8 +20,9 @@ public class DetallePromocionResponse {
     
     // Campos para promoción base
     private TipoPromocionBase tipoBase;
-    private Integer llevent; // Para NxM
-    private Integer paguen;  // Para NxM
+    private Integer llevent; // Para NxM (legacy)
+    private Integer paguen;  // Para NxM (legacy)
+    private ParametrosNxMResponse parametrosNxM; // Estructura anidada para NxM
     
     // Campos para promoción acumulable
     private TipoPromocionAcumulable tipoAcumulable;
@@ -88,6 +89,19 @@ public class DetallePromocionResponse {
     
     public void setPaguen(Integer paguen) {
         this.paguen = paguen;
+    }
+    
+    public ParametrosNxMResponse getParametrosNxM() {
+        return parametrosNxM;
+    }
+    
+    public void setParametrosNxM(ParametrosNxMResponse parametrosNxM) {
+        this.parametrosNxM = parametrosNxM;
+        // Mantener sincronización con campos legacy
+        if (parametrosNxM != null) {
+            this.llevent = parametrosNxM.getLlevent();
+            this.paguen = parametrosNxM.getPaguen();
+        }
     }
     
     public TipoPromocionAcumulable getTipoAcumulable() {

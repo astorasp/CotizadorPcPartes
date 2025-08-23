@@ -62,7 +62,9 @@ export const usePromocionesStore = defineStore('promociones', () => {
     porcentajeDescuento: 0,
     cantidadMinima: 0,
     nCompras: 0,
-    mPago: 0
+    mPago: 0,
+    // Nuevos campos para escalas múltiples
+    escalas: [] // Array de { cantidadMinima, cantidadMaxima, porcentaje }
   })
 
   // Estado del preview
@@ -496,7 +498,8 @@ export const usePromocionesStore = defineStore('promociones', () => {
       porcentajeDescuento: 0,
       cantidadMinima: 0,
       nCompras: 0,
-      mPago: 0
+      mPago: 0,
+      escalas: []
     }
   }
 
@@ -513,7 +516,8 @@ export const usePromocionesStore = defineStore('promociones', () => {
       porcentajeDescuento: 0,
       cantidadMinima: 0,
       nCompras: 0,
-      mPago: 0
+      mPago: 0,
+      escalas: []
     }
     
     currentPromocion.value = null
@@ -535,6 +539,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     formData.value.cantidadMinima = 0
     formData.value.nCompras = 0
     formData.value.mPago = 0
+    formData.value.escalas = []
     
     // Determinar tipo basándose en la estructura de detalles
     if (!promocion.detalles || promocion.detalles.length === 0) {
@@ -590,9 +595,17 @@ export const usePromocionesStore = defineStore('promociones', () => {
             formData.value.tipo = 'POR_CANTIDAD'
             
             if (detalleAcumulable.escalasDescuento && detalleAcumulable.escalasDescuento.length > 0) {
+              // Mapear todas las escalas del backend al formato del frontend
+              formData.value.escalas = detalleAcumulable.escalasDescuento.map(escala => ({
+                cantidadMinima: escala.cantidadMinima || 0,
+                cantidadMaxima: escala.cantidadMaxima || null,
+                porcentaje: escala.descuento || escala.porcentajeDescuento || 0
+              }))
+              
+              // Mantener compatibilidad con campos individuales (para componentes que aún los usen)
               const primeraEscala = detalleAcumulable.escalasDescuento[0]
               formData.value.cantidadMinima = primeraEscala.cantidadMinima || 0
-              formData.value.porcentajeDescuento = primeraEscala.porcentajeDescuento || 0
+              formData.value.porcentajeDescuento = primeraEscala.descuento || primeraEscala.porcentajeDescuento || 0
             }
           } else if (detalleBase.tipoBase === 'SIN_DESCUENTO' && !detalleAcumulable) {
             // CASO AGREGADO: Promoción con detalleBase SIN_DESCUENTO sin detalles acumulables
@@ -630,6 +643,7 @@ export const usePromocionesStore = defineStore('promociones', () => {
     formData.value.cantidadMinima = 0
     formData.value.nCompras = 0
     formData.value.mPago = 0
+    formData.value.escalas = []
     
     updatePreview()
   }

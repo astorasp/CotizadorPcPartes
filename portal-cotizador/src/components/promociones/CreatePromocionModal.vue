@@ -173,30 +173,37 @@
                     </div>
                   </div>
 
-                  <!-- Descuento Porcentual -->
-                  <div v-if="promocionesStore.showTipoConfig('DESCUENTO_PORCENTUAL')" class="bg-yellow-50 p-3 rounded-md">
-                    <h5 class="font-medium text-yellow-900 mb-2">Descuento Porcentual</h5>
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Porcentaje de Descuento (%) *
-                      </label>
-                      <input
-                        v-model.number="promocionesStore.formData.porcentajeDescuento"
-                        @input="handleInputChange"
-                        type="number"
-                        min="1"
-                        max="100"
-                        placeholder="0"
-                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  <!-- Por Cantidad -->
+                  <!-- Por Cantidad - Editor de Escalas Múltiples -->
                   <div v-if="promocionesStore.showTipoConfig('POR_CANTIDAD')" class="bg-blue-50 p-3 rounded-md">
-                    <h5 class="font-medium text-blue-900 mb-2">Descuento por Cantidad</h5>
-                    <div class="grid grid-cols-2 gap-3">
+                    <h5 class="font-medium text-blue-900 mb-4">Descuento por Cantidad</h5>
+                    
+                    <!-- Toggle para modo simple vs avanzado -->
+                    <div class="mb-4">
+                      <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                          <input
+                            v-model="escalasMode"
+                            type="radio"
+                            value="simple"
+                            class="form-radio text-blue-600"
+                          />
+                          <span class="ml-2 text-sm text-gray-700">Configuración Simple</span>
+                        </label>
+                        <label class="flex items-center">
+                          <input
+                            v-model="escalasMode"
+                            type="radio"
+                            value="avanzado"
+                            class="form-radio text-blue-600"
+                          />
+                          <span class="ml-2 text-sm text-gray-700">Escalas Múltiples</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <!-- Modo Simple (Legacy) -->
+                    <div v-if="escalasMode === 'simple'" class="grid grid-cols-2 gap-3">
                       <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                           Cantidad Mínima *
@@ -221,11 +228,20 @@
                           type="number"
                           min="1"
                           max="100"
+                          step="0.01"
                           placeholder="0"
                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                           required
                         />
                       </div>
+                    </div>
+
+                    <!-- Modo Avanzado (Escalas Múltiples) -->
+                    <div v-else>
+                      <EscalasDescuentoEditor
+                        v-model="promocionesStore.formData.escalas"
+                        @validation="handleEscalasValidation"
+                      />
                     </div>
                   </div>
 
@@ -347,6 +363,7 @@
 import { ref, computed, watch } from 'vue'
 import { usePromocionesStore } from '@/stores/usePromocionesStore'
 import { promocionesApi } from '@/services/promocionesApi'
+import EscalasDescuentoEditor from './EscalasDescuentoEditor.vue'
 import { 
   XMarkIcon, 
   InformationCircleIcon, 
@@ -372,6 +389,8 @@ const promocionesStore = usePromocionesStore()
 // Local reactive state
 const loading = ref(false)
 const showValidation = ref(false)
+const escalasMode = ref('simple') // 'simple' o 'avanzado'
+const escalasValidation = ref({ isValid: true, errors: [] })
 
 // Computed properties
 const selectedTipoDescription = computed(() => {
@@ -443,6 +462,13 @@ const validationErrors = computed(() => {
     if (!tipoValidation.isValid) {
       errors.push(...tipoValidation.errors)
     }
+    
+    // Validaciones de escalas en modo avanzado
+    if (promocionesStore.formData.tipo === 'POR_CANTIDAD' && escalasMode.value === 'avanzado') {
+      if (!escalasValidation.value.isValid) {
+        errors.push(...escalasValidation.value.errors)
+      }
+    }
   }
   
   return errors
@@ -468,6 +494,13 @@ const handleTipoChange = () => {
 const handleSubmit = async () => {
   showValidation.value = true
   
+  // Validar escalas si estamos en modo avanzado
+  if (promocionesStore.formData.tipo === 'POR_CANTIDAD' && escalasMode.value === 'avanzado') {
+    if (!escalasValidation.value.isValid) {
+      return
+    }
+  }
+  
   if (!promocionesStore.isFormValid) {
     return
   }
@@ -486,10 +519,54 @@ const handleSubmit = async () => {
   }
 }
 
+const handleEscalasValidation = (validation) => {
+  escalasValidation.value = validation
+  
+  // Actualizar el preview cuando cambian las escalas
+  if (validation.isValid) {
+    promocionesStore.updatePreview()
+  }
+}
+
 // Watch for show prop changes to reset validation
 watch(() => props.show, (newValue) => {
   if (newValue) {
     showValidation.value = false
+    escalasMode.value = 'simple'
+    escalasValidation.value = { isValid: true, errors: [] }
+  }
+})
+
+// Watch for tipo changes to reset escalas mode
+watch(() => promocionesStore.formData.tipo, (newTipo) => {
+  if (newTipo === 'POR_CANTIDAD') {
+    // Inicializar escalas si no existen
+    if (!promocionesStore.formData.escalas) {
+      promocionesStore.formData.escalas = []
+    }
+  }
+})
+
+// Watch for escalas mode changes
+watch(escalasMode, (newMode) => {
+  if (newMode === 'avanzado' && promocionesStore.formData.tipo === 'POR_CANTIDAD') {
+    // Si cambias a modo avanzado, inicializa escalas con los valores simples si existen
+    if (!promocionesStore.formData.escalas || promocionesStore.formData.escalas.length === 0) {
+      if (promocionesStore.formData.cantidadMinima && promocionesStore.formData.porcentajeDescuento) {
+        promocionesStore.formData.escalas = [{
+          cantidadMinima: promocionesStore.formData.cantidadMinima,
+          cantidadMaxima: null,
+          porcentaje: promocionesStore.formData.porcentajeDescuento
+        }]
+      }
+    }
+  } else if (newMode === 'simple' && promocionesStore.formData.escalas && promocionesStore.formData.escalas.length > 0) {
+    // Si cambias a modo simple, toma los valores de la primera escala si existe
+    const primeraEscala = promocionesStore.formData.escalas[0]
+    if (primeraEscala) {
+      promocionesStore.formData.cantidadMinima = primeraEscala.cantidadMinima
+      promocionesStore.formData.porcentajeDescuento = primeraEscala.porcentaje
+    }
   }
 })
 </script>

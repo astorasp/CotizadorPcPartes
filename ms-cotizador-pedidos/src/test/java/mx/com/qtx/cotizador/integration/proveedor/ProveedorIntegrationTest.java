@@ -36,7 +36,7 @@ import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 class ProveedorIntegrationTest extends BaseIntegrationTest {
 
     // Base path para el API de proveedores
-    private static final String PROVEEDORES_API_PATH = "/proveedores";
+    private static final String PROVEEDORES_API_PATH = "/api/v1/proveedores";
 
     // ✅ Configuración heredada de BaseIntegrationTest:
     // - Base de datos MySQL compartida

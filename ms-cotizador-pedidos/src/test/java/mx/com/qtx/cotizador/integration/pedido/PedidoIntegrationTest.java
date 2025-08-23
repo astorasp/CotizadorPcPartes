@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.*;
 @DisplayName("Integration Tests - Gestión de Pedidos")
 class PedidoIntegrationTest extends BaseIntegrationTest {
 
-    private static final String URL_PEDIDOS = "/pedidos";
+    private static final String URL_PEDIDOS = "/api/v1/pedidos";
     
     // ✅ Configuración heredada de BaseIntegrationTest:
     // - Base de datos MySQL compartida

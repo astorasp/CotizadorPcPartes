@@ -1,5 +1,8 @@
 -- TestContainers ya creó la base de datos, no necesitamos crear ni usar
 -- Solo crear las tablas directamente
+-- Configurar UTF-8 explícitamente al inicio
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
 
 -- Tabla para tipos de componentes
 CREATE TABLE IF NOT EXISTS cotipo_componente (
@@ -20,10 +23,10 @@ CREATE TABLE IF NOT EXISTS copromocion (
 CREATE TABLE IF NOT EXISTS codetalle_promocion (
     id_detalle_promocion INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     es_base BOOLEAN NOT NULL DEFAULT FALSE,
-    llevent INT NOT NULL,
+    llevent INT,
     nombre VARCHAR(100) NOT NULL,
-    paguen INT NOT NULL,
-    porc_dcto_plano DOUBLE NOT NULL,
+    paguen INT,
+    porc_dcto_plano DOUBLE,
     tipo_prom_acumulable VARCHAR(50),
     tipo_prom_base VARCHAR(50),
     id_promocion INT UNSIGNED NOT NULL,
@@ -93,5 +96,4 @@ CREATE INDEX idx_componente_tipo ON cocomponente (id_tipo_componente);
 CREATE INDEX idx_promocion ON cocomponente (id_promocion);
 CREATE INDEX idx_pcpartes_pc ON copc_parte (id_pc);
 CREATE INDEX idx_detalle_cotizacion_cotizacion ON codetalle_cotizacion (folio, num_detalle);
-CREATE INDEX idx_detalle_pedido_pedido ON codetalle_pedido (num_pedido);
 CREATE INDEX idx_detalle_promocion_promocion ON codetalle_promocion (id_promocion);

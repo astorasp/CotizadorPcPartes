@@ -1,21 +1,20 @@
+-- Configurar UTF-8 explícitamente
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET CHARACTER SET utf8mb4;
+
 -- Insertar valores iniciales para tipos de componente
 INSERT INTO cotipo_componente (nombre) VALUES 
     ('PC'), ('DISCO_DURO'), ('MONITOR'), ('TARJETA_VIDEO');
 
--- Los tipos de componentes ya están insertados en el DDL
-
--- Insertar proveedores
-INSERT INTO coproveedor (cve, nombre, razon_social) VALUES
-('TECH001', 'TechSupply SA', 'TechSupply Sociedad Anónima de Capital Variable'),
-('HARD002', 'Hardware Express', 'Hardware Express S.A. de C.V.'),
-('COMP003', 'ComponentesMX', 'Componentes Mexicanos S.A.'),
-('GLOB004', 'Global PC Parts', 'Global PC Parts México S.A. de C.V.'),
-('MICR005', 'MicroTech Solutions', 'MicroTech Solutions Internacional S.A.'),
-('ELEC006', 'Electrónicos Del Valle', 'Electrónicos del Valle S.A. de C.V.'),
-('PCWA007', 'PC Warehouse', 'PC Warehouse Internacional S.A. de C.V.'),
-('DIGI008', 'Digital Components', 'Digital Components S. de R.L.'),
-('TECH009', 'Tech Imports', 'Tech Imports México S.A. de C.V.'),
-('HARD010', 'Hardware Depot', 'Hardware Depot Internacional S.A.');
+-- ===================================================================
+-- MICROSERVICIO: ms-cotizador-componentes
+-- DATOS PARA: componentes, tipos, promociones y PCs únicamente
+-- ===================================================================
+-- DATOS ELIMINADOS (transferidos a otros microservicios):
+-- - proveedores → ms-cotizador-pedidos
+-- - cotizaciones y detalles → ms-cotizador-cotizaciones  
+-- - pedidos y detalles → ms-cotizador-pedidos
+-- ===================================================================
 
 -- Insertar promociones
 INSERT INTO copromocion (id_promocion, descripcion, nombre, vigencia_desde, vigencia_hasta) VALUES
@@ -25,28 +24,30 @@ INSERT INTO copromocion (id_promocion, descripcion, nombre, vigencia_desde, vige
 (4, 'Descuento del 20% en componentes para PC', 'PC Componentes', '2025-05-01', '2025-07-31'),
 (5, 'Promoción compra 3 paga 2 en discos duros', 'HDD 3x2', '2025-06-01', '2025-06-30');
 
--- Insertar detalles de promoción
+-- Insertar detalles de promoción (compatible con nueva estructura JPA)
 INSERT INTO codetalle_promocion (id_detalle_promocion, es_base, llevent, nombre, paguen, porc_dcto_plano, tipo_prom_acumulable, tipo_prom_base, id_promocion) VALUES
--- Promoción Regular (sin promoción)
-(1, TRUE, 1, 'Precio Regular', 1, 0.00, NULL, 'BASE', 1),
+-- Promoción Regular (sin promoción) - solo detalle base
+(1, TRUE, NULL, 'Base Regular', NULL, NULL, NULL, 'SIN_DESCUENTO', 1),
 
--- Promoción de Monitores por Volumen (descuento por cantidad)
-(2, TRUE, 1, 'Descuento por Volumen Monitores', 1, 0.00, NULL, 'BASE', 2),
+-- Promoción de Monitores por Volumen - base + acumulable por cantidad  
+(2, TRUE, NULL, 'Base Monitores', NULL, NULL, NULL, 'SIN_DESCUENTO', 2),
+(3, FALSE, NULL, 'Descuento por Cantidad Monitores', NULL, NULL, 'DESCUENTO_POR_CANTIDAD', NULL, 2),
 
--- Promoción Tarjetas 3x2 (compra N lleva M)
-(3, TRUE, 3, 'Compra 3 Paga 2 - Tarjetas', 2, 33.33, NULL, 'BASE', 3),
+-- Promoción Tarjetas 3x2 - solo detalle base NxM
+(4, TRUE, 3, 'Compra 3 Paga 2 - Tarjetas', 2, NULL, NULL, 'NXM', 3),
 
--- Promoción PC Componentes (descuento general)
-(4, TRUE, 1, 'Descuento en PC Componentes', 1, 20.00, NULL, 'BASE', 4),
+-- Promoción PC Componentes - base + acumulable descuento plano
+(5, TRUE, NULL, 'Base PC Componentes', NULL, NULL, NULL, 'SIN_DESCUENTO', 4),
+(6, FALSE, NULL, 'Descuento Plano 20%', NULL, 20.0, 'DESCUENTO_PLANO', NULL, 4),
 
--- Promoción HDD 3x2 (compra N lleva M)
-(5, TRUE, 3, 'Compra 3 Paga 2 - Discos', 2, 33.33, NULL, 'BASE', 5);
+-- Promoción HDD 3x2 - solo detalle base NxM  
+(7, TRUE, 3, 'Compra 3 Paga 2 - Discos', 2, NULL, NULL, 'NXM', 5);
 
 -- Insertar detalles de promoción por documento y cantidad
 INSERT INTO codetalle_prom_dscto_x_cant (num_dscto, cantidad, dscto, num_det_promocion, num_promocion) VALUES
 -- Detalle Promoción Monitores por Volumen - escalado por cantidad
-(1, 3, 5.00, 2, 2),  -- 5% para 3-5 monitores
-(2, 6, 10.00, 2, 2); -- 10% para 6+ monitores
+(1, 3, 5.00, 3, 2),  -- 5% para 3+ monitores
+(2, 6, 10.00, 3, 2); -- 10% para 6+ monitores
 
 -- Insertar componentes - Monitores
 INSERT INTO cocomponente (id_componente, descripcion, marca, modelo, costo, precio_base, id_tipo_componente, id_promocion) VALUES
@@ -108,88 +109,13 @@ INSERT INTO copc_parte (id_pc, id_componente) VALUES
 ('PC005', 'GPU005'), -- Radeon RX 6600
 ('PC005', 'MON001'); -- Monitor 24 pulgadas FullHD
 
--- Insertar cotizaciones
-INSERT INTO cocotizacion (fecha, impuestos, subtotal, total) VALUES
-('2025-04-15', 4800.00, 30000.00, 34800.00),
-('2025-04-18', 2400.00, 15000.00, 17400.00),
-('2025-04-20', 5600.00, 35000.00, 40600.00),
-('2025-04-25', 6720.00, 42000.00, 48720.00),
-('2025-04-28', 3840.00, 24000.00, 27840.00),
-('2025-05-02', 1920.00, 12000.00, 13920.00),
-('2025-05-05', 3360.00, 21000.00, 24360.00),
-('2025-05-08', 1440.00, 9000.00, 10440.00),
-('2025-05-10', 2720.00, 17000.00, 19720.00),
-('2025-05-12', 2320.00, 14500.00, 16820.00);
-
--- Insertar detalles de cotización
-INSERT INTO codetalle_cotizacion (cantidad, descripcion, folio, id_componente, num_detalle, precio_base) VALUES
--- Cotización 1 (usar el folio que se asignó automáticamente)
-(1, 'PC Gaming Alto Rendimiento', 1, 'PC001', 1, 32000.00),
--- Cotización 2
-(1, 'PC Oficina Estándar', 2, 'PC002', 1, 15000.00),
--- Cotización 3
-(1, 'PC Diseño Profesional', 3, 'PC003', 1, 35000.00),
--- Cotización 4
-(1, 'PC Workstation', 4, 'PC004', 1, 42000.00),
--- Cotización 5
-(1, 'PC Gaming Económica', 5, 'PC005', 1, 24000.00),
--- Cotización 6
-(2, 'Monitor 24 pulgadas FullHD', 6, 'MON001', 1, 3500.00),
-(1, 'Disco Duro 1TB SATA', 6, 'HDD001', 2, 1200.00),
-(2, 'Tarjeta de Video Básica', 6, 'GPU003', 3, 4500.00),
--- Cotización 7
-(3, 'SSD 500GB SATA', 7, 'HDD002', 1, 1800.00),
-(2, 'Monitor Gamer 24" 144Hz', 7, 'MON004', 2, 5200.00),
-(1, 'Tarjeta de Video Mid-Range', 7, 'GPU005', 3, 7900.00),
--- Cotización 8
-(2, 'Monitor 24 pulgadas FullHD', 8, 'MON001', 1, 3500.00),
-(1, 'Disco Duro 2TB SATA', 8, 'HDD004', 2, 1600.00),
--- Cotización 9
-(1, 'Tarjeta de Video Alto Rendimiento', 9, 'GPU004', 1, 16500.00),
-(1, 'SSD 1TB SATA', 9, 'HDD005', 2, 2400.00),
--- Cotización 10
-(1, 'Monitor UltraWide 29"', 10, 'MON005', 1, 6300.00),
-(1, 'Tarjeta de Video Profesional', 10, 'GPU002', 2, 10200.00);
-
--- Insertar pedidos
-INSERT INTO copedido (fecha_emision, fecha_entrega, nivel_surtido, cve_proveedor, total) VALUES
-('2025-04-16', '2025-04-30', 1, 'TECH001', 34800.00),
-('2025-04-19', '2025-05-03', 2, 'COMP003', 17400.00),
-('2025-04-21', '2025-05-05', 0, 'HARD002', 40600.00),
-('2025-04-26', '2025-05-10', 1, 'MICR005', 48720.00),
-('2025-04-29', '2025-05-13', 2, 'GLOB004', 27840.00),
-('2025-05-03', '2025-05-17', 1, 'ELEC006', 13920.00),
-('2025-05-06', '2025-05-20', 0, 'PCWA007', 24360.00),
-('2025-05-09', '2025-05-23', 2, 'DIGI008', 10440.00),
-('2025-05-11', '2025-05-25', 1, 'TECH009', 19720.00),
-('2025-05-13', '2025-05-27', 0, 'HARD010', 16820.00);
-
--- Insertar detalles de pedido
-INSERT INTO codetalle_pedido (cantidad, id_componente, num_detalle, num_pedido, precio_unitario, total_cotizado) VALUES
--- Pedido 1
-(1, 'PC001', 1, 1, 32000.00, 34800.00),
--- Pedido 2
-(1, 'PC002', 1, 2, 15000.00, 17400.00),
--- Pedido 3
-(1, 'PC003', 1, 3, 35000.00, 40600.00),
--- Pedido 4
-(1, 'PC004', 1, 4, 42000.00, 48720.00),
--- Pedido 5
-(1, 'PC005', 1, 5, 24000.00, 27840.00),
--- Pedido 6
-(2, 'MON001', 1, 6, 3500.00, 7000.00),
-(1, 'HDD001', 2, 6, 1200.00, 1200.00),
-(2, 'GPU003', 3, 6, 4500.00, 9000.00),
--- Pedido 7
-(3, 'HDD002', 1, 7, 1800.00, 5400.00),
-(2, 'MON004', 2, 7, 5200.00, 10400.00),
-(1, 'GPU005', 3, 7, 7900.00, 7900.00),
--- Pedido 8
-(2, 'MON001', 1, 8, 3500.00, 7000.00),
-(1, 'HDD004', 2, 8, 1600.00, 1600.00),
--- Pedido 9
-(1, 'GPU004', 1, 9, 16500.00, 16500.00),
-(1, 'HDD005', 2, 9, 2400.00, 2400.00),
--- Pedido 10
-(1, 'MON005', 1, 10, 6300.00, 6300.00),
-(1, 'GPU002', 2, 10, 10200.00, 10200.00);
+-- ===================================================================
+-- FIN DE DATOS PARA ms-cotizador-componentes
+-- TOTAL DE REGISTROS INSERTADOS:
+-- - cotipo_componente: 4 tipos
+-- - copromocion: 5 promociones
+-- - codetalle_promocion: 5 detalles
+-- - codetalle_prom_dscto_x_cant: 2 descuentos por cantidad
+-- - cocomponente: 20 componentes (5 de cada tipo)
+-- - copc_parte: 12 relaciones PC-componente
+-- ===================================================================

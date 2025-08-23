@@ -175,16 +175,17 @@ export const promocionesApi = {
           tipoBase: 'SIN_DESCUENTO'
         })
         
-        // Crear detalle acumulable por cantidad
+        // Crear detalle acumulable por cantidad con múltiples escalas
+        const escalasDescuento = this.buildEscalasDescuento(tipoData)
+        const nombreDetalle = escalasDescuento.length === 1 
+          ? `Descuento por Cantidad (${escalasDescuento[0].cantidadMinima}+ unidades)`
+          : `Descuento por Cantidad (${escalasDescuento.length} escalas)`
+        
         detalles.push({
-          nombre: `Descuento por Cantidad (${tipoData.cantidadMinima}+ unidades)`,
+          nombre: nombreDetalle,
           esBase: false,
           tipoAcumulable: 'DESCUENTO_POR_CANTIDAD',
-          escalasDescuento: [{
-            cantidadMinima: parseInt(tipoData.cantidadMinima) || 1,
-            cantidadMaxima: 999,
-            porcentajeDescuento: parseFloat(tipoData.porcentajeDescuento) || 0
-          }]
+          escalasDescuento: escalasDescuento
         })
         break
         
@@ -354,8 +355,7 @@ export const promocionesApi = {
   getTiposPromocion() {
     return [
       { value: 'SIN_DESCUENTO', label: 'Sin Descuento', description: 'Promoción regular sin descuentos' },
-      { value: 'DESCUENTO_PLANO', label: 'Descuento Plano', description: 'Descuento fijo en dinero' },
-      { value: 'DESCUENTO_PORCENTUAL', label: 'Descuento Porcentual', description: 'Descuento por porcentaje' },
+      { value: 'DESCUENTO_PLANO', label: 'Descuento Plano', description: 'Descuento porcentual aplicado al total' },
       { value: 'POR_CANTIDAD', label: 'Por Cantidad', description: 'Descuento por cantidad mínima' },
       { value: 'NXM', label: 'N x M', description: 'Lleva N unidades, paga M' }
     ]
@@ -455,8 +455,27 @@ export const promocionesApi = {
         content += `<div><strong>Porcentaje:</strong> ${formData.porcentajeDescuento}%</div>`
         break
       case 'POR_CANTIDAD':
-        content += `<div><strong>Cantidad Mínima:</strong> ${formData.cantidadMinima}</div>`
-        content += `<div><strong>Descuento:</strong> ${formData.porcentajeDescuento}%</div>`
+        // Mostrar escalas múltiples si existen
+        if (formData.escalas && Array.isArray(formData.escalas) && formData.escalas.length > 0) {
+          content += `<div><strong>Escalas de Descuento:</strong></div>`
+          content += `<div class="ml-4 space-y-1">`
+          formData.escalas
+            .sort((a, b) => a.cantidadMinima - b.cantidadMinima)
+            .forEach((escala, index) => {
+              const rango = escala.cantidadMaxima && escala.cantidadMaxima < 999999 
+                ? `${escala.cantidadMinima}-${escala.cantidadMaxima}`
+                : `${escala.cantidadMinima}+`
+              content += `<div class="text-sm bg-blue-50 p-2 rounded">
+                <strong>Escala ${index + 1}:</strong> ${rango} unidades → ${escala.porcentaje}% descuento
+              </div>`
+            })
+          content += `</div>`
+        }
+        // Fallback para formato legacy
+        else if (formData.cantidadMinima && formData.porcentajeDescuento) {
+          content += `<div><strong>Cantidad Mínima:</strong> ${formData.cantidadMinima}</div>`
+          content += `<div><strong>Descuento:</strong> ${formData.porcentajeDescuento}%</div>`
+        }
         break
       case 'NXM':
         const descuentoCalculado = formData.nCompras && formData.mPago 
@@ -469,6 +488,91 @@ export const promocionesApi = {
 
     content += '</div>'
     return content
+  },
+
+  /**
+   * Construir escalas de descuento para promociones POR_CANTIDAD
+   */
+  buildEscalasDescuento(tipoData) {
+    // Si se proporcionan escalas múltiples (nuevo formato)
+    if (tipoData.escalas && Array.isArray(tipoData.escalas) && tipoData.escalas.length > 0) {
+      return tipoData.escalas
+        .filter(escala => escala.cantidadMinima && escala.porcentaje)
+        .map(escala => ({
+          cantidadMinima: parseInt(escala.cantidadMinima),
+          cantidadMaxima: escala.cantidadMaxima ? parseInt(escala.cantidadMaxima) : 999999,
+          descuento: parseFloat(escala.porcentaje)
+        }))
+        .sort((a, b) => a.cantidadMinima - b.cantidadMinima)
+    }
+    
+    // Fallback: formato legacy (una sola escala)
+    if (tipoData.cantidadMinima && tipoData.porcentajeDescuento) {
+      return [{
+        cantidadMinima: parseInt(tipoData.cantidadMinima) || 1,
+        cantidadMaxima: 999999,
+        descuento: parseFloat(tipoData.porcentajeDescuento) || 0
+      }]
+    }
+    
+    // Fallback: escalas por defecto si no se proporciona información
+    return [{
+      cantidadMinima: 1,
+      cantidadMaxima: 999999,
+      descuento: 5.0
+    }]
+  },
+
+  /**
+   * Validar escalas de descuento múltiples
+   */
+  validateEscalasDescuento(escalas) {
+    const errors = []
+    
+    if (!escalas || !Array.isArray(escalas) || escalas.length === 0) {
+      return { isValid: false, errors: ['Se requiere al menos una escala de descuento'] }
+    }
+    
+    // Validar cada escala individualmente
+    escalas.forEach((escala, index) => {
+      if (!escala.cantidadMinima || escala.cantidadMinima < 1) {
+        errors.push(`Escala ${index + 1}: La cantidad mínima debe ser mayor a 0`)
+      }
+      
+      if (escala.cantidadMaxima && escala.cantidadMaxima < escala.cantidadMinima) {
+        errors.push(`Escala ${index + 1}: La cantidad máxima debe ser mayor a la mínima`)
+      }
+      
+      if (!escala.porcentaje || escala.porcentaje <= 0 || escala.porcentaje > 100) {
+        errors.push(`Escala ${index + 1}: El porcentaje debe estar entre 0.01 y 100`)
+      }
+    })
+    
+    // Validar que no hay solapamientos entre escalas
+    const sorted = [...escalas].sort((a, b) => a.cantidadMinima - b.cantidadMinima)
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const current = sorted[i]
+      const next = sorted[i + 1]
+      
+      const currentMax = current.cantidadMaxima || 999999
+      if (next.cantidadMinima <= currentMax) {
+        errors.push(`Las escalas con rangos ${current.cantidadMinima}-${currentMax} y ${next.cantidadMinima}-${next.cantidadMaxima || '∞'} se solapan`)
+      }
+    }
+    
+    // Validar que los porcentajes son progresivos (opcional, pero recomendado)
+    const porcentajes = sorted.map(e => e.porcentaje)
+    for (let i = 0; i < porcentajes.length - 1; i++) {
+      if (porcentajes[i] >= porcentajes[i + 1]) {
+        errors.push('Se recomienda que los porcentajes de descuento sean progresivos (mayor cantidad = mayor descuento)')
+        break
+      }
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors: errors
+    }
   },
 
   /**
@@ -492,11 +596,25 @@ export const promocionesApi = {
         }
         break
       case 'POR_CANTIDAD':
-        if (!tipoData.cantidadMinima || tipoData.cantidadMinima <= 0) {
-          errors.push('La cantidad mínima debe ser mayor a 0')
+        // Validación para escalas múltiples (nuevo formato)
+        if (tipoData.escalas && Array.isArray(tipoData.escalas) && tipoData.escalas.length > 0) {
+          const escalasValidation = this.validateEscalasDescuento(tipoData.escalas)
+          if (!escalasValidation.isValid) {
+            errors.push(...escalasValidation.errors)
+          }
         }
-        if (!tipoData.porcentajeDescuento || tipoData.porcentajeDescuento <= 0 || tipoData.porcentajeDescuento > 100) {
-          errors.push('El porcentaje debe estar entre 1 y 100')
+        // Validación legacy (formato anterior - cantidadMinima + porcentajeDescuento)
+        else if (tipoData.cantidadMinima || tipoData.porcentajeDescuento) {
+          if (!tipoData.cantidadMinima || tipoData.cantidadMinima <= 0) {
+            errors.push('La cantidad mínima debe ser mayor a 0')
+          }
+          if (!tipoData.porcentajeDescuento || tipoData.porcentajeDescuento <= 0 || tipoData.porcentajeDescuento > 100) {
+            errors.push('El porcentaje debe estar entre 1 y 100')
+          }
+        }
+        // Si no hay ninguna configuración válida
+        else {
+          errors.push('Se requiere configurar escalas de descuento o una cantidad mínima con porcentaje')
         }
         break
       case 'NXM':

@@ -151,11 +151,16 @@ public class DetallePromocion {
     public void addDescuentoPorCantidad(DetallePromDsctoXCant descuento) {
         descuentosPorCantidad.add(descuento);
         descuento.setDetallePromocion(this);
+        // Establecer también la relación con la promoción padre para que JPA maneje num_promocion
+        if (this.promocion != null) {
+            descuento.setPromocion(this.promocion);
+        }
     }
     
     public void removeDescuentoPorCantidad(DetallePromDsctoXCant descuento) {
         descuentosPorCantidad.remove(descuento);
         descuento.setDetallePromocion(null);
+        descuento.setPromocion(null);
     }
     
     @Override
