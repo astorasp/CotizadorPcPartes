@@ -20,11 +20,11 @@ INSERT INTO cotipo_componente (nombre) VALUES
 
 -- Insertar proveedores
 INSERT INTO coproveedor (cve, nombre, razon_social) VALUES
-('TECH001', 'TechSupply SA', 'TechSupply Sociedad Anónima de Capital Variable'),
-('HARD002', 'Hardware Express', 'Hardware Express S.A. de C.V.'),
-('COMP003', 'ComponentesMX', 'Componentes Mexicanos S.A.'),
-('GLOB004', 'Global PC Parts', 'Global PC Parts México S.A. de C.V.'),
-('MICR005', 'MicroTech Solutions', 'MicroTech Solutions Internacional S.A.'),
+('PROV001', 'TechCorp Distribution', 'TechCorp Distribution S.A. de C.V.'),
+('PROV002', 'Hardware Solutions', 'Hardware Solutions México S.A.'),
+('PROV003', 'Component Masters', 'Component Masters Internacional'),
+('PROV004', 'Global PC Parts', 'Global PC Parts México S.A. de C.V.'),
+('PROV005', 'MicroTech Solutions', 'MicroTech Solutions Internacional S.A.'),
 ('ELEC006', 'Electrónicos Del Valle', 'Electrónicos del Valle S.A. de C.V.'),
 ('PCWA007', 'PC Warehouse', 'PC Warehouse Internacional S.A. de C.V.'),
 ('DIGI008', 'Digital Components', 'Digital Components S. de R.L.'),
@@ -173,11 +173,11 @@ INSERT INTO codetalle_cotizacion (cantidad, descripcion, folio, id_componente, n
 
 -- Insertar pedidos
 INSERT INTO copedido (fecha_emision, fecha_entrega, nivel_surtido, cve_proveedor, total) VALUES
-('2025-04-16', '2025-04-30', 1, 'TECH001', 34800.00),
-('2025-04-19', '2025-05-03', 2, 'COMP003', 17400.00),
-('2025-04-21', '2025-05-05', 0, 'HARD002', 40600.00),
-('2025-04-26', '2025-05-10', 1, 'MICR005', 48720.00),
-('2025-04-29', '2025-05-13', 2, 'GLOB004', 27840.00),
+('2025-04-16', '2025-04-30', 1, 'PROV001', 34800.00),
+('2025-04-19', '2025-05-03', 2, 'PROV003', 17400.00),
+('2025-04-21', '2025-05-05', 0, 'PROV002', 40600.00),
+('2025-04-26', '2025-05-10', 1, 'PROV005', 48720.00),
+('2025-04-29', '2025-05-13', 2, 'PROV004', 27840.00),
 ('2025-05-03', '2025-05-17', 1, 'ELEC006', 13920.00),
 ('2025-05-06', '2025-05-20', 0, 'PCWA007', 24360.00),
 ('2025-05-09', '2025-05-23', 2, 'DIGI008', 10440.00),
