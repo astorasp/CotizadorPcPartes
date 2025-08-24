@@ -6,6 +6,8 @@
     "connection.url": "jdbc:mysql://mysql-pedidos:3306/cotizador_pedidos_db",
     "connection.username": "debezium",
     "connection.password": "dbz_password",
+    "hibernate.dialect": "org.hibernate.dialect.MySQLDialect",
+    "hibernate.connection.driver_class": "com.mysql.cj.jdbc.Driver",
     "topics": "componentes.cotizador_componentes_db.cocomponente",
     "table.name.format": "cocomponente",
     "insert.mode": "upsert",

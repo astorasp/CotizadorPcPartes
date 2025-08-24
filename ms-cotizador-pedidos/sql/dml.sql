@@ -31,13 +31,6 @@ INSERT INTO coproveedor (cve, nombre, razon_social) VALUES
 ('TECH009', 'Tech Imports', 'Tech Imports México S.A. de C.V.'),
 ('HARD010', 'Hardware Depot', 'Hardware Depot Internacional S.A.');
 
--- Insertar promociones
-INSERT INTO copromocion (id_promocion, descripcion, nombre, vigencia_desde, vigencia_hasta) VALUES
-(1, 'Sin promoción', 'Regular', '2025-01-01', '2030-12-31'),
-(2, 'Descuento por cantidad en monitores', 'Monitores por Volumen', '2025-03-01', '2025-05-31'),
-(3, 'Promoción compra 3 paga 2 en tarjetas de video', 'Tarjetas 3x2', '2025-04-01', '2025-04-30'),
-(4, 'Descuento del 20% en componentes para PC', 'PC Componentes', '2025-05-01', '2025-07-31'),
-(5, 'Promoción compra 3 paga 2 en discos duros', 'HDD 3x2', '2025-06-01', '2025-06-30');
 
 -- Insertar componentes - Monitores
 INSERT INTO cocomponente (id_componente, descripcion, marca, modelo, costo, precio_base, id_tipo_componente, id_promocion) VALUES

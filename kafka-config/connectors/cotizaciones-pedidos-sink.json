@@ -6,6 +6,8 @@
     "connection.url": "jdbc:mysql://pedidos-mysql:3306/cotizador_pedidos_db?allowPublicKeyRetrieval=true&useSSL=false",
     "connection.username": "debezium",
     "connection.password": "dbz_password",
+    "hibernate.dialect": "org.hibernate.dialect.MySQLDialect",
+    "hibernate.connection.driver_class": "com.mysql.cj.jdbc.Driver",
     "topics.regex": "cotizaciones\\.cotizador_cotizaciones_db\\.(cocotizacion|codetalle_cotizacion)",
     "auto.create": "true",
     "auto.evolve": "true",

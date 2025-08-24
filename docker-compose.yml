@@ -132,15 +132,27 @@ services:
         echo 'Esperando Kafka Connect...' &&
         sleep 30 &&
         echo 'Configurando conectores CDC...' &&
+        success_count=0 &&
+        total_count=0 &&
         for connector in /kafka-config/connectors/*.json; do
           connector_name=$$(basename \"$$connector\" .json)
+          total_count=$$((total_count + 1))
           echo \"Configurando conector: $$connector_name\" &&
           curl -X DELETE http://kafka-connect:8083/connectors/$$connector_name || true &&
           sleep 2 &&
-          curl -X POST -H 'Content-Type: application/json' -d @$$connector http://kafka-connect:8083/connectors &&
-          echo \"Conector $$connector_name configurado\"
+          if curl -X POST -H 'Content-Type: application/json' -d @$$connector http://kafka-connect:8083/connectors | grep -q '\"name\"'; then
+            echo \"✅ Conector $$connector_name: CREADO\" &&
+            success_count=$$((success_count + 1))
+          else
+            echo \"❌ Conector $$connector_name: ERROR\"
+          fi
         done &&
-        echo 'Conectores CDC configurados exitosamente'
+        echo \"Resultado: $$success_count/$$total_count conectores creados\" &&
+        if [ $$success_count -eq $$total_count ]; then
+          echo '🎉 Conectores CDC configurados exitosamente'
+        else
+          echo '⚠️ Algunos conectores fallaron - revisar logs'
+        fi
       "
     restart: "no"
 
@@ -174,7 +186,6 @@ services:
     # PUERTO NO EXPUESTO - Solo acceso interno
     volumes:
       - ./ms-seguridad/scripts/seguridad_ddl.sql:/docker-entrypoint-initdb.d/01-seguridad-ddl.sql
-      - ./kafka-config/mysql-init-scripts/debezium-user.sql:/docker-entrypoint-initdb.d/02-debezium-user.sql
       - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network
@@ -216,7 +227,7 @@ services:
     volumes:
       - ./ms-cotizador-componentes/sql/ddl.sql:/docker-entrypoint-initdb.d/01-componentes-ddl.sql
       - ./ms-cotizador-componentes/sql/dml.sql:/docker-entrypoint-initdb.d/02-componentes-dml.sql
-      - ./kafka-config/mysql-init-scripts/debezium-user.sql:/docker-entrypoint-initdb.d/03-debezium-user.sql
+      - ./kafka-config/mysql-init-scripts/debezium-componentes.sql:/docker-entrypoint-initdb.d/03-debezium-componentes.sql
       - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network
@@ -258,7 +269,7 @@ services:
     volumes:
       - ./ms-cotizador-cotizaciones/sql/ddl.sql:/docker-entrypoint-initdb.d/01-cotizaciones-ddl.sql
       - ./ms-cotizador-cotizaciones/sql/dml.sql:/docker-entrypoint-initdb.d/02-cotizaciones-dml.sql
-      - ./kafka-config/mysql-init-scripts/debezium-user.sql:/docker-entrypoint-initdb.d/03-debezium-user.sql
+      - ./kafka-config/mysql-init-scripts/debezium-cotizaciones.sql:/docker-entrypoint-initdb.d/03-debezium-cotizaciones.sql
       - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network
@@ -300,7 +311,7 @@ services:
     volumes:
       - ./ms-cotizador-pedidos/sql/ddl.sql:/docker-entrypoint-initdb.d/01-pedidos-ddl.sql
       - ./ms-cotizador-pedidos/sql/dml.sql:/docker-entrypoint-initdb.d/02-pedidos-dml.sql
-      - ./kafka-config/mysql-init-scripts/debezium-user.sql:/docker-entrypoint-initdb.d/03-debezium-user.sql
+      - ./kafka-config/mysql-init-scripts/debezium-pedidos.sql:/docker-entrypoint-initdb.d/03-debezium-pedidos.sql
       - ./kafka-config/mysql-debezium.cnf:/etc/mysql/conf.d/mysql-debezium.cnf
     networks:
       - cotizador-network

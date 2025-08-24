@@ -38,7 +38,7 @@ CREATE TABLE cocomponente (
     precio_base DECIMAL(20,2) NOT NULL,
     id_tipo_componente SMALLINT UNSIGNED NOT NULL,
     id_promocion INT UNSIGNED NOT NULL,
-    FOREIGN KEY (id_tipo_componente) REFERENCES cotipo_componente(id),
+    FOREIGN KEY (id_tipo_componente) REFERENCES cotipo_componente(id)
 ) ENGINE=InnoDB;
 
 -- Tabla para la relación composite (PC -> componentes)
