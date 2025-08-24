@@ -27,7 +27,6 @@ import mx.com.qtx.cotizador.repositorio.TipoComponenteRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.ComponenteEntityConverter;
 import mx.com.qtx.cotizador.util.Errores;
 import mx.com.qtx.cotizador.util.TipoComponenteEnum;
-import mx.com.qtx.cotizador.kafka.service.EventPublishingService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -38,18 +37,15 @@ public class ComponenteServicio {
     private PcPartesRepositorio pcPartesRepo;  
     private PromocionRepositorio promoRepo;
     private List<TipoComponente> tipos;
-    private EventPublishingService eventPublishingService;
     
     public ComponenteServicio(ComponenteRepositorio compRepo, 
         PcPartesRepositorio pcPartesRepo,
         PromocionRepositorio promoRepo,
-        TipoComponenteRepositorio tipoRepo,
-        EventPublishingService eventPublishingService) {
+        TipoComponenteRepositorio tipoRepo) {
         this.compRepo = compRepo;
         this.pcPartesRepo = pcPartesRepo;
         this.promoRepo = promoRepo;
         this.tipos = tipoRepo.findAll();
-        this.eventPublishingService = eventPublishingService;
     }
 
     /**
@@ -71,10 +67,6 @@ public class ComponenteServicio {
             }
             
             compRepo.deleteById(id);
-            
-            // Publicar evento de eliminación de componente
-            eventPublishingService.publishComponenteDeleted(id);
-            
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente eliminado exitosamente");
         } catch (Exception e) {
             return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
@@ -144,8 +136,6 @@ public class ComponenteServicio {
             Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteGuardado, null);
             ComponenteResponse response = ComponenteMapper.toResponse(componenteResultado);
             
-            // Publicar evento de creación de componente
-            eventPublishingService.publishComponenteCreated(componenteGuardado);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente guardado exitosamente", response);
         } catch (Exception e) {
@@ -221,9 +211,6 @@ public class ComponenteServicio {
             // Convertir de vuelta a objeto de dominio y luego a DTO de respuesta
             Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteActualizado, null);
             ComponenteResponse response = ComponenteMapper.toResponse(componenteResultado);
-            
-            // Publicar evento de actualización de componente
-            eventPublishingService.publishComponenteUpdated(componenteActualizado);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente actualizado exitosamente", response);
         } catch (Exception e) {
@@ -480,8 +467,6 @@ public class ComponenteServicio {
             // Obtener el ID de la promoción asignada a la PC
             Integer promocionId = pcEntity.getPromocion() != null ? pcEntity.getPromocion().getIdPromocion() : null;
             
-            eventPublishingService.publishPcCreated(pcEntity.getId(), pc.getId(), "PC completa", 
-                                                   1000.0, true, componenteIds, promocionId);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC guardada exitosamente", pcResponse);
         } catch (Exception e) {
@@ -569,10 +554,7 @@ public class ComponenteServicio {
             // Convertir de vuelta a objeto de dominio y luego a DTO
             Componente pcResultado = ComponenteEntityConverter.convertToComponente(pcEntity, null);
             PcResponse pcResponse = PcMapper.toResponse((Pc) pcResultado);
-            
-            // Publicar evento de actualización de PC
-            eventPublishingService.publishPcUpdated(id, pc.getId(), "PC completa", 
-                                                   1000.0, true);
+        
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC actualizada exitosamente", pcResponse);
         } catch (Exception e) {
@@ -618,9 +600,6 @@ public class ComponenteServicio {
                 PcParte pcParte = new PcParte(pcId, request.getId());
                 pcPartesRepo.save(pcParte);
                 
-                // Publicar evento de componente agregado a PC
-                eventPublishingService.publishPcComponentAdded(pcId, request.getId());
-                
                 // Obtener el componente existente y convertir a DTO
                 var componenteEntity = compRepo.findByIdWithTipoComponente(request.getId());
                 Componente componenteResultado = ComponenteEntityConverter.convertToComponente(componenteEntity, null);
@@ -653,8 +632,6 @@ public class ComponenteServicio {
                 PcParte pcParte = new PcParte(pcId, request.getId());
                 pcPartesRepo.save(pcParte);
                 
-                // Publicar evento de componente agregado a PC
-                eventPublishingService.publishPcComponentAdded(pcId, request.getId());
                 
                 componenteResponse = crearResponse.getDatos();
             }
@@ -688,9 +665,6 @@ public class ComponenteServicio {
             
             // Eliminar la asociación
             pcPartesRepo.deleteByPcIdAndComponenteId(pcId, componenteId);
-            
-            // Publicar evento de componente removido de PC
-            eventPublishingService.publishPcComponentRemoved(pcId, componenteId);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Componente removido de la PC exitosamente");
         } catch (Exception e) {
@@ -735,9 +709,6 @@ public class ComponenteServicio {
             
             // 2. Eliminar la PC
             compRepo.deleteById(pcId);
-            
-            // Publicar evento de eliminación de PC
-            eventPublishingService.publishPcDeleted(pcId);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "PC eliminada exitosamente");
         } catch (Exception e) {

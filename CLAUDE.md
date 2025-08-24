@@ -10,6 +10,7 @@ CotizadorPcPartes is a comprehensive enterprise-level microservices system for P
 
 - **Backend**: Spring Boot 3.5.3, Java 21, Spring Data JPA, Spring Security with JWT
 - **Database**: MySQL 8.4.4 with HikariCP connection pooling (separate DBs per service)
+- **Data Replication**: Kafka 4.0.0 + Debezium 3.0 CDC for real-time cross-microservice data sync
 - **Frontend**: Vue.js 3, Vite, TailwindCSS, Pinia stores
 - **Authentication**: JWT with RS256 signing, JWKS endpoints, session management
 - **Gateway**: Nginx API Gateway for service routing
@@ -105,6 +106,24 @@ The system implements a microservices architecture with the following services:
 #### **ms-cotizador** (Quotation Microservice) - Domain-Driven Design
 - **Purpose**: Core business logic for PC quotation, order management, inventory
 - **Architecture**: Rich domain models with embedded business logic
+
+### Data Replication Architecture
+The system implements real-time Change Data Capture (CDC) for cross-microservice data synchronization:
+
+#### **CDC Flow** (< 1 second latency)
+- **Components → Cotizaciones + Pedidos**: All component data (componentes, promociones, PC parts)
+- **Cotizaciones → Pedidos**: All quotation data (cocotizacion, codetalle_cotizacion)
+
+#### **Technology Stack**
+- **Kafka 4.0.0**: Message broker with KRaft mode (no Zookeeper)
+- **Debezium 3.0**: MySQL CDC connector with binlog streaming
+- **Custom Python Replicator**: Multi-table event processor with automatic reconnection
+- **MySQL Binlog**: Source of truth for all database changes
+
+#### **Automatic Setup**
+- **History Topics**: Pre-created on startup (dbhistory.componentes, dbhistory.cotizaciones, dbhistory.pedidos)
+- **CDC Connectors**: Automatically configured via init containers
+- **Recovery Mode**: Connectors use `snapshot.mode: "recovery"` for reliable operation
 
 ### Domain Layer Structure (ms-cotizador)
 The cotizador service follows Domain-Driven Design with rich domain models:
@@ -348,3 +367,4 @@ POST   /promociones       # Create (ADMIN, GERENTE)
 DELETE /promociones/{id}  # Delete (ADMIN only)
 ```
 - No mover el mapping de los controladores de los proyectos de microservicios a menos que el usuario asi lo solicite expresamente
+- si haces un cambio a uno de los microservicios o en el portal, es necesario recompilar la imagen y volver a deployar el contenedor de la aplicaicon

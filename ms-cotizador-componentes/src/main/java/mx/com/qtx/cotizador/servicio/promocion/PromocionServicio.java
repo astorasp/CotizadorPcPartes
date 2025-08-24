@@ -13,8 +13,6 @@ import mx.com.qtx.cotizador.dto.promocion.response.PromocionResponse;
 import mx.com.qtx.cotizador.entidad.Promocion;
 import mx.com.qtx.cotizador.repositorio.PromocionRepositorio;
 import mx.com.qtx.cotizador.util.Errores;
-import mx.com.qtx.cotizador.kafka.service.EventPublishingService;
-
 /**
  * Servicio que gestiona las operaciones relacionadas con las promociones.
  * Implementa la arquitectura ApiResponse<T> con manejo de errores completo.
@@ -24,12 +22,9 @@ public class PromocionServicio {
     
     private static final Logger logger = LoggerFactory.getLogger(PromocionServicio.class);
     private final PromocionRepositorio promocionRepositorio;
-    private final EventPublishingService eventPublishingService;
     
-    public PromocionServicio(PromocionRepositorio promocionRepositorio,
-                           EventPublishingService eventPublishingService) {
+    public PromocionServicio(PromocionRepositorio promocionRepositorio) {
         this.promocionRepositorio = promocionRepositorio;
-        this.eventPublishingService = eventPublishingService;
     }
     
     /**
@@ -61,9 +56,6 @@ public class PromocionServicio {
             
             logger.info("Promoción creada exitosamente: ID={}, Nombre={}", 
                        promocionGuardada.getIdPromocion(), promocionGuardada.getNombre());
-            
-            // Publicar evento de creación de promoción
-            eventPublishingService.publishPromocionCreated(promocionGuardada);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), 
                                    "Promoción creada exitosamente", response);
@@ -156,9 +148,6 @@ public class PromocionServicio {
             Promocion promocionGuardada = promocionRepositorio.save(entidadActualizada);
             PromocionResponse response = PromocionMapper.toResponse(promocionGuardada);
             
-            // Publicar evento de actualización de promoción
-            eventPublishingService.publishPromocionUpdated(promocionGuardada);
-            
             return new ApiResponse<>(Errores.OK.getCodigo(), 
                                    "Promoción actualizada exitosamente", response);
                                    
@@ -186,9 +175,6 @@ public class PromocionServicio {
             }
             
             promocionRepositorio.delete(promocion);
-            
-            // Publicar evento de eliminación de promoción
-            eventPublishingService.publishPromocionDeleted(Long.valueOf(id));
             
             return new ApiResponse<>(Errores.OK.getCodigo(), "Promoción eliminada exitosamente");
                                    

@@ -1,0 +1,29 @@
+{
+  "name": "componentes-cotizaciones-sink",
+  "config": {
+    "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "connection.url": "jdbc:mysql://cotizaciones-mysql:3306/cotizador_cotizaciones_db?allowPublicKeyRetrieval=true&useSSL=false",
+    "connection.username": "debezium",
+    "connection.password": "dbz_password",
+    "topics.regex": "componentes\\.cotizador_componentes_db\\.(cocomponente|copromocion|codetalle_promocion|codetalle_prom_dscto_x_cant|copc_parte)",
+    "auto.create": "true",
+    "auto.evolve": "true",
+    "insert.mode": "upsert",
+    "delete.enabled": "true",
+    "primary.key.mode": "record_key",
+    "table.name.format": "${topic}",
+    "transforms": "unwrap,extractTopic",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "false",
+    "transforms.unwrap.delete.handling.mode": "drop",
+    "transforms.extractTopic.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.extractTopic.regex": "componentes\\.cotizador_componentes_db\\.(.*)",
+    "transforms.extractTopic.replacement": "$1",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "true",
+    "value.converter.schemas.enable": "true",
+    "consumer.auto.offset.reset": "latest"
+  }
+}

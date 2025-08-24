@@ -26,40 +26,6 @@ CREATE TABLE cotipo_componente (
     nombre VARCHAR(50) NOT NULL UNIQUE
 ) ENGINE=InnoDB;
 
-
--- Tabla de promociones
-CREATE TABLE copromocion (
-    id_promocion INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    descripcion VARCHAR(255) NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    vigencia_desde DATE NOT NULL,
-    vigencia_hasta DATE NOT NULL
-) ENGINE=InnoDB;
-
--- Tabla de detalles de promoción
-CREATE TABLE codetalle_promocion (
-    id_detalle_promocion INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    es_base BOOLEAN NOT NULL DEFAULT FALSE,
-    llevent INT,
-    nombre VARCHAR(100) NOT NULL,
-    paguen INT,
-    porc_dcto_plano DOUBLE,
-    tipo_prom_acumulable VARCHAR(50),
-    tipo_prom_base VARCHAR(50),
-    id_promocion INT UNSIGNED NOT NULL,
-    FOREIGN KEY (id_promocion) REFERENCES copromocion(id_promocion) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- Tabla de detalles de promoción por documento y cantidad
-CREATE TABLE codetalle_prom_dscto_x_cant (
-    num_dscto INT UNSIGNED NOT NULL,
-    cantidad INT NOT NULL,
-    dscto DOUBLE NOT NULL,
-    num_det_promocion INT UNSIGNED NOT NULL,
-    num_promocion INT UNSIGNED NOT NULL,
-    PRIMARY KEY (num_dscto,num_det_promocion, num_promocion),
-    FOREIGN KEY (num_det_promocion) REFERENCES codetalle_promocion(id_detalle_promocion) ON DELETE CASCADE
-) ENGINE=InnoDB;
 -- =================================================================
 -- TABLAS CON DEPENDENCIAS DE PRIMER NIVEL
 -- =================================================================
@@ -76,8 +42,7 @@ CREATE TABLE cocomponente (
     precio_base DECIMAL(20,2) NOT NULL,
     id_tipo_componente SMALLINT UNSIGNED NOT NULL,
     id_promocion INT UNSIGNED NOT NULL,
-    FOREIGN KEY (id_tipo_componente) REFERENCES cotipo_componente(id),
-    FOREIGN KEY (id_promocion) REFERENCES copromocion(id_promocion)
+    FOREIGN KEY (id_tipo_componente) REFERENCES cotipo_componente(id)
 ) ENGINE=InnoDB;
 
 -- Tabla para la relación composite (PC -> componentes)

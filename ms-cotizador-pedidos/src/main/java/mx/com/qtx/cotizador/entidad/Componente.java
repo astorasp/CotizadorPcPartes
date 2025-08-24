@@ -48,9 +48,8 @@ public class Componente {
     @JoinColumn(name = "id_tipo_componente")
     private TipoComponente tipoComponente;
     
-    @ManyToOne
-    @JoinColumn(name = "id_promocion")
-    private Promocion promocion;
+    @Column(name = "id_promocion")
+    private Integer promocion;
     
     // Constructores
     public Componente() {
@@ -105,11 +104,11 @@ public class Componente {
         this.precioBase = precioBase;
     }
     
-    public Promocion getPromocion() {
+    public Integer getPromocion() {
         return promocion;
     }
-    
-    public void setPromocion(Promocion promocion) {
+
+    public void setPromocion(Integer promocion) {
         this.promocion = promocion;
     }
     

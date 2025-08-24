@@ -101,12 +101,6 @@
             <artifactId>caffeine</artifactId>
         </dependency>
         
-        <!-- Kafka Dependencies -->
-        <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka</artifactId>
-        </dependency>
-        
         <!-- Jackson para serialización JSON en Kafka -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -182,12 +176,6 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- H2 Database for unit/integration tests -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <!-- Configuración de construcción -->
