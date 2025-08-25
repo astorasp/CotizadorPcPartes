@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
     "tasks.max": "1",
-    "connection.url": "jdbc:mysql://mysql-cotizaciones:3306/cotizador_cotizaciones_db",
+    "connection.url": "jdbc:mysql://cotizaciones-mysql:3306/cotizador_cotizaciones_db?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&maxReconnects=3&initialTimeout=2",
     "connection.username": "debezium",
     "connection.password": "dbz_password",
     "topics": "componentes.cotizador_componentes_db.cocomponente",

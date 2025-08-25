@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
     "tasks.max": "1",
-    "connection.url": "jdbc:mysql://mysql-pedidos:3306/cotizador_pedidos_db",
+    "connection.url": "jdbc:mysql://pedidos-mysql:3306/cotizador_pedidos_db?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&maxReconnects=3&initialTimeout=2",
     "connection.username": "debezium",
     "connection.password": "dbz_password",
     "hibernate.dialect": "org.hibernate.dialect.MySQLDialect",
