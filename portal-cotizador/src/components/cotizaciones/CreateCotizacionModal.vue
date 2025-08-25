@@ -54,8 +54,8 @@
                     :disabled="modalLoading"
                   >
                     <option value="">Seleccionar tipo...</option>
-                    <option value="COTIZADOR_A">Cotizador A</option>
-                    <option value="COTIZADOR_B">Cotizador B</option>
+                    <option value="A">Cotizador A</option>
+                    <option value="B">Cotizador B</option>
                   </select>
                 </div>
                 
@@ -68,6 +68,17 @@
                     :disabled="modalLoading"
                   />
                 </div>
+              </div>
+              
+              <div class="mt-6">
+                <label class="form-label">Observaciones</label>
+                <textarea
+                  v-model="formData.observaciones"
+                  class="form-field"
+                  rows="3"
+                  placeholder="Ingrese observaciones adicionales para la cotización..."
+                  :disabled="modalLoading"
+                />
               </div>
             </div>
 

@@ -60,7 +60,8 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
   // Estado del formulario
   const formData = ref({
     tipoCotizador: '',
-    fecha: new Date().toISOString().split('T')[0]
+    fecha: new Date().toISOString().split('T')[0],
+    observaciones: ''
   })
 
   // Estado para agregar componentes
@@ -398,6 +399,13 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     componentSelectValue.value = ''
     componentQuantity.value = 1
     
+    // Resetear formData
+    formData.value = {
+      tipoCotizador: '',
+      fecha: new Date().toISOString().split('T')[0],
+      observaciones: ''
+    }
+    
     if (DEBUG_CONFIG.ENABLED) {
       // console.log('[CotizacionesStore] Closed modal')
     }
@@ -626,9 +634,16 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       
       const cotizacionData = {
         tipoCotizador: formData.value.tipoCotizador,
-        fecha: formData.value.fecha,
-        impuestos: (currentImpuestos.value || []).filter(imp => imp.tipo && imp.pais && imp.tasa > 0),
-        detalles: currentComponents.value
+        impuestos: (currentImpuestos.value || [])
+          .filter(imp => imp.tipo && imp.pais && imp.tasa > 0)
+          .map(imp => imp.tipo), // Convertir a array de strings según API spec
+        detalles: currentComponents.value.map(comp => ({
+          idComponente: comp.componenteId || comp.idComponente,
+          cantidad: comp.cantidad,
+          descripcion: comp.descripcion,
+          precioBase: comp.precioUnitario || comp.precioBase
+        })),
+        observaciones: formData.value.observaciones || ""
       }
 
       const result = await createCotizacion(cotizacionData)

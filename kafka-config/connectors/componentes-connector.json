@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "io.debezium.connector.mysql.MySqlConnector",
     "tasks.max": "1",
-    "database.hostname": "mysql-componentes",
+    "database.hostname": "componentes-mysql",
     "database.port": "3306",
     "database.user": "debezium",
     "database.password": "dbz_password",
@@ -21,6 +21,9 @@
     "value.converter.schemas.enable": "true",
     "database.allowPublicKeyRetrieval": "true",
     "database.ssl.mode": "disabled",
+    "database.autoReconnect": "true",
+    "database.maxReconnects": "3",
+    "database.initialTimeout": "2",
     "snapshot.mode": "always",
     "snapshot.locking.mode": "minimal",
     "time.precision.mode": "adaptive_time_microseconds",

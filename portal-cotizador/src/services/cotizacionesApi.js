@@ -119,29 +119,21 @@ export const cotizacionesApi = {
     // Validar detalles de componentes
     if (cotizacionData.detalles) {
       cotizacionData.detalles.forEach((detalle, index) => {
-        if (!detalle.componenteId) {
+        if (!detalle.idComponente) {
           errors.push(`Componente ${index + 1}: ID es requerido`)
         }
         if (!detalle.cantidad || detalle.cantidad <= 0) {
           errors.push(`Componente ${index + 1}: Cantidad debe ser mayor a 0`)
         }
-        if (!detalle.precioUnitario || detalle.precioUnitario <= 0) {
-          errors.push(`Componente ${index + 1}: Precio unitario debe ser mayor a 0`)
-        }
+        // precioBase es opcional según la API spec
       })
     }
 
-    // Validar impuestos
+    // Validar impuestos (ahora son array de strings)
     if (cotizacionData.impuestos) {
       cotizacionData.impuestos.forEach((impuesto, index) => {
-        if (!impuesto.tipo) {
-          errors.push(`Impuesto ${index + 1}: Tipo es requerido`)
-        }
-        if (!impuesto.pais) {
-          errors.push(`Impuesto ${index + 1}: País es requerido`)
-        }
-        if (!impuesto.tasa || impuesto.tasa <= 0 || impuesto.tasa > 100) {
-          errors.push(`Impuesto ${index + 1}: Tasa debe estar entre 0.01 y 100`)
+        if (!impuesto || typeof impuesto !== 'string' || impuesto.trim() === '') {
+          errors.push(`Impuesto ${index + 1}: Tipo de impuesto es requerido`)
         }
       })
     }
