@@ -55,10 +55,21 @@ export const useUtils = () => {
     const defaultOptions = UI_CONFIG.DATE_FORMAT
     
     try {
+      // Manejo especial para strings de fecha en formato ISO (yyyy-MM-dd)
+      // para evitar problemas de timezone
+      let dateObj
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        // Para fechas en formato yyyy-MM-dd, crearlas como fecha local
+        const [year, month, day] = date.split('-').map(Number)
+        dateObj = new Date(year, month - 1, day) // month - 1 porque los meses son 0-indexed
+      } else {
+        dateObj = new Date(date)
+      }
+      
       return new Intl.DateTimeFormat('es-MX', {
         ...defaultOptions,
         ...options
-      }).format(new Date(date))
+      }).format(dateObj)
     } catch (error) {
       console.error('Error formatting date:', error)
       return date.toString()

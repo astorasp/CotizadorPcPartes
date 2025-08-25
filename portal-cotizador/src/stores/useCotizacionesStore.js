@@ -104,8 +104,8 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
   })
 
   const availableComponentsForSelect = computed(() => {
-    // Filtrar componentes que no sean PCs para evitar problemas (validación defensiva)
-    return (availableComponents.value || []).filter(comp => comp.tipoComponente !== 'PC')
+    // Retornar todos los componentes disponibles incluyendo PCs para cotizaciones
+    return availableComponents.value || []
   })
 
   // Computed para validación del formulario
@@ -373,7 +373,7 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
       // Configurar formulario con datos de la cotización
       formData.value = {
         tipoCotizador: cotizacion.tipoCotizador || 'Estándar',
-        fecha: cotizacion.fecha ? cotizacion.fecha.split('T')[0] : new Date().toISOString().split('T')[0]
+        fecha: cotizacion.fecha || new Date().toISOString().split('T')[0]
       }
       
       showViewModal.value = true
@@ -429,12 +429,12 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
     }
     
     try {
-      const allComponents = await componentesApi.getAll()
-      // Filtrar solo componentes que no sean PCs (validación defensiva)
-      availableComponents.value = (allComponents || []).filter(comp => comp.tipoComponente !== 'PC')
+      // Usar el nuevo endpoint que incluye PCs para cotizaciones
+      const allComponents = await componentesApi.getAllWithPcs()
+      availableComponents.value = allComponents || []
       
       if (DEBUG_CONFIG.ENABLED) {
-        // console.log(`[CotizacionesStore] Loaded ${availableComponents.value.length} available components`)
+        // console.log(`[CotizacionesStore] Loaded ${availableComponents.value.length} available components (including PCs)`)
       }
       
     } catch (error) {
@@ -643,7 +643,8 @@ export const useCotizacionesStore = defineStore('cotizaciones', () => {
           descripcion: comp.descripcion,
           precioBase: comp.precioUnitario || comp.precioBase
         })),
-        observaciones: formData.value.observaciones || ""
+        observaciones: formData.value.observaciones || "",
+        fecha: formData.value.fecha // Agregar fecha al payload
       }
 
       const result = await createCotizacion(cotizacionData)

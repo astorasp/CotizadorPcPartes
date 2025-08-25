@@ -61,7 +61,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700">Fecha</label>
                 <div class="mt-1 text-sm text-gray-900">
-                  {{ formatDate(getCotizacionFecha()) }}
+                  {{ formatDate(getCotizacionFecha) }}
                 </div>
               </div>
             </div>
@@ -272,10 +272,14 @@ const getCotizacionTipoCotizador = () => {
   return currentCotizacion.value?.tipoCotizador || 'Estándar'
 }
 
-const getCotizacionFecha = () => {
-  const fecha = currentCotizacion.value?.fecha || currentCotizacion.value?.fechaCreacion
-  return fecha ? (fecha.includes('T') ? fecha.split('T')[0] : fecha) : new Date().toISOString().split('T')[0]
-}
+const getCotizacionFecha = computed(() => {
+  // La fecha debe venir directamente de currentCotizacion.value.fecha desde la API
+  if (currentCotizacion.value?.fecha) {
+    return currentCotizacion.value.fecha
+  }
+  // Fallback por si no hay fecha (no debería pasar)
+  return new Date().toISOString().split('T')[0]
+})
 
 const getCountryLabel = (pais) => {
   return COUNTRY_LABELS[pais] || pais

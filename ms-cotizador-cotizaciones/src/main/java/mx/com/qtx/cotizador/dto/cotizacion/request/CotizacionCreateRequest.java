@@ -45,4 +45,10 @@ public class CotizacionCreateRequest {
      * Observaciones adicionales sobre la cotización (opcional)
      */
     private String observaciones;
+    
+    /**
+     * Fecha de la cotización (formato yyyy-MM-dd)
+     * Si no se proporciona, se usará la fecha actual
+     */
+    private String fecha;
 } 

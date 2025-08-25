@@ -25,7 +25,8 @@ export const API_ENDPOINTS = {
     BASE: '',
     BY_ID: (id) => `/${id}`,
     BY_TYPE: (tipo) => `/tipo/${tipo}`,
-    EXISTS: (id) => `/${id}/existe`
+    EXISTS: (id) => `/${id}/existe`,
+    CON_PCS: '/con-pcs'
   },
   
   // PCs

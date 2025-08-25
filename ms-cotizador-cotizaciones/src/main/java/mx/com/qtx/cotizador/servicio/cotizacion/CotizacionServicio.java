@@ -102,6 +102,17 @@ public class CotizacionServicio {
             List<CalculadorImpuesto> impuestos = mapearImpuestos(request.getImpuestos());
             Cotizacion cotizacionDominio = cotizador.generarCotizacion(impuestos);
             
+            // 4.1 Establecer fecha personalizada si se proporciona
+            if (request.getFecha() != null && !request.getFecha().trim().isEmpty()) {
+                try {
+                    java.time.LocalDate fechaPersonalizada = java.time.LocalDate.parse(request.getFecha());
+                    cotizacionDominio.setFecha(fechaPersonalizada);
+                    logger.info("Fecha personalizada establecida: {}", fechaPersonalizada);
+                } catch (Exception e) {
+                    logger.warn("Formato de fecha inválido: {}, usando fecha actual", request.getFecha());
+                }
+            }
+            
             logger.info("Cotización generada con lógica de dominio. Total: {}", cotizacionDominio.getTotal());
             
             // 5. Convertir dominio a entidad JPA para persistir

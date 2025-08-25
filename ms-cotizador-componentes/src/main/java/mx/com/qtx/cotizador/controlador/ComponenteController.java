@@ -119,6 +119,26 @@ public class ComponenteController {
         log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
         return ResponseEntity.status(httpStatus).body(respuesta);
     }
+
+    /**
+     * Caso de uso 1.4: Consultar componentes - Obtener todos incluyendo PCs
+     * Endpoint especializado para cotizaciones que necesitan ver todos los items
+     * Todos los roles pueden consultar componentes
+     */
+    @GetMapping("/con-pcs")
+    public ResponseEntity<ApiResponse<List<ComponenteResponse>>> obtenerTodosLosComponentesConPcs() {
+        
+        log.info("Consultando todos los componentes incluyendo PCs");
+        
+        // Llamar al servicio que retorna todos los componentes sin filtros
+        ApiResponse<List<ComponenteResponse>> respuesta = componenteServicio.obtenerTodosLosComponentesConPcs();
+        
+        // Mapear el código de error a HTTP status
+        HttpStatus httpStatus = HttpStatusMapper.mapearCodigoAHttpStatus(respuesta.getCodigo());
+        
+        log.info("Operación completada. Código: {}, HttpStatus: {}", respuesta.getCodigo(), httpStatus);
+        return ResponseEntity.status(httpStatus).body(respuesta);
+    }
     
     /**
      * Caso de uso 1.4: Consultar componentes - Obtener por ID

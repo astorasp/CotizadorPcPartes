@@ -325,6 +325,36 @@ public class ComponenteServicio {
     }
 
     /**
+     * Obtiene todos los componentes incluyendo PCs (sin filtros)
+     * Útil para cotizaciones donde se necesita mostrar todos los items disponibles
+     * @return ApiResponse<List<ComponenteResponse>> con la lista completa de componentes
+     */
+    public ApiResponse<List<ComponenteResponse>> obtenerTodosLosComponentesConPcs() {
+        try {
+            var compEntities = compRepo.findAllWithTipoComponente();
+            List<ComponenteResponse> componentes = compEntities.stream()
+                .map(entity -> {
+                    Componente componente;
+                    // Si es una PC, cargar sus sub-componentes para mostrar información completa
+                    if (entity.getTipoComponente().getNombre().equals(TipoComponenteEnum.PC.name())) {
+                        var subCompEntities = compRepo.findComponentesByPcWithTipoComponente(entity.getId());
+                        componente = ComponenteEntityConverter.convertToComponente(entity, subCompEntities);
+                    } else {
+                        componente = ComponenteEntityConverter.convertToComponente(entity, null);
+                    }
+                    return ComponenteMapper.toResponse(componente);
+                })
+                .collect(Collectors.toList());
+            
+            return new ApiResponse<>(Errores.OK.getCodigo(), "Consulta exitosa incluyendo PCs", componentes);
+        } catch (Exception e) {
+            log.error("Error al obtener todos los componentes con PCs: {}", e.getMessage(), e);
+            return new ApiResponse<>(Errores.ERROR_INTERNO_DEL_SERVICIO.getCodigo(), 
+                                   Errores.ERROR_INTERNO_DEL_SERVICIO.getMensaje());
+        }
+    }
+
+    /**
      * Busca componentes por tipo
      * @param tipoComponente Tipo de componente a buscar
      * @return ApiResponse<List<ComponenteResponse>> con la lista de componentes del tipo especificado

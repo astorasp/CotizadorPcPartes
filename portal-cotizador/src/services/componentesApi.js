@@ -15,6 +15,15 @@ export const componentesApi = {
   },
 
   /**
+   * Obtener todos los componentes incluyendo PCs (sin filtros)
+   * Útil para cotizaciones donde se necesita mostrar todos los items disponibles
+   */
+  async getAllWithPcs() {
+    const response = await componentesApiClient.get(API_ENDPOINTS.COMPONENTES.CON_PCS)
+    return response.datos || []
+  },
+
+  /**
    * Obtener componente por ID
    */
   async getById(id) {
