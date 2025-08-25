@@ -3,11 +3,27 @@
   "config": {
     "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
     "tasks.max": "1",
-    "connection.url": "jdbc:mysql://pedidos-mysql:3306/cotizador_pedidos_db?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&maxReconnects=3&initialTimeout=2",
+    "connection.url": "jdbc:mysql://pedidos-mysql:3306/cotizador_pedidos_db?autoReconnect=true&failOverReadOnly=false&maxReconnects=10&initialTimeout=2&allowPublicKeyRetrieval=true&useSSL=false",
     "connection.username": "debezium",
     "connection.password": "dbz_password",
     "hibernate.dialect": "org.hibernate.dialect.MySQLDialect",
     "hibernate.connection.driver_class": "com.mysql.cj.jdbc.Driver",
+    
+    "hibernate.c3p0.min_size": "1",
+    "hibernate.c3p0.max_size": "5",
+    "hibernate.c3p0.timeout": "300",
+    "hibernate.c3p0.max_statements": "50",
+    "hibernate.c3p0.idle_test_period": "150",
+    "hibernate.c3p0.preferredTestQuery": "SELECT 1",
+    "hibernate.c3p0.testConnectionOnCheckout": "true",
+    "hibernate.c3p0.acquireRetryAttempts": "3",
+    "hibernate.c3p0.acquireRetryDelay": "1000",
+    
+    "heartbeat.interval.ms": "30000",
+    "batch.size": "100",
+    "buffer.count.records": "500",
+    "flush.timeout.ms": "60000",
+    
     "topics.regex": "componentes\\.cotizador_componentes_db\\.(cocomponente|copc_parte)",
     "auto.create": "true",
     "auto.evolve": "true",
