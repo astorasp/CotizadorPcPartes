@@ -2,7 +2,6 @@ package mx.com.qtx.cotizador.dominio.cotizadorB;
 
 import mx.com.qtx.cotizador.dominio.core.Cotizacion;
 import mx.com.qtx.cotizador.dominio.core.DetalleCotizacion;
-import mx.com.qtx.cotizador.servicio.cotizacion.CotizacionServicio;
 
 public class CotizacionFmtoB extends Cotizacion {
 

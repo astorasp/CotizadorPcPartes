@@ -20,11 +20,9 @@ import mx.com.qtx.cotizador.dto.cotizacion.request.CotizacionCreateRequest;
 import mx.com.qtx.cotizador.dto.cotizacion.request.DetalleCotizacionRequest;
 import mx.com.qtx.cotizador.dto.cotizacion.response.CotizacionResponse;
 import mx.com.qtx.cotizador.dto.cotizacion.mapper.CotizacionMapper;
-import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
 import mx.com.qtx.cotizador.repositorio.CotizacionRepositorio;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
 import mx.com.qtx.cotizador.servicio.wrapper.CotizacionEntityConverter;
-import org.springframework.beans.factory.annotation.Autowired;
 import mx.com.qtx.cotizador.util.Errores;
 
 import java.math.BigDecimal;
