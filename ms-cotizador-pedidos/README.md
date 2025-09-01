@@ -3,7 +3,7 @@
 > **API REST empresarial** para cotización de componentes de hardware con arquitectura Domain-Driven Design, desarrollado con Spring Boot 3.5.0 y Java 21.
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4.4-blue.svg)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
@@ -61,7 +61,7 @@ El microservicio implementa DDD con separación clara de responsabilidades:
 docker-compose up -d
 
 # Verificar que el servicio esté funcionando
-curl http://localhost:8080/actuator/health
+curl http://localhost:8084/api/v1/actuator/health
 ```
 
 ### 🛠️ **Desarrollo Local**
@@ -73,17 +73,17 @@ curl http://localhost:8080/actuator/health
 
 #### **Setup**
 ```bash
-cd ms-cotizador
+cd ms-cotizador-pedidos
 
 # 1. Configurar base de datos MySQL
 mysql -u root -p
-CREATE DATABASE cotizador CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'cotizador_user'@'localhost' IDENTIFIED BY 'cotizador_pass';
-GRANT ALL PRIVILEGES ON cotizador.* TO 'cotizador_user'@'localhost';
+CREATE DATABASE cotizador_pedidos_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'pedidos_user'@'localhost' IDENTIFIED BY 'pedidos_pass';
+GRANT ALL PRIVILEGES ON cotizador_pedidos_db.* TO 'pedidos_user'@'localhost';
 
 # 2. Ejecutar scripts de base de datos
-mysql -u cotizador_user -p cotizador < sql/ddl.sql
-mysql -u cotizador_user -p cotizador < sql/dml.sql
+mysql -u pedidos_user -p cotizador_pedidos_db < sql/ddl.sql
+mysql -u pedidos_user -p cotizador_pedidos_db < sql/dml.sql
 
 # 3. Compilar y ejecutar
 mvn spring-boot:run
@@ -93,10 +93,10 @@ mvn spring-boot:run
 
 | Servicio | URL | Credenciales |
 |----------|-----|--------------|
-| **API REST** | http://localhost:8080/cotizador/v1/api | admin / admin123 |
-| **Swagger UI** | http://localhost:8080/swagger-ui.html | admin / admin123 |
-| **Health Check** | http://localhost:8080/actuator/health | - |
-| **Base de Datos** | localhost:3306/cotizador | cotizador_user / cotizador_pass |
+| **API REST (dev)** | http://localhost:8084/api/v1 | Basic Auth (admin/admin123) |
+| **Swagger UI (dev)** | http://localhost:8084/api/v1/swagger-ui/index.html | Basic Auth |
+| **Health Check (dev)** | http://localhost:8084/api/v1/actuator/health | - |
+| **Base de Datos (dev)** | localhost:3306/cotizador_pedidos_db | pedidos_user / pedidos_pass |
 
 ---
 
@@ -267,33 +267,23 @@ DELETE /cotizador/v1/api/pcs/{id}/componentes/{componenteId} # Remover component
 GET    /cotizador/v1/api/pcs/{id}/componentes  # Listar componentes de PC
 ```
 
-### 📋 **Cotizaciones**
-
-```http
-GET    /cotizador/v1/api/cotizaciones          # Listar cotizaciones
-POST   /cotizador/v1/api/cotizaciones          # Crear cotización
-GET    /cotizador/v1/api/cotizaciones/{id}     # Obtener cotización
-PUT    /cotizador/v1/api/cotizaciones/{id}     # Actualizar cotización
-DELETE /cotizador/v1/api/cotizaciones/{id}     # Eliminar cotización
-```
-
 ### 📦 **Pedidos**
 
 ```http
-GET    /cotizador/v1/api/pedidos               # Listar pedidos
-POST   /cotizador/v1/api/pedidos/generar       # Generar pedido desde cotización
-GET    /cotizador/v1/api/pedidos/{id}          # Obtener pedido por ID
-PUT    /cotizador/v1/api/pedidos/{id}          # Actualizar pedido
+GET    /api/v1/pedidos                          # Listar pedidos
+POST   /api/v1/pedidos/generar                  # Generar pedido desde cotización
+GET    /api/v1/pedidos/{id}                     # Obtener pedido por ID
+PUT    /api/v1/pedidos/{id}                     # Actualizar pedido
 ```
 
 ### 🏢 **Proveedores**
 
 ```http
-GET    /cotizador/v1/api/proveedores           # Listar proveedores
-POST   /cotizador/v1/api/proveedores           # Crear proveedor
-GET    /cotizador/v1/api/proveedores/{id}      # Obtener proveedor
-PUT    /cotizador/v1/api/proveedores/{id}      # Actualizar proveedor
-DELETE /cotizador/v1/api/proveedores/{id}      # Eliminar proveedor
+GET    /api/v1/proveedores                      # Listar proveedores
+POST   /api/v1/proveedores                      # Crear proveedor
+GET    /api/v1/proveedores/{id}                 # Obtener proveedor
+PUT    /api/v1/proveedores/{id}                 # Actualizar proveedor
+DELETE /api/v1/proveedores/{id}                 # Eliminar proveedor
 ```
 
 ### 🎁 **Promociones**
@@ -308,9 +298,9 @@ DELETE /cotizador/v1/api/promociones/{id}      # Eliminar promoción
 
 ### 📖 **Documentación API**
 
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
-- **Health Check**: http://localhost:8080/actuator/health
+- **Swagger UI (dev)**: http://localhost:8084/api/v1/swagger-ui/index.html
+- **OpenAPI JSON (dev)**: http://localhost:8084/api/v1/v3/api-docs
+- **Health Check (dev)**: http://localhost:8084/api/v1/actuator/health
 
 ---
 
@@ -357,32 +347,32 @@ DELETE /cotizador/v1/api/promociones/{id}      # Eliminar promoción
 | `docker` | `application-docker.yml` | Contenedores Docker |
 | `test` | `application-test.properties` | Tests de integración |
 
-### 🔧 **Variables de Entorno**
+### 🔧 **Variables de Entorno (dev)**
 
 ```bash
 # Base de datos
 DB_HOST=localhost                   # Host de MySQL
-DB_USERNAME=cotizador_user          # Usuario de base de datos
-DB_PASSWORD=cotizador_pass          # Contraseña de base de datos
+DB_USERNAME=pedidos_user            # Usuario de base de datos
+DB_PASSWORD=pedidos_pass            # Contraseña de base de datos
 
 # Seguridad
 SECURITY_USERNAME=admin             # Usuario API básica
 SECURITY_PASSWORD=admin123          # Contraseña API básica
 
 # Aplicación
-SERVER_PORT=8080                    # Puerto del servidor
+SERVER_PORT=8084                    # Puerto del servidor (dev)
 LOGGING_LEVEL=INFO                  # Nivel de logging
 ```
 
 ### 📊 **Configuración de Base de Datos**
 
 ```yaml
-# application.yml
+# application.yml (perfil dev)
 spring:
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:3306/cotizador
-    username: ${DB_USERNAME:cotizador_user}
-    password: ${DB_PASSWORD:cotizador_pass}
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/cotizador_pedidos_db
+    username: ${DB_USERNAME:pedidos_user}
+    password: ${DB_PASSWORD:pedidos_pass}
     driver-class-name: com.mysql.cj.jdbc.Driver
   
   jpa:
@@ -391,8 +381,13 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+
+server:
+  port: 8084
+  servlet:
+    context-path: /api/v1
 ```
 
 ---
@@ -513,25 +508,37 @@ logging.level.com.github.dockerjava=WARN
 ### 🏗️ **Construcción de Imagen**
 
 ```dockerfile
-# Dockerfile
-FROM openjdk:21-jdk-slim
-COPY target/ms-cotizador-*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+# Dockerfile (multi-stage)
+FROM eclipse-temurin:21.0.7_6-jdk-alpine AS builder
+WORKDIR /app
+COPY pom.xml .
+RUN apk add --no-cache maven curl && mvn dependency:resolve
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+FROM eclipse-temurin:21.0.7_6-jre-alpine
+RUN addgroup -S spring && adduser -S spring -G spring && mkdir -p /app/logs && chown -R spring:spring /app
+USER spring
+WORKDIR /app
+COPY --from=builder /app/target/*.jar /app/pedidos.jar
+EXPOSE 8084
+ENV SPRING_PROFILES_ACTIVE=docker
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS} -jar pedidos.jar"]
 ```
 
 ### 🚀 **Comandos Docker**
 
 ```bash
 # Construir imagen
-docker build -t ms-cotizador .
+docker build -t ms-cotizador-pedidos ./ms-cotizador-pedidos
 
-# Ejecutar contenedor
-docker run -p 8080:8080 \
-  -e DB_HOST=mysql \
-  -e DB_USERNAME=cotizador_user \
-  -e DB_PASSWORD=cotizador_pass \
-  ms-cotizador
+# Ejecutar contenedor (dev)
+docker run -p 8084:8084 \
+  -e DB_HOST=localhost \
+  -e DB_USERNAME=pedidos_user \
+  -e DB_PASSWORD=pedidos_pass \
+  -e SPRING_PROFILES_ACTIVE=default \
+  ms-cotizador-pedidos
 
 # Con Docker Compose (recomendado)
 docker-compose up -d
@@ -541,7 +548,7 @@ docker-compose up -d
 
 ```bash
 # Verificar salud del servicio
-curl http://localhost:8080/actuator/health
+curl http://localhost:8084/api/v1/actuator/health
 
 # Información detallada
 curl http://localhost:8080/actuator/info
@@ -594,10 +601,10 @@ mvn dependency:tree            # Árbol de dependencias
 curl http://localhost:8080/actuator/health
 
 # Ver logs del contenedor
-docker logs ms-cotizador
+docker logs ms-cotizador-pedidos
 
 # Verificar conexión a base de datos
-mysql -h localhost -u cotizador_user -p cotizador
+mysql -h localhost -u pedidos_user -p cotizador_pedidos_db
 
 # Verificar endpoints disponibles
 curl -u admin:admin123 http://localhost:8080/cotizador/v1/api/componentes

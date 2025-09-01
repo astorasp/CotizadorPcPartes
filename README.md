@@ -1,7 +1,7 @@
 # 🖥️ Sistema Cotizador de PC Partes
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.0-brightgreen.svg)](https://vuejs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4.4-blue.svg)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://docs.docker.com/compose/)
@@ -135,14 +135,14 @@ La siguiente tabla resume las capacidades clave de cada rol dentro del sistema.
 
 ---
 
-### 🌐 **Acceso a los Servicios**
+### 🌐 **Acceso a los Servicios (Microservicios)**
 
-| Servicio | URL | Autenticación |
-|----------|-----|---------------|
-| **Portal Web** | http://localhost | Login con usuarios del sistema (JWT) |
-| **API REST** | http://localhost:8080 | JWT Token (Authorization: Bearer) |
-| **Swagger UI** | http://localhost:8080/swagger-ui.html | JWT Token (Authorization: Bearer) |
-| **Health Check** | http://localhost:8080/actuator/health | JWT Token (Authorization: Bearer) |
+| Servicio | URL Base (dev) | Swagger (dev) | Health (dev) |
+|----------|-----------------|---------------|--------------|
+| **Portal Web** | http://localhost | - | http://localhost/health |
+| **Componentes/PCs/Promociones** | http://localhost:8082/api/v1 | http://localhost:8082/api/v1/swagger-ui/index.html | http://localhost:8082/api/v1/actuator/health |
+| **Cotizaciones** | http://localhost:8083/api/v1 | http://localhost:8083/api/v1/swagger-ui/index.html | http://localhost:8083/api/v1/actuator/health |
+| **Pedidos/Proveedores** | http://localhost:8084/api/v1 | http://localhost:8084/api/v1/swagger-ui/index.html | http://localhost:8084/api/v1/actuator/health |
 
 ### 🔐 **Sistema de Autenticación**
 
@@ -187,15 +187,17 @@ La siguiente tabla resume las capacidades clave de cada rol dentro del sistema.
       └─────────────────────┘ └────────┘ └─────────────────┘
 ```
 
-### 🔄 **Flujo de Datos**
+### 🔄 **Flujo de Datos (Microservicios)**
 
 ```
-Portal Web (Vue.js 3) → Backend API (Spring Boot) → MySQL Database
-      ↓                        ↓                         ↓
-- Sistema de Loading    - Domain-Driven Design    - Connection Pooling
-- Composables Vue       - CRUD Operations         - Transacciones ACID
-- Pinia State Mgmt      - Business Logic          - Índices optimizados
-- TailwindCSS          - Security (Basic Auth)    - Esquema normalizado
+Portal Web (Vue.js 3)
+  → API Gateway (Nginx)
+    → ms-cotizador-componentes (8082)  ─┐
+    → ms-cotizador-cotizaciones (8083) ─┼→ MySQLs por microservicio
+    → ms-cotizador-pedidos (8084)      ─┘    (cotizador_componentes_db, cotizador_cotizaciones_db, cotizador_pedidos_db)
+
+CDC (Debezium + Kafka Connect)
+  Componentes/Cotizaciones/Pedidos MySQL → Kafka topics → Sinks cruzados
 ```
 
 ---
@@ -645,59 +647,59 @@ mvn test jacoco:report
 
 ## 📚 API Documentation
 
-### 🔗 **Endpoints Principales**
+### 🔗 **Endpoints Principales (por microservicio)**
 
-#### **Componentes**
+#### **Componentes / PCs / Promociones** (ms-cotizador-componentes · 8082)
 ```http
-GET    /cotizador/v1/api/componentes         # Listar componentes
-POST   /cotizador/v1/api/componentes         # Crear componente
-GET    /cotizador/v1/api/componentes/{id}    # Obtener componente
-PUT    /cotizador/v1/api/componentes/{id}    # Actualizar componente
-DELETE /cotizador/v1/api/componentes/{id}    # Eliminar componente
+GET    /api/v1/componentes                   # Listar componentes
+POST   /api/v1/componentes                   # Crear componente
+GET    /api/v1/componentes/{id}              # Obtener componente
+PUT    /api/v1/componentes/{id}              # Actualizar componente
+DELETE /api/v1/componentes/{id}              # Eliminar componente
 ```
 
 #### **PCs**
 ```http
-GET    /cotizador/v1/api/pcs                 # Listar PCs
-POST   /cotizador/v1/api/pcs                 # Crear PC
-GET    /cotizador/v1/api/pcs/{id}            # Obtener PC
-PUT    /cotizador/v1/api/pcs/{id}            # Actualizar PC
-DELETE /cotizador/v1/api/pcs/{id}            # Eliminar PC
-POST   /cotizador/v1/api/pcs/{id}/componentes # Agregar componente a PC
+GET    /api/v1/pcs                            # Listar PCs
+POST   /api/v1/pcs                            # Crear PC
+GET    /api/v1/pcs/{id}                       # Obtener PC
+PUT    /api/v1/pcs/{id}                       # Actualizar PC
+DELETE /api/v1/pcs/{id}                       # Eliminar PC
+POST   /api/v1/pcs/{id}/componentes           # Agregar componente a PC
 ```
 
-#### **Cotizaciones**
+#### **Cotizaciones** (ms-cotizador-cotizaciones · 8083)
 ```http
-GET    /cotizador/v1/api/cotizaciones        # Listar cotizaciones
-POST   /cotizador/v1/api/cotizaciones        # Crear cotización
-GET    /cotizador/v1/api/cotizaciones/{id}   # Obtener cotización
-PUT    /cotizador/v1/api/cotizaciones/{id}   # Actualizar cotización
-DELETE /cotizador/v1/api/cotizaciones/{id}   # Eliminar cotización
+GET    /api/v1/cotizaciones                  # Listar cotizaciones
+POST   /api/v1/cotizaciones                  # Crear cotización
+GET    /api/v1/cotizaciones/{id}             # Obtener cotización
+PUT    /api/v1/cotizaciones/{id}             # Actualizar cotización
+DELETE /api/v1/cotizaciones/{id}             # Eliminar cotización
 ```
 
-#### **Pedidos**
+#### **Pedidos** (ms-cotizador-pedidos · 8084)
 ```http
-GET    /cotizador/v1/api/pedidos             # Listar pedidos
-POST   /cotizador/v1/api/pedidos/generar     # Generar pedido desde cotización
-GET    /cotizador/v1/api/pedidos/{id}        # Obtener pedido
+GET    /api/v1/pedidos                        # Listar pedidos
+POST   /api/v1/pedidos/generar                # Generar pedido desde cotización
+GET    /api/v1/pedidos/{id}                   # Obtener pedido
 ```
 
-#### **Proveedores**
+#### **Proveedores** (ms-cotizador-pedidos · 8084)
 ```http
-GET    /cotizador/v1/api/proveedores         # Listar proveedores
-POST   /cotizador/v1/api/proveedores         # Crear proveedor
-GET    /cotizador/v1/api/proveedores/{id}    # Obtener proveedor
-PUT    /cotizador/v1/api/proveedores/{id}    # Actualizar proveedor
-DELETE /cotizador/v1/api/proveedores/{id}    # Eliminar proveedor
+GET    /api/v1/proveedores                    # Listar proveedores
+POST   /api/v1/proveedores                    # Crear proveedor
+GET    /api/v1/proveedores/{id}               # Obtener proveedor
+PUT    /api/v1/proveedores/{id}               # Actualizar proveedor
+DELETE /api/v1/proveedores/{id}               # Eliminar proveedor
 ```
 
-#### **Promociones**
+#### **Promociones** (ms-cotizador-componentes · 8082)
 ```http
-GET    /cotizador/v1/api/promociones         # Listar promociones
-POST   /cotizador/v1/api/promociones         # Crear promoción
-GET    /cotizador/v1/api/promociones/{id}    # Obtener promoción
-PUT    /cotizador/v1/api/promociones/{id}    # Actualizar promoción
-DELETE /cotizador/v1/api/promociones/{id}    # Eliminar promoción
+GET    /api/v1/promociones                    # Listar promociones
+POST   /api/v1/promociones                    # Crear promoción
+GET    /api/v1/promociones/{id}               # Obtener promoción
+PUT    /api/v1/promociones/{id}               # Actualizar promoción
+DELETE /api/v1/promociones/{id}               # Eliminar promoción
 ```
 
 ### 📖 **Documentación Interactiva**
@@ -951,6 +953,34 @@ docker-compose build --no-cache
 docker-compose down -v --remove-orphans
 ```
 
+### 🔄 CDC (Change Data Capture) con Kafka + Debezium
+
+El sistema incluye CDC para replicar tablas clave entre microservicios usando Kafka y Debezium.
+
+- Broker: Kafka 4 (KRaft)
+- Conectores: Kafka Connect (Debezium)
+- Configuración y scripts: `kafka-config/`
+- Topics de cambios (por defecto):
+  - `componentes.changes`, `promociones.changes`, `pcs.changes`, `cotizaciones.changes`, `pedidos.changes`
+
+Flujo general:
+```
+MySQL (componentes/cotizaciones/pedidos) → Debezium Source → Kafka Topics → Debezium Sink → MySQL destino
+```
+
+Operación:
+```bash
+# Validar setup CDC
+./kafka-config/validate-cdc-setup.sh
+
+# Crear/actualizar conectores (si es necesario)
+./kafka-config/setup-debezium-connectors.sh
+
+# Monitoreo
+./kafka-config/health-check.sh
+./kafka-config/monitor-cdc.sh
+```
+
 ### 🛠️ **Script de Gestión Avanzada**
 
 ```bash
@@ -1005,6 +1035,7 @@ docker-compose ps
 
 ### 🐳 **DevOps & Testing**
 - **Docker & Docker Compose** - Containerización
+- **Kafka 4 + Kafka Connect (Debezium)** - CDC entre microservicios
 - **TestContainers** - Tests de integración
 - **JUnit 5** - Framework de testing
 - **Mockito** - Mocking
