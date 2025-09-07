@@ -23,9 +23,21 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Configuración de seguridad específica para tests.
+ * Configuración de seguridad específica para pruebas de integración.
  * 
- * Solo Basic Auth - Sin JWT para simplicidad en tests.
+ * Esta configuración reemplaza la configuración de seguridad principal durante las pruebas,
+ * proporcionando una autenticación simplificada usando HTTP Basic Authentication sin JWT.
+ * 
+ * Características principales:
+ * - Autenticación básica HTTP (usuario/contraseña)
+ * - Usuario único en memoria (configurable via properties)
+ * - CORS completamente abierto para facilitar pruebas
+ * - Deshabilitación de CSRF
+ * - Gestión de sesiones sin estado
+ * - Sin filtros JWT para simplificar las pruebas
+ * 
+ * Está diseñada para permitir pruebas de integración eficientes y rápidas
+ * sin la complejidad adicional de tokens JWT.
  * 
  * @author Sistema Cotizador
  * @version 1.0
@@ -34,18 +46,31 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Profile("test")
 public class TestSecurityConfig {
     
+    /** Usuario de prueba configurable vía properties */
     @Value("${security.basic.username:test}")
     private String username;
     
+    /** Contraseña de prueba configurable vía properties */
     @Value("${security.basic.password:test123}")
     private String password;
     
+    /** Nombre del realm HTTP Basic configurable */
     @Value("${security.basic.realm:Test Realm}")
     private String realm;
 
     /**
-     * Configuración de seguridad para tests.
-     * Solo Basic Auth - Sin filtros JWT.
+     * Configura la cadena de filtros de seguridad para pruebas de integración.
+     * 
+     * Establece una configuración simplificada que incluye:
+     * - Configuración CORS abierta
+     * - Deshabilitación de CSRF
+     * - Políticas de autorización para endpoints REST
+     * - Autenticación básica HTTP
+     * - Gestión de sesiones sin estado
+     * 
+     * @param http Configuración HTTP de Spring Security
+     * @return Cadena de filtros de seguridad configurada para pruebas
+     * @throws Exception Si ocurre un error durante la configuración
      */
     @Bean("securityFilterChain")
     @Primary
@@ -86,6 +111,14 @@ public class TestSecurityConfig {
             .build();
     }
 
+    /**
+     * Configura la fuente de configuración CORS para pruebas.
+     * 
+     * Permite todas las solicitudes desde cualquier origen con todos los métodos
+     * y encabezados HTTP, facilitando las pruebas de integración desde cualquier cliente.
+     * 
+     * @return Configuración CORS completamente abierta para pruebas
+     */
     @Bean
     @Primary
     public CorsConfigurationSource testCorsConfigurationSource() {
@@ -101,7 +134,12 @@ public class TestSecurityConfig {
     }
     
     /**
-     * Encoder de contraseñas usando BCrypt para tests.
+     * Proporciona un codificador de contraseñas para pruebas.
+     * 
+     * Utiliza BCrypt para codificar contraseñas de forma segura
+     * durante las pruebas de integración.
+     * 
+     * @return Codificador BCrypt para contraseñas de prueba
      */
     @Bean
     @Primary
@@ -110,7 +148,15 @@ public class TestSecurityConfig {
     }
     
     /**
-     * Servicio de usuarios en memoria para tests.
+     * Configura el servicio de detalles de usuario para pruebas.
+     * 
+     * Crea un usuario único en memoria con las credenciales configuradas.
+     * Las credenciales se pueden configurar vía properties del sistema:
+     * - security.basic.username (default: test)
+     * - security.basic.password (default: test123)
+     * - security.basic.realm (default: Test Realm)
+     * 
+     * @return Servicio de detalles de usuario en memoria con usuario de prueba
      */
     @Bean
     @Primary

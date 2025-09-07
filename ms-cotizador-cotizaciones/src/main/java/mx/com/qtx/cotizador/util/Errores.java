@@ -1,5 +1,63 @@
 package mx.com.qtx.cotizador.util;
 
+/**
+ * Enum que define todos los códigos de error y mensajes del sistema CotizadorPcPartes.
+ * <p>
+ * Esta enumeración centraliza la definición de todos los códigos de error utilizados
+ * en el microservicio de cotizaciones, siguiendo una arquitectura consistente para
+ * el manejo de errores. Cada código tiene asociado un identificador único y un
+ * mensaje descriptivo que puede ser internacionalizado.
+ * </p>
+ *
+ * <h3>Estructura de códigos:</h3>
+ * <ul>
+ *   <li><strong>0:</strong> Éxito</li>
+ *   <li><strong>1-19:</strong> Errores generales de negocio y validación (4xx)</li>
+ *   <li><strong>20-29:</strong> Errores específicos de cotizaciones</li>
+ *   <li><strong>30-39:</strong> Errores específicos de proveedores</li>
+ *   <li><strong>40-49:</strong> Errores específicos de pedidos</li>
+ *   <li><strong>50-59:</strong> Errores específicos de promociones</li>
+ *   <li><strong>3:</strong> Errores de sistema/internos (5xx)</li>
+ *   <li><strong>11-13:</strong> Errores técnicos específicos</li>
+ * </ul>
+ *
+ * <h3>Mapeo HTTP Status:</h3>
+ * <p>
+ * Los códigos de error se mapean automáticamente a códigos HTTP usando
+ * {@link HttpStatusMapper}:
+ * </p>
+ * <ul>
+ *   <li><strong>"0" → 200 OK</strong> (éxito)</li>
+ *   <li><strong>"3" → 500 Internal Server Error</strong> (error interno)</li>
+ *   <li><strong>Otros → 400 Bad Request</strong> (error del cliente)</li>
+ * </ul>
+ *
+ * <h3>Uso típico:</h3>
+ * <pre>{@code
+ * // En un servicio
+ * if (cotizacion == null) {
+ *     return ApiResponse.error(Errores.COTIZACION_NO_ENCONTRADA);
+ * }
+ *
+ * // En validaciones
+ * if (monto.compareTo(BigDecimal.ZERO) <= 0) {
+ *     return ApiResponse.error(Errores.VALOR_INVALIDO);
+ * }
+ * }</pre>
+ *
+ * <h3>Internacionalización:</h3>
+ * <p>
+ * Los mensajes están preparados para internacionalización. En futuras versiones,
+ * los mensajes pueden ser cargados desde archivos de propiedades según el locale
+ * del usuario.
+ * </p>
+ *
+ * @author Subagente3F - [2025-01-17 19:30:00 MST]
+ * @version 1.0.0
+ * @since 1.0.0
+ * @see mx.com.qtx.cotizador.util.HttpStatusMapper
+ * @see mx.com.qtx.cotizador.dto.common.response.ApiResponse
+ */
 public enum Errores {
     // Códigos de éxito
     OK("0", "OK"),

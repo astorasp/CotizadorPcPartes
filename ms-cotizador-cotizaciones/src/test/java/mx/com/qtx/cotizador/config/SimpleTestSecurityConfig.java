@@ -21,12 +21,39 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Configuración de seguridad simple para tests
- * Reemplaza completamente la configuración principal
+ * Configuración de seguridad simplificada para pruebas de integración
+ * 
+ * Esta configuración reemplaza completamente la configuración de seguridad principal
+ * durante las pruebas, proporcionando una configuración simplificada con:
+ * - Autenticación básica HTTP
+ * - Usuario de prueba único (test/test123)
+ * - CORS completamente abierto para facilitar las pruebas
+ * - Deshabilitación de CSRF
+ * - Gestión de sesiones sin estado
+ * 
+ * Está diseñada para permitir pruebas de integración rápidas y eficientes
+ * sin la complejidad de JWT o autenticación externa.
+ * 
+ * @author Sistema Cotizador
+ * @version 1.0
  */
 @TestConfiguration
 public class SimpleTestSecurityConfig {
 
+    /**
+     * Configura la cadena de filtros de seguridad para pruebas.
+     * 
+     * Establece:
+     * - Configuración CORS completa
+     * - Deshabilitación de CSRF
+     * - Autenticación básica HTTP
+     * - Políticas de autorización para endpoints REST
+     * - Gestión de sesiones sin estado
+     * 
+     * @param http Configuración HTTP de Spring Security
+     * @return Cadena de filtros de seguridad configurada
+     * @throws Exception Si ocurre un error durante la configuración
+     */
     @Bean("filterChain")
     @Primary
     public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -52,6 +79,14 @@ public class SimpleTestSecurityConfig {
             .build();
     }
 
+    /**
+     * Configura la fuente de configuración CORS para pruebas.
+     * 
+     * Permite todas las solicitudes desde cualquier origen con todos los métodos
+     * y encabezados, facilitando las pruebas de integración.
+     * 
+     * @return Configuración CORS completamente abierta
+     */
     @Bean
     @Primary
     public CorsConfigurationSource testCorsConfigurationSource() {
@@ -66,12 +101,30 @@ public class SimpleTestSecurityConfig {
         return source;
     }
     
+    /**
+     * Proporciona un codificador de contraseñas para pruebas.
+     * 
+     * Utiliza BCrypt para codificar contraseñas de forma segura
+     * durante las pruebas de integración.
+     * 
+     * @return Codificador BCrypt para contraseñas
+     */
     @Bean
     @Primary
     public PasswordEncoder testPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
     
+    /**
+     * Configura el servicio de detalles de usuario para pruebas.
+     * 
+     * Crea un usuario único en memoria con credenciales de prueba:
+     * - Usuario: test
+     * - Contraseña: test123
+     * - Roles: ADMIN, USER
+     * 
+     * @return Servicio de detalles de usuario en memoria
+     */
     @Bean
     @Primary
     public UserDetailsService testUserDetailsService() {

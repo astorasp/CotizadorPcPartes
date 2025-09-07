@@ -6,11 +6,26 @@ import org.junit.jupiter.api.DisplayName;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test básico para verificar que las clases de seguridad están presentes
- * Test de unidad que no requiere contexto Spring ni base de datos
+ * Tests de componentes de seguridad para verificar existencia de clases críticas.
+ * 
+ * Esta clase realiza pruebas unitarias básicas que verifican que todas las clases
+ * y componentes de seguridad necesarios están presentes en el classpath sin requerir
+ * contexto Spring ni configuración de base de datos.
+ * 
+ * Es útil para validar que el módulo de seguridad está correctamente configurado
+ * antes de ejecutar tests más complejos de integración que requieren contexto completo.
+ * 
+ * @author Sistema Cotizador
+ * @version 1.0
  */
 class SecurityComponentsTest {
 
+    /**
+     * Verifica que la clase principal de configuración de seguridad existe.
+     * 
+     * SecurityConfig es la clase central que configura todos los aspectos
+     * de seguridad de la aplicación incluyendo filtros, autenticación y autorización.
+     */
     @Test
     @DisplayName("SecurityConfig class should exist and be properly structured")
     void securityConfigClassExists() {
@@ -19,6 +34,12 @@ class SecurityComponentsTest {
         }, "SecurityConfig class debe existir");
     }
 
+    /**
+     * Verifica que el filtro de autenticación JWT existe.
+     * 
+     * JwtAuthenticationFilter es responsable de procesar tokens JWT
+     * en las solicitudes HTTP y establecer la autenticación en el contexto de seguridad.
+     */
     @Test
     @DisplayName("JwtAuthenticationFilter class should exist")
     void jwtAuthenticationFilterExists() {
@@ -27,6 +48,12 @@ class SecurityComponentsTest {
         }, "JwtAuthenticationFilter class debe existir");
     }
 
+    /**
+     * Verifica que el servicio de validación JWT existe.
+     * 
+     * JwtValidationService maneja la lógica de validación de tokens JWT,
+     * incluyendo verificación de firma, expiración y claims.
+     */
     @Test
     @DisplayName("JwtValidationService class should exist")
     void jwtValidationServiceExists() {
@@ -35,6 +62,12 @@ class SecurityComponentsTest {
         }, "JwtValidationService class debe existir");
     }
 
+    /**
+     * Verifica que el cliente JWKS existe.
+     * 
+     * JwksClient se comunica con el servidor de autorización para obtener
+     * las claves públicas necesarias para validar tokens JWT.
+     */
     @Test
     @DisplayName("JwksClient class should exist")
     void jwksClientExists() {
@@ -43,6 +76,12 @@ class SecurityComponentsTest {
         }, "JwksClient class debe existir");
     }
 
+    /**
+     * Verifica que el cliente de validación de sesiones existe.
+     * 
+     * SessionValidationClient se comunica con el microservicio de seguridad
+     * para validar sesiones de usuario y obtener información de sesión.
+     */
     @Test
     @DisplayName("SessionValidationClient class should exist")
     void sessionValidationClientExists() {
@@ -51,6 +90,12 @@ class SecurityComponentsTest {
         }, "SessionValidationClient class debe existir");
     }
 
+    /**
+     * Verifica que el servicio de caché de sesiones existe.
+     * 
+     * SessionCacheService optimiza las validaciones de sesión manteniendo
+     * en caché información de sesiones válidas para mejorar el rendimiento.
+     */
     @Test
     @DisplayName("SessionCacheService class should exist")
     void sessionCacheServiceExists() {
@@ -59,6 +104,13 @@ class SecurityComponentsTest {
         }, "SessionCacheService class debe existir");
     }
 
+    /**
+     * Verifica que todos los DTOs requeridos para JWT existen.
+     * 
+     * Los DTOs son objetos de transferencia de datos utilizados para
+     * comunicar información entre el cliente y el servidor de autorización,
+     * incluyendo claves JWK, respuestas JWKS y información de sesiones.
+     */
     @Test
     @DisplayName("All required JWT DTOs should exist")
     void jwtDtosExist() {
@@ -72,6 +124,13 @@ class SecurityComponentsTest {
         }, "Todos los DTOs de JWT deben existir");
     }
 
+    /**
+     * Verifica que las constantes de roles de seguridad están definidas.
+     * 
+     * Los roles de seguridad (ADMIN, GERENTE, VENDEDOR, INVENTARIO, CONSULTOR)
+     * son constantes críticas que definen los niveles de autorización en el sistema.
+     * Esta prueba asegura que están correctamente definidos antes de usarlos.
+     */
     @Test
     @DisplayName("Security roles constants should be defined")
     void securityRolesConstantsExist() {
