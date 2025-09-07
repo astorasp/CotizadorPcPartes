@@ -21,12 +21,30 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Configuración de seguridad simple para tests
- * Reemplaza completamente la configuración principal
+ * Configuración de seguridad simple para tests de integración.
+ * Reemplaza completamente la configuración de seguridad principal durante los tests,
+ * proporcionando una configuración simplificada con autenticación básica HTTP.
+ *
+ * Esta configuración permite:
+ * - Acceso público a documentación Swagger y endpoints de health
+ * - Autenticación requerida para todos los endpoints de negocio
+ * - Usuario de test con roles ADMIN y USER
+ * - Configuración CORS permisiva para tests
+ *
+ * @author [Nombre del autor]
+ * @version 1.0
  */
 @TestConfiguration
 public class SimpleTestSecurityConfig {
 
+    /**
+     * Configura la cadena de filtros de seguridad para tests.
+     * Define reglas de autorización, deshabilita CSRF y configura autenticación básica.
+     *
+     * @param http El objeto HttpSecurity para configurar
+     * @return La cadena de filtros de seguridad configurada
+     * @throws Exception Si ocurre un error en la configuración
+     */
     @Bean("filterChain")
     @Primary
     public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -52,6 +70,12 @@ public class SimpleTestSecurityConfig {
             .build();
     }
 
+    /**
+     * Configura la fuente de configuración CORS para tests.
+     * Permite todas las solicitudes desde cualquier origen para facilitar los tests.
+     *
+     * @return La fuente de configuración CORS configurada
+     */
     @Bean
     @Primary
     public CorsConfigurationSource testCorsConfigurationSource() {
@@ -66,12 +90,23 @@ public class SimpleTestSecurityConfig {
         return source;
     }
     
+    /**
+     * Proporciona un codificador de contraseñas BCrypt para tests.
+     *
+     * @return El codificador de contraseñas configurado
+     */
     @Bean
     @Primary
     public PasswordEncoder testPasswordEncoder() {
         return new BCryptPasswordEncoder();
     }
     
+    /**
+     * Configura un servicio de detalles de usuario en memoria para tests.
+     * Crea un usuario de test con credenciales simples y roles ADMIN y USER.
+     *
+     * @return El servicio de detalles de usuario configurado
+     */
     @Bean
     @Primary
     public UserDetailsService testUserDetailsService() {

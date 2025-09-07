@@ -4,24 +4,38 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 /**
+ * Implementación de promoción que aplica descuentos basados en umbrales de cantidad.
+ * Utiliza un mapa que asocia cantidades mínimas con porcentajes de descuento,
+ * aplicando el descuento correspondiente al umbral más alto que cumpla la cantidad solicitada.
+ *
  * @author hp835
  * @version 1.0
  * @created 24-mar.-2025 11:21:20 p. m.
  */
 public class PromDsctoXcantidad extends PromAcumulable {
 
+	/** Mapa que asocia cantidades mínimas con porcentajes de descuento */
 	private Map<Integer,Double> mapCantidadVsDscto;
 
 
+	/**
+	 * Constructor que crea una promoción de descuento por cantidad con promoción base y mapa de descuentos.
+	 *
+	 * @param promoBase Promoción base sobre la cual aplicar los descuentos por cantidad
+	 * @param mapCantidadVsDscto Mapa que asocia cantidades mínimas con porcentajes de descuento
+	 */
 	public PromDsctoXcantidad(Promocion promoBase, Map<Integer, Double> mapCantidadVsDscto) {
 		super("Dscto con base en tabla de cantidades y descuentos" + mapCantidadVsDscto, "Dscto x cantidad", promoBase);
 		this.mapCantidadVsDscto = mapCantidadVsDscto;
 	}
 
 	/**
-	 * 
-	 * @param cant
-	 * @param precioBase
+	 * Calcula el importe total aplicando descuento según la cantidad usando la tabla de descuentos.
+	 * Busca el umbral de cantidad más alto aplicable y aplica el porcentaje de descuento correspondiente.
+	 *
+	 * @param cant Cantidad de unidades del componente
+	 * @param precioBase Precio base unitario del componente
+	 * @return Importe total con el descuento por cantidad aplicado
 	 */
 	public BigDecimal calcularImportePromocion(int cant, BigDecimal precioBase){
 		

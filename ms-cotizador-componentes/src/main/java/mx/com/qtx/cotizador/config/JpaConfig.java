@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * Spring Boot auto-configura DataSource, EntityManagerFactory y TransactionManager
  * basándose en application.yml. Solo especificamos el paquete de repositorios.
  * </p>
+ *
+ * @author [Nombre del autor]
+ * @version 1.0
  */
 @Configuration
 @EnableJpaRepositories(basePackages = "mx.com.qtx.cotizador.repositorio")
