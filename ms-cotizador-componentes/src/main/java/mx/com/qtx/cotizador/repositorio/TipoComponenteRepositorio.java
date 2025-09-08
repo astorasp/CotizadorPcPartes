@@ -7,6 +7,9 @@ import mx.com.qtx.cotizador.entidad.TipoComponente;
 
 import java.util.Optional;
 
+/**
+ * Repository interface for TipoComponente entity.
+ */
 @Repository
 public interface TipoComponenteRepositorio extends JpaRepository<TipoComponente, Short> {
     // Encontrar tipo de componente por nombre

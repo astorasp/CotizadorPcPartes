@@ -84,17 +84,95 @@ import mx.com.qtx.cotizador.dominio.impuestos.CalculadorImpuesto;
  * @see java.util.HashMap
  */
 public class CotizadorConMap implements ICotizador {
+
+    /**
+     * Mapa que asocia componentes con sus cantidades correspondientes.
+     * <p>
+     * Esta estructura de datos es el corazón de la estrategia de implementación Map-based.
+     * Las claves del mapa son instancias de {@link Componente}, mientras que los valores
+     * representan las cantidades de cada componente que el cliente desea adquirir.
+     * </p>
+     * <p>
+     * Esta aproximación ofrece varias ventajas sobre las listas paralelas:
+     * <ul>
+     *   <li><strong>Asociación directa:</strong> Componente y cantidad están inherentemente ligados</li>
+     *   <li><strong>Integridad de datos:</strong> No hay riesgo de desincronización entre listas</li>
+     *   <li><strong>Búsqueda eficiente:</strong> Acceso O(1) promedio para componentes conocidos</li>
+     *   <li><strong>Eliminación directa:</strong> Remoción inmediata sin búsqueda lineal</li>
+     * </ul>
+     * </p>
+     * <p>
+     * El mapa se inicializa como un {@link HashMap} vacío en el constructor y se
+     * mantiene durante todo el ciclo de vida del cotizador.
+     * </p>
+     */
 	private Map<Componente,Integer> mapCompsYcants;
 
+	/**
+	 * Constructor que inicializa el cotizador con una estructura de mapa vacía.
+	 * <p>
+	 * Crea una nueva instancia del CotizadorConMap preparada para almacenar
+	 * componentes y sus cantidades utilizando un {@link HashMap}. Esta estructura
+	 * proporciona una alternativa más eficiente a las listas paralelas utilizadas
+	 * en el Cotizador A, especialmente para operaciones de búsqueda y eliminación.
+	 * </p>
+	 * <p>
+	 * El constructor inicializa el mapa interno como un HashMap vacío, listo
+	 * para recibir componentes a través del método {@link #agregarComponente(int, Componente)}.
+	 * </p>
+	 *
+	 * @see #agregarComponente(int, Componente)
+	 * @see java.util.HashMap
+	 */
 	public CotizadorConMap() {
 		this.mapCompsYcants = new HashMap<>();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * En esta implementación Map-based, el método utiliza {@link Map#put(Object, Object)}
+	 * para asociar directamente el componente con su cantidad. Esta operación es O(1)
+	 * promedio, lo que la hace más eficiente que la estrategia de listas paralelas
+	 * para cotizaciones grandes.
+	 * </p>
+	 * <p>
+	 * Si el componente ya existe en el mapa, su cantidad anterior será reemplazada
+	 * por la nueva cantidad especificada. Esta implementación no permite cantidades
+	 * acumulativas para el mismo componente.
+	 * </p>
+	 *
+	 * @param cantidad {@inheritDoc}
+	 * @param componente {@inheritDoc}
+	 * @see Map#put(Object, Object)
+	 */
 	@Override
 	public void agregarComponente(int cantidad, Componente componente) {
 		this.mapCompsYcants.put(componente, cantidad);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Esta implementación utiliza streams para buscar el componente por su ID único
+	 * dentro del conjunto de claves del mapa. Una vez encontrado el componente,
+	 * utiliza {@link Map#remove(Object)} para eliminar la entrada completa del mapa.
+	 * </p>
+	 * <p>
+	 * La búsqueda por ID requiere O(n) operaciones donde n es el número de componentes,
+	 * sin embargo, la eliminación propiamente dicha es O(1) promedio. Esta es una
+	 * mejora significativa respecto a la implementación con listas paralelas.
+	 * </p>
+	 * <p>
+	 * <strong>Nota:</strong> Esta implementación puede lanzar {@link java.util.NoSuchElementException}
+	 * si el stream no encuentra ningún componente con el ID especificado.
+	 * </p>
+	 *
+	 * @param idComponente {@inheritDoc}
+	 * @see Map#remove(Object)
+	 * @see java.util.stream.Stream#filter(java.util.function.Predicate)
+	 * @see java.util.Optional#get()
+	 */
 	@Override
 	public void eliminarComponente(String idComponente) {
     	   Componente llave = this.mapCompsYcants.keySet()
@@ -107,6 +185,36 @@ public class CotizadorConMap implements ICotizador {
 		this.mapCompsYcants.remove(llave);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Esta implementación Map-based itera directamente sobre las claves del mapa
+	 * ({@link Map#keySet()}) para acceder a cada componente y su cantidad correspondiente.
+	 * Esta aproximación es más eficiente que las listas paralelas ya que no requiere
+	 * mantener índices sincronizados.
+	 * </p>
+	 * <p>
+	 * El proceso de generación incluye los mismos pasos que la implementación base,
+	 * pero utiliza {@link CotizacionFmtoB} como tipo de cotización resultante,
+	 * proporcionando un formato de reporte más profesional y detallado.
+	 * </p>
+	 * <p>
+	 * <strong>Características específicas de esta implementación:</strong>
+	 * <ul>
+	 *   <li>Iteración directa sobre componentes sin índices manuales</li>
+	 *   <li>Uso de {@link CotizacionFmtoB} para reportes con formato tabular</li>
+	 *   <li>Acceso O(1) promedio a las cantidades a través del mapa</li>
+	 *   <li>Mayor eficiencia en memoria para cotizaciones grandes</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param calculadorImpuestos {@inheritDoc}
+	 * @return {@inheritDoc} Específicamente, una instancia de {@link CotizacionFmtoB}
+	 *         que proporciona formato de reporte mejorado
+	 * @see CotizacionFmtoB
+	 * @see Map#keySet()
+	 * @see Map#get(Object)
+	 */
 	@Override
 	public Cotizacion generarCotizacion(List<CalculadorImpuesto> calculadorImpuestos) {
         BigDecimal total = new BigDecimal(0);
@@ -140,6 +248,22 @@ public class CotizadorConMap implements ICotizador {
 		return cotizacion;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Esta implementación Map-based itera sobre el conjunto de claves del mapa
+	 * ({@link Map#keySet()}) para acceder a cada componente. Para cada componente,
+	 * obtiene su cantidad correspondiente utilizando {@link Map#get(Object)}, que
+	 * proporciona acceso O(1) promedio.
+	 * </p>
+	 * <p>
+	 * El formato de salida incluye una identificación específica "CotizadorConMap"
+	 * para distinguir esta implementación de otras estrategias de cotización.
+	 * </p>
+	 *
+	 * @see Map#keySet()
+	 * @see Map#get(Object)
+	 */
 	@Override
 	public void listarComponentes() {
         System.out.println("=== Componentes a cotizar en CotizadorConMap ===");

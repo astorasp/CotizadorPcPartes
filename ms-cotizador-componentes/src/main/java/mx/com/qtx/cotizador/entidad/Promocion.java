@@ -13,6 +13,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+/**
+ * Entidad JPA que representa una promoción.
+ * Contiene detalles de promociones aplicables a componentes.
+ */
 @Entity
 @Table(name = "copromocion")
 public class Promocion {

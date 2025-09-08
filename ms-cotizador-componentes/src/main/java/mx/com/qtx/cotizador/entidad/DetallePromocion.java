@@ -14,6 +14,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+/**
+ * Entidad JPA que representa un detalle de promoción.
+ * Contiene información sobre promociones aplicables a componentes.
+ */
 @Entity
 @Table(name = "codetalle_promocion")
 public class DetallePromocion {

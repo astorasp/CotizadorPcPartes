@@ -16,6 +16,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 
+/**
+ * Entidad JPA que representa un componente.
+ * Incluye relación con promociones para cálculos de cotización.
+ */
 @Entity
 @Table(name = "cocomponente")
 @Inheritance(strategy = InheritanceType.JOINED)

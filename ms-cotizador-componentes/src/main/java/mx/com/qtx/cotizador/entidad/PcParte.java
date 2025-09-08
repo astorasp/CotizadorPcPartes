@@ -9,6 +9,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 
+/**
+ * Entidad JPA que representa la relación entre PC y sus componentes.
+ * Mapea la tabla copc_parte en la base de datos.
+ */
 @Entity
 @Table(name = "copc_parte")
 @IdClass(PcParte.PcPartesId.class)
@@ -67,6 +71,10 @@ public class PcParte implements Serializable {
     }
     
     // Clase para la llave compuesta
+/**
+ * Clase que representa la llave primaria compuesta de PcParte.
+ * Consiste en idPc y idComponente.
+ */
     public static class PcPartesId implements Serializable {
         private static final long serialVersionUID = 1L;
         

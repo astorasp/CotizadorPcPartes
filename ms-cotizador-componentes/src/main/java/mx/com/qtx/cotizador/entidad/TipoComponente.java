@@ -9,6 +9,10 @@ import jakarta.persistence.CascadeType;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+ * Entidad JPA que representa tipos de componentes.
+ * Categoriza los diferentes tipos de componentes disponibles.
+ */
 @Entity
 @Table(name = "cotipo_componente")
 public class TipoComponente {

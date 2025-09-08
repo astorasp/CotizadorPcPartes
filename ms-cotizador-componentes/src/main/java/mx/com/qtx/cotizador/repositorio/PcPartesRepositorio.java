@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import mx.com.qtx.cotizador.entidad.PcParte;
 import mx.com.qtx.cotizador.entidad.PcParte.PcPartesId;
 
+/**
+ * Repository interface for PcParte entity.
+ */
 @Repository
 public interface PcPartesRepositorio extends JpaRepository<PcParte, PcPartesId> {
     
