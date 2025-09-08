@@ -4,7 +4,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import mx.com.qtx.cotizador.entidad.Promocion;
 
-
+/**
+ * Repository interface for Promocion entity.
+ */
 public interface PromocionRepositorio extends JpaRepository<Promocion, Integer> {
  
     /**

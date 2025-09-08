@@ -11,9 +11,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Repositorio JPA para la entidad Cotizacion.
- * <p>
- * Proporciona operaciones de persistencia para las cotizaciones, incluyendo consultas
+ * Repository interface for Cotizacion entity.
  * personalizadas para buscar cotizaciones por diferentes criterios como fecha, monto total
  * y componentes incluidos. Extiende JpaRepository para heredar operaciones CRUD estándar.
  * </p>

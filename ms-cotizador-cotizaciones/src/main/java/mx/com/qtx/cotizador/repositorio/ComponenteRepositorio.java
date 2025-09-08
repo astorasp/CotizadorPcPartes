@@ -3,22 +3,16 @@ package mx.com.qtx.cotizador.repositorio;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.EntityGraph;
 
 import mx.com.qtx.cotizador.entidad.Componente;
-import java.util.List;
+
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
- * Repositorio JPA para la entidad Componente.
- * <p>
- * Proporciona operaciones de persistencia para los componentes, incluyendo consultas
- * personalizadas para buscar componentes por tipo, marca y rango de precio. Extiende
- * JpaRepository para heredar operaciones CRUD estándar.
- * </p>
+ * Repository interface for Componente entity.
  */
-@Repository
 public interface ComponenteRepositorio extends JpaRepository<Componente, String> {
 
     @EntityGraph("Componente.completo")

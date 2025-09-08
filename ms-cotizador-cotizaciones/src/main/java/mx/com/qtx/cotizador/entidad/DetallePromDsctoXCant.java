@@ -12,6 +12,10 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import jakarta.persistence.Embeddable;
 
+/**
+ * Entidad JPA que representa un detalle de promoción de descuento por cantidad.
+ * Define descuentos aplicables basados en la cantidad de componentes.
+ */
 @Entity
 @Table(name = "codetalle_prom_dscto_x_cant")
 public class DetallePromDsctoXCant implements Serializable {
@@ -128,6 +132,10 @@ public class DetallePromDsctoXCant implements Serializable {
     }
     
     // Clase interna para la llave compuesta
+    /**
+     * Clase embebida que representa la llave primaria compuesta de DetallePromDsctoXCant.
+     * Consiste en numDscto, numDetPromocion y numPromocion.
+     */
     @Embeddable
     public static class DetallePromDsctoXCantId implements Serializable {
         private static final long serialVersionUID = 1L;

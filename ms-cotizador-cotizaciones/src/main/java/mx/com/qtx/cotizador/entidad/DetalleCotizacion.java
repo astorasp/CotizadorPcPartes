@@ -13,6 +13,10 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import jakarta.persistence.Embeddable;
 
+/**
+ * Entidad JPA que representa un detalle de una cotización.
+ * Contiene información sobre el componente, cantidad, precio base, etc.
+ */
 @Entity
 @Table(name = "codetalle_cotizacion")
 public class DetalleCotizacion implements Serializable {
@@ -109,7 +113,11 @@ public class DetalleCotizacion implements Serializable {
     }
     
     // Clase interna para la llave compuesta
-    @Embeddable
+/**
+ * Clase embebida que representa la llave primaria compuesta de DetalleCotizacion.
+ * Consiste en folio y numDetalle.
+ */
+@Embeddable
     public static class DetalleCotizacionId implements Serializable {
         private static final long serialVersionUID = 1L;
         

@@ -13,6 +13,11 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 
+/**
+ * Entidad JPA que representa una cotización de componentes de PC.
+ * Contiene información financiera como subtotal, impuestos y total,
+ * además de una lista de detalles de la cotización.
+ */
 @Entity
 @Table(name = "cocotizacion")
 public class Cotizacion {
