@@ -67,4 +67,12 @@ public class PromDsctoXcantidad extends PromAcumulable {
 
 	}
 
+	/**
+	 * Devuelve el mapa de cantidad mínima vs descuento configurado.
+	 * @return mapa de escalas {cantidadMinima -> porcentajeDescuento}
+	 */
+	public Map<Integer, Double> getMapCantidadVsDscto() {
+		return this.mapCantidadVsDscto;
+	}
+
 }

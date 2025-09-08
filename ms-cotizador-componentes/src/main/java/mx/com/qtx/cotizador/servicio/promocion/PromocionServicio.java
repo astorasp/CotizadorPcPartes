@@ -11,6 +11,7 @@ import mx.com.qtx.cotizador.dto.promocion.request.PromocionCreateRequest;
 import mx.com.qtx.cotizador.dto.promocion.request.PromocionUpdateRequest;
 import mx.com.qtx.cotizador.dto.promocion.response.PromocionResponse;
 import mx.com.qtx.cotizador.entidad.Promocion;
+import mx.com.qtx.cotizador.servicio.wrapper.PromocionEntityConverter;
 import mx.com.qtx.cotizador.repositorio.PromocionRepositorio;
 import mx.com.qtx.cotizador.util.Errores;
 /**
@@ -50,9 +51,22 @@ public class PromocionServicio {
                                        "Ya existe una promoción con el nombre: " + request.getNombre());
             }
             
-            Promocion entidad = PromocionMapper.toEntity(request);
+            // 1) Convertir DTO → Dominio
+            mx.com.qtx.cotizador.dominio.promos.Promocion promDominio = PromocionMapper.toDominio(request);
+
+            // 2) Convertir Dominio → Entidad y setear vigencias desde el DTO
+            Promocion entidad = PromocionEntityConverter.convertToEntity(promDominio);
+            entidad.setVigenciaDesde(request.getVigenciaDesde());
+            entidad.setVigenciaHasta(request.getVigenciaHasta());
+
+            // 3) Persistir
             Promocion promocionGuardada = promocionRepositorio.save(entidad);
-            PromocionResponse response = PromocionMapper.toResponse(promocionGuardada);
+            mx.com.qtx.cotizador.dominio.promos.Promocion domGuardada = PromocionEntityConverter.convertToPromocion(promocionGuardada);
+            // Pasar nombres de detalles del request para respetar nombre del detalle base
+            java.util.List<String> nombres = request.getDetalles() != null ?
+                request.getDetalles().stream().map(d -> d.getNombre()).collect(java.util.stream.Collectors.toList()) : null;
+            PromocionResponse response = PromocionMapper.toResponse(domGuardada,
+                promocionGuardada.getIdPromocion(), promocionGuardada.getVigenciaDesde(), promocionGuardada.getVigenciaHasta(), nombres);
             
             logger.info("Promoción creada exitosamente: ID={}, Nombre={}", 
                        promocionGuardada.getIdPromocion(), promocionGuardada.getNombre());
@@ -83,7 +97,10 @@ public class PromocionServicio {
                                        "Promoción no encontrada con ID: " + id);
             }
             
-            PromocionResponse response = PromocionMapper.toResponse(promocion);
+            // Entidad → Dominio → Response
+            mx.com.qtx.cotizador.dominio.promos.Promocion dom = PromocionEntityConverter.convertToPromocion(promocion);
+            PromocionResponse response = PromocionMapper.toResponse(dom,
+                promocion.getIdPromocion(), promocion.getVigenciaDesde(), promocion.getVigenciaHasta());
             return new ApiResponse<>(Errores.OK.getCodigo(), 
                                    "Promoción encontrada exitosamente", response);
                                    
@@ -100,7 +117,12 @@ public class PromocionServicio {
     public ApiResponse<List<PromocionResponse>> obtenerTodasLasPromociones() {
         try {
             List<Promocion> promociones = promocionRepositorio.findAll();
-            List<PromocionResponse> responses = PromocionMapper.toResponseList(promociones);
+            List<PromocionResponse> responses = promociones.stream()
+                .map(p -> {
+                    var dom = PromocionEntityConverter.convertToPromocion(p);
+                    return PromocionMapper.toResponse(dom, p.getIdPromocion(), p.getVigenciaDesde(), p.getVigenciaHasta());
+                })
+                .collect(java.util.stream.Collectors.toList());
             return new ApiResponse<>(Errores.OK.getCodigo(), 
                                    "Promociones obtenidas exitosamente", responses);
         } catch (Exception e) {
@@ -143,10 +165,21 @@ public class PromocionServicio {
                                        "Ya existe otra promoción con el nombre: " + request.getNombre());
             }
             
-            // Actualizar entidad usando mapper
-            Promocion entidadActualizada = PromocionMapper.toEntity(request, promocionExistente);
+            // 1) DTO → Dominio
+            mx.com.qtx.cotizador.dominio.promos.Promocion promDominio = PromocionMapper.toDominio(request);
+
+            // 2) Dominio → Entidad (merge en existente) y setear vigencias
+            Promocion entidadActualizada = PromocionEntityConverter.mergeIntoEntity(promDominio, promocionExistente);
+            entidadActualizada.setVigenciaDesde(request.getVigenciaDesde());
+            entidadActualizada.setVigenciaHasta(request.getVigenciaHasta());
+
+            // 3) Persistir
             Promocion promocionGuardada = promocionRepositorio.save(entidadActualizada);
-            PromocionResponse response = PromocionMapper.toResponse(promocionGuardada);
+            mx.com.qtx.cotizador.dominio.promos.Promocion domGuardada = PromocionEntityConverter.convertToPromocion(promocionGuardada);
+            java.util.List<String> nombres = request.getDetalles() != null ?
+                request.getDetalles().stream().map(d -> d.getNombre()).collect(java.util.stream.Collectors.toList()) : null;
+            PromocionResponse response = PromocionMapper.toResponse(domGuardada,
+                promocionGuardada.getIdPromocion(), promocionGuardada.getVigenciaDesde(), promocionGuardada.getVigenciaHasta(), nombres);
             
             return new ApiResponse<>(Errores.OK.getCodigo(), 
                                    "Promoción actualizada exitosamente", response);

@@ -44,4 +44,12 @@ public class PromDsctoPlano extends PromAcumulable {
 		return baseCalculo.subtract(importeDscto);
 	}
 
+	/**
+	 * Obtiene el porcentaje de descuento plano configurado.
+	 * @return porcentaje de descuento (ej: 7.5 para 7.5%)
+	 */
+	public float getPorcDescto() {
+		return this.porcDescto;
+	}
+
 }

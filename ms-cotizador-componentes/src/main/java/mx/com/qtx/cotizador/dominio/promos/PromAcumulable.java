@@ -27,6 +27,15 @@ public abstract class PromAcumulable extends Promocion {
 		this.promoBase = promoBase;
 	}
 
+	/**
+	 * Obtiene la promoción base sobre la cual se acumulan descuentos.
+	 *
+	 * @return Promoción base
+	 */
+	public Promocion getPromoBase() {
+		return this.promoBase;
+	}
+
 
 	/**
 	 * Método abstracto para calcular el importe de la promoción acumulable.
