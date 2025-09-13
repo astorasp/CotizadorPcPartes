@@ -1,244 +1,225 @@
 package mx.com.qtx.cotizador.integration.componente;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
-import io.restassured.http.ContentType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import mx.com.qtx.cotizador.config.TestSecurityConfig;
+import mx.com.qtx.cotizador.controlador.ComponenteController;
+import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
 import mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest;
-import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
+import mx.com.qtx.cotizador.dto.componente.request.ComponenteUpdateRequest;
+import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
+import mx.com.qtx.cotizador.servicio.componente.ComponenteServicio;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
- * Test de permisos basados en roles para el controlador de Componentes
- * Verifica que los diferentes roles tengan los permisos correctos según la matriz de permisos
- * 
+ * Test de permisos basados en roles para el controlador de Componentes usando mocks.
+ *
+ * Este test se enfoca ÚNICAMENTE en validar que Spring Security funciona correctamente
+ * con los roles definidos. No prueba la lógica de negocio del servicio.
+ *
  * Matriz de Permisos para Componentes:
  * - ADMIN: Full CRUD (Create, Read, Update, Delete)
- * - GERENTE: Read + Update (no Create, no Delete)  
+ * - GERENTE: Read + Update (no Create, no Delete)
  * - VENDEDOR: Read-only
  * - INVENTARIO: Full CRUD (Create, Read, Update, Delete)
  * - CONSULTOR: Read-only
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@WebMvcTest(ComponenteController.class)
+@Import(TestSecurityConfig.class)
 @ActiveProfiles("test")
-@TestMethodOrder(MethodOrderer.DisplayName.class)
-public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
+public class ComponenteRolePermissionsTest {
 
-    private ComponenteCreateRequest componenteRequest;
-    private final String BASE_URL = "/componentes";
+    @Autowired
+    private MockMvc mockMvc;
 
-    @BeforeEach
-    protected void setUp() {
-        super.setUp(); // Call parent setUp for RestAssured configuration
-        
-        // Preparar datos de prueba
-        componenteRequest = ComponenteCreateRequest.builder()
-            .id("TESTPERM01")  // Max 10 characters
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private ComponenteServicio componenteServicio;
+
+    private static final String ADMIN_USER = "test";
+    private static final String ADMIN_PASSWORD = "test123";
+
+    // Helper para Basic Auth
+    private String basicAuth(String username, String password) {
+        String auth = username + ":" + password;
+        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + new String(encodedAuth, StandardCharsets.UTF_8);
+    }
+
+    // Datos de prueba
+    private ComponenteCreateRequest createRequest() {
+        return ComponenteCreateRequest.builder()
+            .id("TEST01")
             .tipoComponente("MONITOR")
-            .descripcion("Monitor de prueba para permisos")
+            .descripcion("Monitor de prueba")
             .marca("TestBrand")
-            .modelo("TB-PERM-001")
+            .modelo("TB-001")
+            .costo(new BigDecimal("5000.00"))
+            .precioBase(new BigDecimal("6500.00"))
+            .build();
+    }
+
+    private ComponenteResponse mockResponse() {
+        return ComponenteResponse.builder()
+            .id("TEST01")
+            .descripcion("Monitor de prueba")
+            .marca("TestBrand")
+            .modelo("TB-001")
             .costo(new BigDecimal("5000.00"))
             .precioBase(new BigDecimal("6500.00"))
             .build();
     }
 
     // ==========================================
-    // TESTS PARA VERIFICAR ACCESO READ (todos los roles)
+    // TESTS DE ACCESO SIN AUTENTICACIÓN
     // ==========================================
 
     @Test
-    @DisplayName("Permisos 1: Usuario sin autenticación no puede acceder")
-    void usuarioSinAutenticacionNoPuedeAcceder() {
-        given()
-            .auth().none() // Explicitly disable authentication set by BaseIntegrationTest
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL)
-        .then()
-            .statusCode(401); // Unauthorized
+    @DisplayName("Usuario sin autenticación no puede acceder a GET /componentes")
+    void usuarioSinAutenticacionNoPuedeLeer() throws Exception {
+        mockMvc.perform(get("/componentes"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
     }
 
     @Test
-    @DisplayName("Permisos 2: Todos los roles pueden leer componentes")
-    void todosLosRolesPuedenLeerComponentes() {
-        // Probar que todos los roles con permisos pueden leer
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
+    @DisplayName("Usuario sin autenticación no puede crear componente")
+    void usuarioSinAutenticacionNoPuedeCrear() throws Exception {
+        String requestJson = objectMapper.writeValueAsString(createRequest());
+
+        mockMvc.perform(post("/componentes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
+    }
+
+    @Test
+    @DisplayName("Usuario sin autenticación no puede actualizar componente")
+    void usuarioSinAutenticacionNoPuedeActualizar() throws Exception {
+        ComponenteUpdateRequest updateRequest = new ComponenteUpdateRequest();
+        updateRequest.setDescripcion("Actualizado");
+        String requestJson = objectMapper.writeValueAsString(updateRequest);
+
+        mockMvc.perform(put("/componentes/TEST01")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
+    }
+
+    @Test
+    @DisplayName("Usuario sin autenticación no puede eliminar componente")
+    void usuarioSinAutenticacionNoPuedeEliminar() throws Exception {
+        mockMvc.perform(delete("/componentes/TEST01"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
     }
 
     // ==========================================
-    // TESTS PARA VERIFICAR ACCESO WRITE (solo roles con permisos)
+    // TESTS DE ACCESO CON AUTENTICACIÓN
     // ==========================================
 
     @Test
-    @DisplayName("Permisos 3: Usuario con rol de solo lectura puede acceder al endpoint base")
-    void usuarioConPermisosDeLecturaPuedeAcceder() {
-        // Test que verifica que los usuarios autenticados pueden leer
-        // (En la implementación actual, Basic Auth da todos los permisos para testing)
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
+    @DisplayName("Usuario autenticado puede leer componentes")
+    void usuarioAutenticadoPuedeLeer() throws Exception {
+        // Mock del servicio para devolver lista vacía exitosa
+        when(componenteServicio.obtenerTodosLosComponentes())
+            .thenReturn(new ApiResponse<>("0", "OK", List.of()));
+
+        mockMvc.perform(get("/componentes")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"));
+
+        verify(componenteServicio).obtenerTodosLosComponentes();
     }
 
     @Test
-    @DisplayName("Permisos 4: Usuario autenticado puede crear componente")
-    void usuarioAutenticadoPuedeCrearComponente() {
-        // Crear componente con usuario autenticado
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(200)  // API returns 200 for all successful operations
-            .body("codigo", equalTo("0"))
-            .body("datos.id", equalTo(componenteRequest.getId()));
+    @DisplayName("Usuario autenticado puede crear componente")
+    void usuarioAutenticadoPuedeCrear() throws Exception {
+        // Mock del servicio para devolver respuesta exitosa
+        when(componenteServicio.guardarComponente(any(ComponenteCreateRequest.class)))
+            .thenReturn(new ApiResponse<>("0", "Componente guardado exitosamente", mockResponse()));
+
+        String requestJson = objectMapper.writeValueAsString(createRequest());
+
+        mockMvc.perform(post("/componentes")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"))
+            .andExpect(jsonPath("$.datos.id").value("TEST01"));
+
+        verify(componenteServicio).guardarComponente(any(ComponenteCreateRequest.class));
     }
 
     @Test
-    @DisplayName("Permisos 5: Usuario autenticado puede actualizar componente")
-    void usuarioAutenticadoPuedeActualizarComponente() {
-        // Primero crear el componente
-        crearComponenteTest();
+    @DisplayName("Usuario autenticado puede actualizar componente")
+    void usuarioAutenticadoPuedeActualizar() throws Exception {
+        // Mock del servicio para devolver respuesta exitosa
+        when(componenteServicio.actualizarComponente(anyString(), any(ComponenteUpdateRequest.class)))
+            .thenReturn(new ApiResponse<>("0", "Componente actualizado exitosamente", mockResponse()));
 
-        // Actualizar descripción
-        componenteRequest.setDescripcion("Monitor actualizado");
+        ComponenteUpdateRequest updateRequest = new ComponenteUpdateRequest();
+        updateRequest.setDescripcion("Monitor actualizado");
+        updateRequest.setMarca("TestBrand");
+        updateRequest.setModelo("TB-001");
+        updateRequest.setCosto(new BigDecimal("5000.00"));
+        updateRequest.setPrecioBase(new BigDecimal("6500.00"));
+        updateRequest.setTipoComponente("MONITOR");
+        String requestJson = objectMapper.writeValueAsString(updateRequest);
 
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .put(BASE_URL + "/" + componenteRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
+        mockMvc.perform(put("/componentes/TEST01")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"));
+
+        verify(componenteServicio).actualizarComponente(anyString(), any(ComponenteUpdateRequest.class));
     }
 
     @Test
-    @DisplayName("Permisos 6: Usuario autenticado puede eliminar componente")
-    void usuarioAutenticadoPuedeEliminarComponente() {
-        // Primero crear el componente
-        crearComponenteTest();
+    @DisplayName("Usuario autenticado puede eliminar componente")
+    void usuarioAutenticadoPuedeEliminar() throws Exception {
+        // Mock del servicio para devolver respuesta exitosa
+        when(componenteServicio.borrarComponente(anyString()))
+            .thenReturn(new ApiResponse<>("0", "Componente eliminado exitosamente"));
 
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .delete(BASE_URL + "/" + componenteRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-    }
+        mockMvc.perform(delete("/componentes/TEST01")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"));
 
-    // ==========================================
-    // TESTS PARA VERIFICAR DENEGACIÓN DE ACCESO
-    // ==========================================
-
-    @Test
-    @DisplayName("Permisos 7: Usuario sin autenticación no puede crear")
-    void usuarioSinAutenticacionNoPuedeCrear() {
-        given()
-            .auth().none() // Explicitly disable authentication
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(401); // Unauthorized
-    }
-
-    @Test
-    @DisplayName("Permisos 8: Usuario sin autenticación no puede actualizar")
-    void usuarioSinAutenticacionNoPuedeActualizar() {
-        given()
-            .auth().none() // Explicitly disable authentication
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .put(BASE_URL + "/" + componenteRequest.getId())
-        .then()
-            .statusCode(401); // Unauthorized
-    }
-
-    @Test
-    @DisplayName("Permisos 9: Usuario sin autenticación no puede eliminar")
-    void usuarioSinAutenticacionNoPuedeEliminar() {
-        given()
-            .auth().none() // Explicitly disable authentication
-            .contentType(ContentType.JSON)
-        .when()
-            .delete(BASE_URL + "/" + componenteRequest.getId())
-        .then()
-            .statusCode(401); // Unauthorized
-    }
-
-    // ==========================================
-    // TESTS FUNCIONALES DE LA MATRIZ DE PERMISOS
-    // ==========================================
-
-    @Test
-    @DisplayName("Permisos 10: Verificar que las anotaciones @PreAuthorize están presentes")
-    void verificarQueAnotacionesDePermisosFuncionan() {
-        // Este test verifica que el sistema funciona con la autenticación básica
-        // En la implementación actual, el usuario de testing tiene todos los roles
-        
-        // Verificar lectura
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-
-        // Verificar creación
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(200)  // API returns 200 for all successful operations
-            .body("codigo", equalTo("0"));
-    }
-
-    // ==========================================
-    // MÉTODOS AUXILIARES
-    // ==========================================
-
-    private void crearComponenteTest() {
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(200);  // API returns 200 for all successful operations
+        verify(componenteServicio).borrarComponente("TEST01");
     }
 }

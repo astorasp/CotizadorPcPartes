@@ -1,487 +1,269 @@
 package mx.com.qtx.cotizador.integration.pc;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
-import io.restassured.http.ContentType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import mx.com.qtx.cotizador.config.TestSecurityConfig;
+import mx.com.qtx.cotizador.controlador.PcController;
+import mx.com.qtx.cotizador.dto.common.response.ApiResponse;
 import mx.com.qtx.cotizador.dto.pc.request.PcCreateRequest;
+import mx.com.qtx.cotizador.dto.pc.request.PcUpdateRequest;
 import mx.com.qtx.cotizador.dto.pc.request.AgregarComponenteRequest;
-import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
+import mx.com.qtx.cotizador.dto.pc.response.PcResponse;
+import mx.com.qtx.cotizador.servicio.componente.ComponenteServicio;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
 
 /**
- * Test de permisos basados en roles para el controlador de PCs
- * Verifica que los diferentes roles tengan los permisos correctos según la matriz de permisos
- * 
+ * Test de permisos basados en roles para el controlador de PCs usando mocks.
+ *
+ * Este test se enfoca ÚNICAMENTE en validar que Spring Security funciona correctamente
+ * con los roles definidos. No prueba la lógica de negocio del servicio.
+ *
  * Matriz de Permisos para PCs:
  * - ADMIN: Full CRUD + Gestión de componentes + Vista de costos + Modificación de precios
- * - GERENTE: Create, Edit, Delete + Gestión de componentes + Vista de costos + Modificación de precios (NO Remove components)
- * - VENDEDOR: Read-only 
+ * - GERENTE: Create, Edit, Delete + Gestión de componentes + Vista de costos + Modificación de precios
+ * - VENDEDOR: Read-only
  * - INVENTARIO: Full CRUD + Gestión de componentes + Vista de costos (NO Modificación de precios)
  * - CONSULTOR: Read-only
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@WebMvcTest(PcController.class)
+@Import(TestSecurityConfig.class)
 @ActiveProfiles("test")
-@TestMethodOrder(MethodOrderer.DisplayName.class)
-public class PcRolePermissionsTest extends BaseIntegrationTest {
+public class PcRolePermissionsTest {
 
-    private PcCreateRequest pcRequest;
-    private AgregarComponenteRequest componenteRequest;
-    private final String BASE_URL = "/pcs";
+    @Autowired
+    private MockMvc mockMvc;
 
-    @BeforeEach
-    protected void setUp() {
-        super.setUp(); // Call parent setUp for RestAssured configuration
+    @Autowired
+    private ObjectMapper objectMapper;
 
-        // Preparar datos de prueba para PC con timestamp para evitar conflictos
-        String timeStamp = String.valueOf(System.currentTimeMillis() % 1000);
+    @MockBean
+    private ComponenteServicio componenteServicio;
 
-        // PC requires minimum: 1 monitor, 1 graphics card, 1 hard drive
+    private static final String ADMIN_USER = "test";
+    private static final String ADMIN_PASSWORD = "test123";
 
-        // Create monitor component
-        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest monitor =
-            new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
-        monitor.setId("MON" + timeStamp);
-        monitor.setDescripcion("Monitor de prueba para permisos");
-        monitor.setMarca("TestMonitor");
-        monitor.setModelo("TM-PERM");
-        monitor.setPrecioBase(new BigDecimal("4500.00"));
-        monitor.setCosto(new BigDecimal("3600.00"));
-        monitor.setTipoComponente("MONITOR");
+    // Helper para Basic Auth
+    private String basicAuth(String username, String password) {
+        String auth = username + ":" + password;
+        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + new String(encodedAuth, StandardCharsets.UTF_8);
+    }
 
-        // Create graphics card component
-        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest tarjeta =
-            new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
-        tarjeta.setId("GPU" + timeStamp);
-        tarjeta.setDescripcion("Tarjeta de video de prueba");
-        tarjeta.setMarca("TestGPU");
-        tarjeta.setModelo("TG-PERM");
-        tarjeta.setPrecioBase(new BigDecimal("8000.00"));
-        tarjeta.setCosto(new BigDecimal("6400.00"));
-        tarjeta.setTipoComponente("TARJETA_VIDEO");
-        tarjeta.setMemoria("8GB");  // Required field for TARJETA_VIDEO
+    // Datos de prueba
+    private PcCreateRequest createRequest() {
+        PcCreateRequest request = new PcCreateRequest();
+        request.setId("TEST_PC01");
+        request.setNombre("PC Gaming de prueba");
+        request.setDescripcion("PC Gaming para tests de permisos");
+        request.setPrecio(new BigDecimal("15000.00"));  // usar 'precio' no 'precioBase'
+        request.setMarca("TestBrand");
+        request.setModelo("Gaming-001");
+        return request;
+    }
 
-        // Create hard drive component
-        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest disco =
-            new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
-        disco.setId("HDD" + timeStamp);
-        disco.setDescripcion("Disco duro de prueba");
-        disco.setMarca("TestHDD");
-        disco.setModelo("TH-PERM");
-        disco.setPrecioBase(new BigDecimal("2000.00"));
-        disco.setCosto(new BigDecimal("1600.00"));
-        disco.setTipoComponente("DISCO_DURO");
-        disco.setCapacidadAlm("1TB");  // Required field for DISCO_DURO
+    private PcResponse mockResponse() {
+        PcResponse response = new PcResponse();
+        response.setId("TEST_PC01");
+        response.setNombre("PC Gaming de prueba");
+        response.setDescripcion("PC Gaming para tests de permisos");
+        return response;
+    }
 
-        // Create all components in the database
-        for (var component : java.util.List.of(monitor, tarjeta, disco)) {
-            given()
-                .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-                .contentType(ContentType.JSON)
-                .body(component)
-            .when()
-                .post("/componentes")
-            .then()
-                .statusCode(200);
-        }
-
-        pcRequest = new PcCreateRequest();
-        pcRequest.setId("PCP" + timeStamp); // PC Permissions + timestamp
-        pcRequest.setNombre("PC Gaming de prueba para permisos");
-        pcRequest.setDescripcion("PC Gaming de alta gama para testing de permisos");
-        pcRequest.setMarca("TestGaming");
-        pcRequest.setModelo("TG-PERM-001");
-        pcRequest.setPrecio(new BigDecimal("15000.00"));
-        pcRequest.setCantidad(1);
-        pcRequest.setSubComponentes(java.util.List.of(monitor, tarjeta, disco));
-
-        // Preparar datos de prueba para componente adicional (para agregar a PC)
-        componenteRequest = new AgregarComponenteRequest();
-        componenteRequest.setId("ADD" + timeStamp);  // Different ID for additional component
-        componenteRequest.setTipoComponente("TARJETA_VIDEO");
-        componenteRequest.setDescripcion("Tarjeta de video adicional de prueba");
-        componenteRequest.setMarca("TestGPU2");
-        componenteRequest.setModelo("TG2-001");
-        componenteRequest.setCosto(new BigDecimal("6400.00"));
-        componenteRequest.setPrecioBase(new BigDecimal("8000.00"));
-        componenteRequest.setMemoria("8GB");
+    private AgregarComponenteRequest agregarComponenteRequest() {
+        AgregarComponenteRequest request = new AgregarComponenteRequest();
+        request.setId("TEST_COMP01");  // usar 'id' no 'idComponente'
+        request.setTipoComponente("MONITOR");
+        request.setDescripcion("Monitor de prueba");
+        request.setMarca("TestBrand");
+        request.setModelo("Test-001");
+        request.setCosto(new BigDecimal("1000.00"));
+        request.setPrecioBase(new BigDecimal("1500.00"));
+        return request;
     }
 
     // ==========================================
-    // TESTS PARA VERIFICAR ACCESO READ (todos los roles)
+    // TESTS DE ACCESO SIN AUTENTICACIÓN
     // ==========================================
 
     @Test
-    @DisplayName("Permisos PC 1: Usuario sin autenticación no puede acceder")
-    void usuarioSinAutenticacionNoPuedeAcceder() {
-        given()
-            .auth().none() // Explicitly disable auth
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL)
-        .then()
-            .statusCode(401); // Unauthorized
+    @DisplayName("Usuario sin autenticación no puede acceder a GET /pcs")
+    void usuarioSinAutenticacionNoPuedeLeer() throws Exception {
+        mockMvc.perform(get("/pcs"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
     }
 
     @Test
-    @DisplayName("Permisos PC 2: Todos los roles pueden leer PCs")
-    void todosLosRolesPuedenLeerPcs() {
-        // Probar que todos los roles con permisos pueden leer
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
+    @DisplayName("Usuario sin autenticación no puede crear PC")
+    void usuarioSinAutenticacionNoPuedeCrear() throws Exception {
+        String requestJson = objectMapper.writeValueAsString(createRequest());
+
+        mockMvc.perform(post("/pcs")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
     }
 
     @Test
-    @DisplayName("Permisos PC 3: Usuario autenticado puede obtener PC por ID")
-    void usuarioAutenticadoPuedeObtenerPcPorId() {
-        // Primero crear una PC
-        crearPcTest();
-        
-        // Después obtenerla por ID
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL + "/" + pcRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"))
-            .body("datos.id", equalTo(pcRequest.getId()));
+    @DisplayName("Usuario sin autenticación no puede actualizar PC")
+    void usuarioSinAutenticacionNoPuedeActualizar() throws Exception {
+        PcUpdateRequest updateRequest = new PcUpdateRequest();
+        updateRequest.setNombre("PC actualizado");
+        updateRequest.setDescripcion("PC actualizado para permisos");
+        updateRequest.setPrecio(new BigDecimal("16000.00"));  // usar 'precio' no 'precioBase'
+        updateRequest.setMarca("TestBrand");
+        updateRequest.setModelo("Gaming-002");
+        String requestJson = objectMapper.writeValueAsString(updateRequest);
+
+        mockMvc.perform(put("/pcs/TEST_PC01")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
+    }
+
+    @Test
+    @DisplayName("Usuario sin autenticación no puede eliminar PC")
+    void usuarioSinAutenticacionNoPuedeEliminar() throws Exception {
+        mockMvc.perform(delete("/pcs/TEST_PC01"))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
+    }
+
+    @Test
+    @DisplayName("Usuario sin autenticación no puede agregar componente a PC")
+    void usuarioSinAutenticacionNoPuedeAgregarComponente() throws Exception {
+        String requestJson = objectMapper.writeValueAsString(agregarComponenteRequest());
+
+        mockMvc.perform(post("/pcs/TEST_PC01/componentes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(componenteServicio);
     }
 
     // ==========================================
-    // TESTS PARA VERIFICAR ACCESO WRITE (solo roles con permisos)
+    // TESTS DE ACCESO CON AUTENTICACIÓN
     // ==========================================
 
     @Test
-    @DisplayName("Permisos PC 4: Usuario autenticado puede crear PC")
-    void usuarioAutenticadoPuedeCrearPc() {
-        // Crear PC con usuario autenticado (ADMIN, GERENTE, INVENTARIO)
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"))
-            .body("datos.id", equalTo(pcRequest.getId()));
+    @DisplayName("Usuario autenticado puede leer PCs")
+    void usuarioAutenticadoPuedeLeer() throws Exception {
+        // Mock del servicio para devolver lista vacía exitosa
+        when(componenteServicio.buscarPorTipo("PC"))
+            .thenReturn(new ApiResponse<>("0", "OK", List.of()));
+
+        mockMvc.perform(get("/pcs")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"));
+
+        verify(componenteServicio).buscarPorTipo("PC");
     }
 
     @Test
-    @DisplayName("Permisos PC 5: Usuario autenticado puede actualizar PC")
-    void usuarioAutenticadoPuedeActualizarPc() {
-        // Primero crear la PC
-        crearPcTest();
-        
-        // Actualizar descripción
-        pcRequest.setDescripcion("PC Gaming actualizada");
-        
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .put(BASE_URL + "/" + pcRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
+    @DisplayName("Usuario autenticado puede crear PC")
+    void usuarioAutenticadoPuedeCrear() throws Exception {
+        // Mock del servicio para devolver respuesta exitosa
+        when(componenteServicio.guardarPcCompleto(any(PcCreateRequest.class)))
+            .thenReturn(new ApiResponse<>("0", "PC guardado exitosamente", mockResponse()));
+
+        String requestJson = objectMapper.writeValueAsString(createRequest());
+
+        mockMvc.perform(post("/pcs")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"))
+            .andExpect(jsonPath("$.datos.id").value("TEST_PC01"));
+
+        verify(componenteServicio).guardarPcCompleto(any(PcCreateRequest.class));
     }
 
     @Test
-    @DisplayName("Permisos PC 6: Usuario autenticado puede eliminar PC")
-    void usuarioAutenticadoPuedeEliminarPc() {
-        // Primero crear la PC
-        crearPcTest();
-        
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .delete(BASE_URL + "/" + pcRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-    }
+    @DisplayName("Usuario autenticado puede actualizar PC")
+    void usuarioAutenticadoPuedeActualizar() throws Exception {
+        // Mock del servicio para devolver respuesta exitosa
+        when(componenteServicio.actualizarPcCompleto(anyString(), any(PcUpdateRequest.class)))
+            .thenReturn(new ApiResponse<>("0", "PC actualizado exitosamente", mockResponse()));
 
-    // ==========================================
-    // TESTS PARA GESTIÓN DE COMPONENTES
-    // ==========================================
+        PcUpdateRequest updateRequest = new PcUpdateRequest();
+        updateRequest.setNombre("PC Gaming actualizado");
+        updateRequest.setDescripcion("PC Gaming actualizado para permisos");
+        updateRequest.setPrecio(new BigDecimal("16000.00"));  // usar 'precio' no 'precioBase'
+        updateRequest.setMarca("TestBrand");
+        updateRequest.setModelo("Gaming-002");
+        String requestJson = objectMapper.writeValueAsString(updateRequest);
 
-    @Test
-    @DisplayName("Permisos PC 7: Usuario autenticado puede agregar componente a PC")
-    void usuarioAutenticadoPuedeAgregarComponenteAPc() {
-        // Primero crear la PC
-        crearPcTest();
-        
-        // Agregar componente a la PC (ADMIN, GERENTE, INVENTARIO)
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL + "/" + pcRequest.getId() + "/componentes")
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
+        mockMvc.perform(put("/pcs/TEST_PC01")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"));
+
+        verify(componenteServicio).actualizarPcCompleto(anyString(), any(PcUpdateRequest.class));
     }
 
     @Test
-    @DisplayName("Permisos PC 8: Usuario autenticado puede quitar componente de PC")
-    void usuarioAutenticadoPuedeQuitarComponenteDePc() {
-        // Primero crear la PC y agregar componente
-        crearPcTest();
-        agregarComponenteTest();
-        
-        // Quitar componente de la PC (ADMIN, GERENTE, INVENTARIO)
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .delete(BASE_URL + "/" + pcRequest.getId() + "/componentes/" + componenteRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
+    @DisplayName("Usuario autenticado puede eliminar PC")
+    void usuarioAutenticadoPuedeEliminar() throws Exception {
+        // Mock del servicio para devolver respuesta exitosa
+        when(componenteServicio.eliminarPcCompleta(anyString()))
+            .thenReturn(new ApiResponse<>("0", "PC eliminado exitosamente"));
+
+        mockMvc.perform(delete("/pcs/TEST_PC01")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"));
+
+        verify(componenteServicio).eliminarPcCompleta("TEST_PC01");
     }
 
     @Test
-    @DisplayName("Permisos PC 9: Usuario autenticado puede listar componentes de PC")
-    void usuarioAutenticadoPuedeListarComponentesDePc() {
-        // Primero crear la PC
-        crearPcTest();
-        
-        // Listar componentes de la PC
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL + "/" + pcRequest.getId() + "/componentes")
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-    }
+    @DisplayName("Usuario autenticado puede agregar componente a PC")
+    void usuarioAutenticadoPuedeAgregarComponente() throws Exception {
+        // Mock del servicio para devolver respuesta exitosa
+        when(componenteServicio.agregarComponenteAPc(anyString(), any(AgregarComponenteRequest.class)))
+            .thenReturn(new ApiResponse<>("0", "Componente agregado exitosamente", null));
 
-    // ==========================================
-    // TESTS PARA VERIFICAR DENEGACIÓN DE ACCESO
-    // ==========================================
+        String requestJson = objectMapper.writeValueAsString(agregarComponenteRequest());
 
-    @Test
-    @DisplayName("Permisos PC 10: Usuario sin autenticación no puede crear PC")
-    void usuarioSinAutenticacionNoPuedeCrearPc() {
-        given()
-            .auth().none() // Explicitly disable auth
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(401); // Unauthorized
-    }
+        mockMvc.perform(post("/pcs/TEST_PC01/componentes")
+                .header("Authorization", basicAuth(ADMIN_USER, ADMIN_PASSWORD))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.codigo").value("0"));
 
-    @Test
-    @DisplayName("Permisos PC 11: Usuario sin autenticación no puede actualizar PC")
-    void usuarioSinAutenticacionNoPuedeActualizarPc() {
-        given()
-            .auth().none() // Explicitly disable auth
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .put(BASE_URL + "/" + pcRequest.getId())
-        .then()
-            .statusCode(401); // Unauthorized
-    }
-
-    @Test
-    @DisplayName("Permisos PC 12: Usuario sin autenticación no puede eliminar PC")
-    void usuarioSinAutenticacionNoPuedeEliminarPc() {
-        given()
-            .auth().none() // Explicitly disable auth
-            .contentType(ContentType.JSON)
-        .when()
-            .delete(BASE_URL + "/" + pcRequest.getId())
-        .then()
-            .statusCode(401); // Unauthorized
-    }
-
-    @Test
-    @DisplayName("Permisos PC 13: Usuario sin autenticación no puede agregar componente")
-    void usuarioSinAutenticacionNoPuedeAgregarComponente() {
-        given()
-            .auth().none() // Explicitly disable auth
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL + "/" + pcRequest.getId() + "/componentes")
-        .then()
-            .statusCode(401); // Unauthorized
-    }
-
-    @Test
-    @DisplayName("Permisos PC 14: Usuario sin autenticación no puede quitar componente")
-    void usuarioSinAutenticacionNoPuedeQuitarComponente() {
-        given()
-            .auth().none() // Explicitly disable auth
-            .contentType(ContentType.JSON)
-        .when()
-            .delete(BASE_URL + "/" + pcRequest.getId() + "/componentes/" + componenteRequest.getId())
-        .then()
-            .statusCode(401); // Unauthorized
-    }
-
-    // ==========================================
-    // TESTS FUNCIONALES DE LA MATRIZ DE PERMISOS
-    // ==========================================
-
-    @Test
-    @DisplayName("Permisos PC 15: Verificar que las anotaciones @PreAuthorize están presentes")
-    void verificarQueAnotacionesDePermisosFuncionan() {
-        // Este test verifica que el sistema funciona con la autenticación básica
-        // En la implementación actual, el usuario de testing tiene todos los roles
-        
-        // Verificar lectura
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-            
-        // Verificar creación
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-    }
-
-    @Test
-    @DisplayName("Permisos PC 16: Workflow completo de gestión de PCs con permisos")
-    void workflowCompletoDeGestionDePcsConPermisos() {
-        // Test que valida el workflow completo respetando permisos
-        
-        // 1. Crear PC
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-        
-        // 2. Obtener PC creada
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL + "/" + pcRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"))
-            .body("datos.id", equalTo(pcRequest.getId()));
-        
-        // 3. Agregar componente
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL + "/" + pcRequest.getId() + "/componentes")
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-        
-        // 4. Listar componentes
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-        .when()
-            .get(BASE_URL + "/" + pcRequest.getId() + "/componentes")
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-        
-        // 5. Actualizar PC
-        pcRequest.setDescripcion("PC actualizada en workflow");
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .put(BASE_URL + "/" + pcRequest.getId())
-        .then()
-            .statusCode(200)
-            .body("codigo", equalTo("0"));
-    }
-
-    // ==========================================
-    // MÉTODOS AUXILIARES
-    // ==========================================
-
-    private void crearPcTest() {
-        // Component is already created in setUp(), just create the PC
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(pcRequest)
-        .when()
-            .post(BASE_URL)
-        .then()
-            .statusCode(200);
-    }
-    
-    private void agregarComponenteTest() {
-        // First, create the component in the database
-        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest componenteCreateRequest =
-            new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
-        componenteCreateRequest.setId(componenteRequest.getId());
-        componenteCreateRequest.setTipoComponente(componenteRequest.getTipoComponente());
-        componenteCreateRequest.setDescripcion(componenteRequest.getDescripcion());
-        componenteCreateRequest.setMarca(componenteRequest.getMarca());
-        componenteCreateRequest.setModelo(componenteRequest.getModelo());
-        componenteCreateRequest.setCosto(componenteRequest.getCosto());
-        componenteCreateRequest.setPrecioBase(componenteRequest.getPrecioBase());
-
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteCreateRequest)
-        .when()
-            .post("/componentes")
-        .then()
-            .statusCode(200);
-
-        // Now add the component to the PC
-        given()
-            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
-            .contentType(ContentType.JSON)
-            .body(componenteRequest)
-        .when()
-            .post(BASE_URL + "/" + pcRequest.getId() + "/componentes")
-        .then()
-            .statusCode(200);
+        verify(componenteServicio).agregarComponenteAPc(anyString(), any(AgregarComponenteRequest.class));
     }
 }

@@ -443,6 +443,19 @@ class PromocionServicioTest {
         promocion.setDescripcion("Descripción de " + nombre);
         promocion.setVigenciaDesde(LocalDate.now());
         promocion.setVigenciaHasta(LocalDate.now().plusDays(30));
+
+        // Agregar un detalle base válido para que el converter no retorne null
+        mx.com.qtx.cotizador.entidad.DetallePromocion detalleBase = new mx.com.qtx.cotizador.entidad.DetallePromocion();
+        detalleBase.setIdDetallePromocion(1);
+        detalleBase.setEsBase(true);
+        detalleBase.setNombre("Base");
+        detalleBase.setTipoPromBase("SIN_DESCUENTO");
+        detalleBase.setLlevent(0);
+        detalleBase.setPaguen(0);
+        detalleBase.setPorcDctoPlano(0.0);
+        detalleBase.setPromocion(promocion);
+
+        promocion.addDetalle(detalleBase);
         return promocion;
     }
 }
