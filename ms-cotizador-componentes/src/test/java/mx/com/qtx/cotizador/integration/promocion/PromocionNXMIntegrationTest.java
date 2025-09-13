@@ -1,4 +1,4 @@
-package mx.com.qtx.cotizador.integration;
+package mx.com.qtx.cotizador.integration.promocion;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
@@ -13,6 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import io.restassured.http.ContentType;
 import mx.com.qtx.cotizador.dto.promocion.request.PromocionCreateRequest;
+import mx.com.qtx.cotizador.integration.BaseIntegrationTest;
 import mx.com.qtx.cotizador.dto.promocion.request.DetallePromocionRequest;
 import mx.com.qtx.cotizador.dto.promocion.request.ParametrosNxMRequest;
 import mx.com.qtx.cotizador.dto.promocion.enums.TipoPromocionBase;

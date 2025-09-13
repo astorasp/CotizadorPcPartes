@@ -409,6 +409,24 @@ POST   /proveedores       # Create supplier
 GET    /proveedores/{id}  # Get supplier details
 PUT    /proveedores/{id}  # Update supplier
 DELETE /proveedores/{id}  # Delete supplier
-```
-- No mover el mapping de los controladores de los proyectos de microservicios a menos que el usuario asi lo solicite expresamente
-- si haces un cambio a uno de los microservicios o en el portal, es necesario recompilar la imagen y volver a deployar el contenedor de la aplicaicon
+## Important Development Notes
+
+- **Controller Mappings**: Do not move controller mappings in microservice projects unless explicitly requested by the user
+- **Container Rebuilds**: When making changes to any microservice or portal, you must rebuild the image and redeploy the container using:
+  ```bash
+  docker-compose up -d --build [service-name]
+  ```
+
+## Development Workflow
+
+### Making Changes to Microservices
+1. Make code changes in the respective microservice
+2. Rebuild specific service: `docker-compose build ms-seguridad` (or other service)
+3. Redeploy: `docker-compose up -d --build ms-seguridad`
+4. Verify: Check health endpoint and logs
+
+### Making Changes to Frontend
+1. Make changes in `portal-cotizador/`
+2. Rebuild frontend: `docker-compose build portal-cotizador`  
+3. Redeploy: `docker-compose up -d --build portal-cotizador`
+4. Verify: Check application at http://localhost

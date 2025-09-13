@@ -20,16 +20,59 @@ public abstract class Componente {
     
     /**
      * Constructor para crear un componente con sus propiedades básicas.
-     * 
-     * @param id Identificador único del componente
-     * @param descripcion Descripción detallada del componente
-     * @param marca Marca del componente
-     * @param modelo Modelo específico del componente
-     * @param costo Costo de adquisición del componente
-     * @param precioBase Precio base de venta del componente
+     *
+     * @param id Identificador único del componente (no debe ser nulo ni vacío)
+     * @param descripcion Descripción detallada del componente (no debe ser nula ni vacía)
+     * @param marca Marca del componente (no debe ser nula ni vacía)
+     * @param modelo Modelo específico del componente (no debe ser nulo ni vacío)
+     * @param costo Costo de adquisición del componente (no debe ser nulo ni negativo)
+     * @param precioBase Precio base de venta del componente (no debe ser nulo ni negativo)
+     * @throws IllegalArgumentException si algún parámetro es nulo, vacío o negativo (según aplique)
      */
-    public Componente(String id, String descripcion, String marca, String modelo, 
+    public Componente(String id, String descripcion, String marca, String modelo,
                      BigDecimal costo, BigDecimal precioBase) {
+        // Validaciones PRD: campos no nulos
+        if (id == null) {
+            throw new IllegalArgumentException("El id no puede ser nulo");
+        }
+        if (descripcion == null) {
+            throw new IllegalArgumentException("La descripcion no puede ser nula");
+        }
+        if (marca == null) {
+            throw new IllegalArgumentException("La marca no puede ser nula");
+        }
+        if (modelo == null) {
+            throw new IllegalArgumentException("El modelo no puede ser nulo");
+        }
+        if (costo == null) {
+            throw new IllegalArgumentException("El costo no puede ser nulo");
+        }
+        if (precioBase == null) {
+            throw new IllegalArgumentException("El precioBase no puede ser nulo");
+        }
+
+        // Validaciones PRD: campos no vacíos
+        if (id.trim().isEmpty()) {
+            throw new IllegalArgumentException("El id no puede estar vacío");
+        }
+        if (descripcion.trim().isEmpty()) {
+            throw new IllegalArgumentException("La descripcion no puede estar vacía");
+        }
+        if (marca.trim().isEmpty()) {
+            throw new IllegalArgumentException("La marca no puede estar vacía");
+        }
+        if (modelo.trim().isEmpty()) {
+            throw new IllegalArgumentException("El modelo no puede estar vacío");
+        }
+
+        // Validaciones PRD: valores no negativos
+        if (costo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El costo no puede ser negativo");
+        }
+        if (precioBase.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El precioBase no puede ser negativo");
+        }
+
         this.id = id;
         this.descripcion = descripcion;
         this.marca = marca;

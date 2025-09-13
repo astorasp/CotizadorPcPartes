@@ -21,24 +21,36 @@ public class ComponenteMapper {
         }
         
         return switch (request.getTipoComponente().toUpperCase()) {
-            case "DISCO_DURO" -> Componente.crearDiscoDuro(
-                request.getId(),
-                request.getDescripcion(),
-                request.getMarca(),
-                request.getModelo(),
-                request.getCosto(),
-                request.getPrecioBase(),
-                request.getCapacidadAlm()
-            );
-            case "TARJETA_VIDEO" -> Componente.crearTarjetaVideo(
-                request.getId(),
-                request.getDescripcion(),
-                request.getMarca(),
-                request.getModelo(),
-                request.getCosto(),
-                request.getPrecioBase(),
-                request.getMemoria()
-            );
+            case "DISCO_DURO" -> {
+                // Validación defensiva para capacidadAlm requerida
+                if (request.getCapacidadAlm() == null || request.getCapacidadAlm().trim().isEmpty()) {
+                    throw new IllegalArgumentException("La capacidadAlm es requerida para DISCO_DURO");
+                }
+                yield Componente.crearDiscoDuro(
+                    request.getId(),
+                    request.getDescripcion(),
+                    request.getMarca(),
+                    request.getModelo(),
+                    request.getCosto(),
+                    request.getPrecioBase(),
+                    request.getCapacidadAlm()
+                );
+            }
+            case "TARJETA_VIDEO" -> {
+                // Validación defensiva para memoria requerida
+                if (request.getMemoria() == null || request.getMemoria().trim().isEmpty()) {
+                    throw new IllegalArgumentException("La memoria es requerida para TARJETA_VIDEO");
+                }
+                yield Componente.crearTarjetaVideo(
+                    request.getId(),
+                    request.getDescripcion(),
+                    request.getMarca(),
+                    request.getModelo(),
+                    request.getCosto(),
+                    request.getPrecioBase(),
+                    request.getMemoria()
+                );
+            }
             case "MONITOR" -> Componente.crearMonitor(
                 request.getId(),
                 request.getDescripcion(),
@@ -61,24 +73,36 @@ public class ComponenteMapper {
         }
         
         return switch (request.getTipoComponente().toUpperCase()) {
-            case "DISCO_DURO" -> Componente.crearDiscoDuro(
-                id,
-                request.getDescripcion(),
-                request.getMarca(),
-                request.getModelo(),
-                request.getCosto(),
-                request.getPrecioBase(),
-                request.getCapacidadAlm()
-            );
-            case "TARJETA_VIDEO" -> Componente.crearTarjetaVideo(
-                id,
-                request.getDescripcion(),
-                request.getMarca(),
-                request.getModelo(),
-                request.getCosto(),
-                request.getPrecioBase(),
-                request.getMemoria()
-            );
+            case "DISCO_DURO" -> {
+                // Validación defensiva para capacidadAlm requerida
+                if (request.getCapacidadAlm() == null || request.getCapacidadAlm().trim().isEmpty()) {
+                    throw new IllegalArgumentException("La capacidadAlm es requerida para DISCO_DURO");
+                }
+                yield Componente.crearDiscoDuro(
+                    id,
+                    request.getDescripcion(),
+                    request.getMarca(),
+                    request.getModelo(),
+                    request.getCosto(),
+                    request.getPrecioBase(),
+                    request.getCapacidadAlm()
+                );
+            }
+            case "TARJETA_VIDEO" -> {
+                // Validación defensiva para memoria requerida
+                if (request.getMemoria() == null || request.getMemoria().trim().isEmpty()) {
+                    throw new IllegalArgumentException("La memoria es requerida para TARJETA_VIDEO");
+                }
+                yield Componente.crearTarjetaVideo(
+                    id,
+                    request.getDescripcion(),
+                    request.getMarca(),
+                    request.getModelo(),
+                    request.getCosto(),
+                    request.getPrecioBase(),
+                    request.getMemoria()
+                );
+            }
             case "MONITOR" -> Componente.crearMonitor(
                 id,
                 request.getDescripcion(),

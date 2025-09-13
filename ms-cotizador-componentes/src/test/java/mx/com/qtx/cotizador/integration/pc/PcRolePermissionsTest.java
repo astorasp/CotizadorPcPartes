@@ -41,12 +41,14 @@ public class PcRolePermissionsTest extends BaseIntegrationTest {
     @BeforeEach
     protected void setUp() {
         super.setUp(); // Call parent setUp for RestAssured configuration
-        
+
         // Preparar datos de prueba para PC con timestamp para evitar conflictos
         String timeStamp = String.valueOf(System.currentTimeMillis() % 1000);
-        
-        // Crear lista de subComponentes con un componente monitor
-        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest monitor = 
+
+        // PC requires minimum: 1 monitor, 1 graphics card, 1 hard drive
+
+        // Create monitor component
+        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest monitor =
             new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
         monitor.setId("MON" + timeStamp);
         monitor.setDescripcion("Monitor de prueba para permisos");
@@ -55,7 +57,43 @@ public class PcRolePermissionsTest extends BaseIntegrationTest {
         monitor.setPrecioBase(new BigDecimal("4500.00"));
         monitor.setCosto(new BigDecimal("3600.00"));
         monitor.setTipoComponente("MONITOR");
-        
+
+        // Create graphics card component
+        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest tarjeta =
+            new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
+        tarjeta.setId("GPU" + timeStamp);
+        tarjeta.setDescripcion("Tarjeta de video de prueba");
+        tarjeta.setMarca("TestGPU");
+        tarjeta.setModelo("TG-PERM");
+        tarjeta.setPrecioBase(new BigDecimal("8000.00"));
+        tarjeta.setCosto(new BigDecimal("6400.00"));
+        tarjeta.setTipoComponente("TARJETA_VIDEO");
+        tarjeta.setMemoria("8GB");  // Required field for TARJETA_VIDEO
+
+        // Create hard drive component
+        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest disco =
+            new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
+        disco.setId("HDD" + timeStamp);
+        disco.setDescripcion("Disco duro de prueba");
+        disco.setMarca("TestHDD");
+        disco.setModelo("TH-PERM");
+        disco.setPrecioBase(new BigDecimal("2000.00"));
+        disco.setCosto(new BigDecimal("1600.00"));
+        disco.setTipoComponente("DISCO_DURO");
+        disco.setCapacidadAlm("1TB");  // Required field for DISCO_DURO
+
+        // Create all components in the database
+        for (var component : java.util.List.of(monitor, tarjeta, disco)) {
+            given()
+                .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
+                .contentType(ContentType.JSON)
+                .body(component)
+            .when()
+                .post("/componentes")
+            .then()
+                .statusCode(200);
+        }
+
         pcRequest = new PcCreateRequest();
         pcRequest.setId("PCP" + timeStamp); // PC Permissions + timestamp
         pcRequest.setNombre("PC Gaming de prueba para permisos");
@@ -64,15 +102,15 @@ public class PcRolePermissionsTest extends BaseIntegrationTest {
         pcRequest.setModelo("TG-PERM-001");
         pcRequest.setPrecio(new BigDecimal("15000.00"));
         pcRequest.setCantidad(1);
-        pcRequest.setSubComponentes(java.util.List.of(monitor));
-            
-        // Preparar datos de prueba para componente
+        pcRequest.setSubComponentes(java.util.List.of(monitor, tarjeta, disco));
+
+        // Preparar datos de prueba para componente adicional (para agregar a PC)
         componenteRequest = new AgregarComponenteRequest();
-        componenteRequest.setId("GPU" + timeStamp);
+        componenteRequest.setId("ADD" + timeStamp);  // Different ID for additional component
         componenteRequest.setTipoComponente("TARJETA_VIDEO");
-        componenteRequest.setDescripcion("Tarjeta de video de prueba");
-        componenteRequest.setMarca("TestGPU");
-        componenteRequest.setModelo("TG-001");
+        componenteRequest.setDescripcion("Tarjeta de video adicional de prueba");
+        componenteRequest.setMarca("TestGPU2");
+        componenteRequest.setModelo("TG2-001");
         componenteRequest.setCosto(new BigDecimal("6400.00"));
         componenteRequest.setPrecioBase(new BigDecimal("8000.00"));
         componenteRequest.setMemoria("8GB");
@@ -404,6 +442,7 @@ public class PcRolePermissionsTest extends BaseIntegrationTest {
     // ==========================================
 
     private void crearPcTest() {
+        // Component is already created in setUp(), just create the PC
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
@@ -415,6 +454,27 @@ public class PcRolePermissionsTest extends BaseIntegrationTest {
     }
     
     private void agregarComponenteTest() {
+        // First, create the component in the database
+        mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest componenteCreateRequest =
+            new mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest();
+        componenteCreateRequest.setId(componenteRequest.getId());
+        componenteCreateRequest.setTipoComponente(componenteRequest.getTipoComponente());
+        componenteCreateRequest.setDescripcion(componenteRequest.getDescripcion());
+        componenteCreateRequest.setMarca(componenteRequest.getMarca());
+        componenteCreateRequest.setModelo(componenteRequest.getModelo());
+        componenteCreateRequest.setCosto(componenteRequest.getCosto());
+        componenteCreateRequest.setPrecioBase(componenteRequest.getPrecioBase());
+
+        given()
+            .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
+            .contentType(ContentType.JSON)
+            .body(componenteCreateRequest)
+        .when()
+            .post("/componentes")
+        .then()
+            .statusCode(200);
+
+        // Now add the component to the PC
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)

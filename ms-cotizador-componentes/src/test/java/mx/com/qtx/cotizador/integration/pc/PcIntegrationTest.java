@@ -100,7 +100,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "ConsultaTest",
                         "precioBase": 8000.00,
                         "costo": 6400.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "8GB"
                     },
                     {
                         "id": "HDD001",
@@ -109,7 +110,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "ConsultaTest",
                         "precioBase": 2500.00,
                         "costo": 2000.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -193,7 +195,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "RTX4070",
                         "precioBase": 9500.00,
                         "costo": 7600.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "12GB"
                     },
                     {
                         "id": "HDD002",
@@ -202,7 +205,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "980PRO",
                         "precioBase": 3300.00,
                         "costo": 2640.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "2TB"
                     }
                 ]
             }
@@ -278,7 +282,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "GTX 1650",
                         "precioBase": 4500.00,
                         "costo": 3600.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "4GB"
                     },
                     {
                         "id": "HDD001",
@@ -287,7 +292,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "Barracuda 1TB",
                         "precioBase": 1200.00,
                         "costo": 960.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -329,7 +335,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "Test",
                         "precioBase": 4500.00,
                         "costo": 3600.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "4GB"
                     },
                     {
                         "id": "HDD002",
@@ -338,7 +345,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "Test",
                         "precioBase": 1200.00,
                         "costo": 960.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -366,7 +374,6 @@ class PcIntegrationTest extends BaseIntegrationTest {
     void deberiaAgregarComponenteNuevoAPcPrecargada() {
         // 1. Primero crear una PC base válida (con monitor, tarjeta y disco)
         String pcBaseId = "PCADD" + System.currentTimeMillis() % 1000;
-        String timeStamp = String.valueOf(System.currentTimeMillis() % 1000);
         String pcBase = """
             {
                 "id": "%s",
@@ -393,7 +400,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "GTX 1650",
                         "precioBase": 4500.00,
                         "costo": 3600.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "4GB"
                     },
                     {
                         "id": "HDD002",
@@ -402,7 +410,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "Barracuda 1TB",
                         "precioBase": 1200.00,
                         "costo": 960.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -436,7 +445,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                 "modelo": "Vengeance LPX",
                 "precioBase": 1800.00,
                 "costo": 1440.00,
-                "tipoComponente": "DISCO_DURO"
+                "tipoComponente": "DISCO_DURO",
+                "capacidadAlm": "32GB"
             }
             """.formatted(System.currentTimeMillis() % 10000);
             
@@ -465,7 +475,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                 "modelo": "Blue 1TB",
                 "precioBase": 1200.00,
                 "costo": 960.00,
-                "tipoComponente": "DISCO_DURO"
+                "tipoComponente": "DISCO_DURO",
+                "capacidadAlm": "1TB"
             }
             """.formatted(componentePrecargadoId);
         
@@ -481,7 +492,6 @@ class PcIntegrationTest extends BaseIntegrationTest {
         
         // 2. Crear una PC válida para agregar el componente
         String pcTargetId = "PCTAR" + System.currentTimeMillis() % 1000;
-        String timeStamp2 = String.valueOf(System.currentTimeMillis() % 1000 + 10);
         String pcTarget = """
             {
                 "id": "%s",
@@ -508,7 +518,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "GTX 1650",
                         "precioBase": 4500.00,
                         "costo": 3600.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "4GB"
                     },
                     {
                         "id": "HDD003",
@@ -517,7 +528,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "Black 1TB",
                         "precioBase": 1500.00,
                         "costo": 1200.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -538,11 +550,12 @@ class PcIntegrationTest extends BaseIntegrationTest {
             {
                 "id": "%s",
                 "descripcion": "Disco duro precargado para pruebas",
-                "marca": "Western Digital", 
+                "marca": "Western Digital",
                 "modelo": "Blue 1TB",
                 "precioBase": 1200.00,
                 "costo": 960.00,
-                "tipoComponente": "DISCO_DURO"
+                "tipoComponente": "DISCO_DURO",
+                "capacidadAlm": "1TB"
             }
             """.formatted(componentePrecargadoId);
             
@@ -569,7 +582,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                 "modelo": "Test",
                 "precioBase": 1500.00,
                 "costo": 1200.00,
-                "tipoComponente": "DISCO_DURO"
+                "tipoComponente": "DISCO_DURO",
+                "capacidadAlm": "16GB"
             }
             """.formatted(System.currentTimeMillis() % 10000);
             
@@ -594,7 +608,6 @@ class PcIntegrationTest extends BaseIntegrationTest {
     void deberiaQuitarComponentePrecargadoDePc() {
         // 1. Crear una PC con componentes para poder quitar uno después
         String pcId = "PCQUITAR" + System.currentTimeMillis() % 1000;
-        String timeStamp = String.valueOf(System.currentTimeMillis() % 1000);
         String pcConComponentes = """
             {
                 "id": "%s",
@@ -621,7 +634,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "GTX 1650",
                         "precioBase": 4500.00,
                         "costo": 3600.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "4GB"
                     },
                     {
                         "id": "HDD005",
@@ -630,7 +644,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "Barracuda 1TB",
                         "precioBase": 1200.00,
                         "costo": 960.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -666,7 +681,6 @@ class PcIntegrationTest extends BaseIntegrationTest {
     void deberiaQuitarComponenteAgregadoPreviamente() {
         // 1. Crear una PC base válida
         String pcId = "PCAGR" + System.currentTimeMillis() % 1000;
-        String timeStamp = String.valueOf(System.currentTimeMillis() % 1000);
         String pcBase = """
             {
                 "id": "%s",
@@ -693,7 +707,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "GTX 1650",
                         "precioBase": 4500.00,
                         "costo": 3600.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "4GB"
                     },
                     {
                         "id": "HDD004",
@@ -702,7 +717,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "Barracuda 1TB",
                         "precioBase": 1200.00,
                         "costo": 960.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -729,7 +745,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                 "modelo": "Blue 1TB",
                 "precioBase": 1300.00,
                 "costo": 1040.00,
-                "tipoComponente": "DISCO_DURO"
+                "tipoComponente": "DISCO_DURO",
+                "capacidadAlm": "1TB"
             }
             """.formatted(componenteIdAdicional);
             
@@ -820,7 +837,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "RTX3060",
                         "precioBase": 8000.00,
                         "costo": 6400.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "8GB"
                     },
                     {
                         "id": "HDD003",
@@ -829,7 +847,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "980 EVO",
                         "precioBase": 2800.00,
                         "costo": 2240.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "1TB"
                     }
                 ]
             }
@@ -866,7 +885,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                 "modelo": "Barracuda",
                 "precioBase": 2000.00,
                 "costo": 1600.00,
-                "tipoComponente": "DISCO_DURO"
+                "tipoComponente": "DISCO_DURO",
+                "capacidadAlm": "2TB"
             }
             """.formatted("HDD004");
             
@@ -950,7 +970,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "ElimTest",
                         "precioBase": 8000.00,
                         "costo": 6400.00,
-                        "tipoComponente": "TARJETA_VIDEO"
+                        "tipoComponente": "TARJETA_VIDEO",
+                        "memoria": "8GB"
                     },
                     {
                         "id": "HDD005",
@@ -959,7 +980,8 @@ class PcIntegrationTest extends BaseIntegrationTest {
                         "modelo": "ElimTest",
                         "precioBase": 2500.00,
                         "costo": 2000.00,
-                        "tipoComponente": "DISCO_DURO"
+                        "tipoComponente": "DISCO_DURO",
+                        "capacidadAlm": "512GB"
                     }
                 ]
             }

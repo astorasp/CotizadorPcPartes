@@ -23,11 +23,21 @@ public class TarjetaVideo extends ComponenteSimple {
 	 * @param modelo Modelo específico de la tarjeta de video
 	 * @param costo Costo de adquisición de la tarjeta de video
 	 * @param precioBase Precio base de venta de la tarjeta de video
-	 * @param memoria Cantidad de memoria de video de la tarjeta
+	 * @param memoria Cantidad de memoria de video de la tarjeta (no debe ser nula ni vacía)
+	 * @throws IllegalArgumentException si memoria es nula o vacía
 	 */
 	protected TarjetaVideo(String id, String descripcion, String marca, String modelo, BigDecimal costo,
 			BigDecimal precioBase, String memoria) {
 		super(id, descripcion, marca, modelo, costo, precioBase);
+
+		// Validaciones PRD específicas para TarjetaVideo
+		if (memoria == null) {
+			throw new IllegalArgumentException("La memoria no puede ser nula");
+		}
+		if (memoria.trim().isEmpty()) {
+			throw new IllegalArgumentException("La memoria no puede estar vacía");
+		}
+
 		this.memoria = memoria;
 	}
 

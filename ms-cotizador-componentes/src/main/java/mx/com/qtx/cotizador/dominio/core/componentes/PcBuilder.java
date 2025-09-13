@@ -182,15 +182,14 @@ public class PcBuilder {
 	 */
 	public PcBuilder agregarDisco(String id, String descripcion, String marca, String modelo, BigDecimal costo,
 			BigDecimal precioBase, String capacidadAlm) {
-		if(this.discos.size() == PcBuilder.MAX_DISCOS) //Si excede el max, lo ignora
-			return this;
 		this.discos.add(new DiscoDuro(id, descripcion, marca, modelo, costo,
 				precioBase, capacidadAlm));
 		return this;
 	}
 	
 	/**
-	 * Agrega un monitor a la PC si no excede el máximo permitido.
+	 * Agrega un monitor a la PC.
+	 * La validación de límites máximos se realiza al construir la PC.
 	 *
 	 * @param id Identificador del monitor
 	 * @param descripcion Descripción del monitor
@@ -202,14 +201,13 @@ public class PcBuilder {
 	 */
 	public PcBuilder agregarMonitor(String id, String descripcion, String marca, String modelo, BigDecimal costo,
 			BigDecimal precioBase) {
-		if(this.monitores.size() == PcBuilder.MAX_MONITORES) //
-			return this;
 		this.monitores.add(new Monitor(id, descripcion, marca, modelo, costo,precioBase));
 		return this;
 	}
 
 	/**
-	 * Agrega una tarjeta de video a la PC si no excede el máximo permitido.
+	 * Agrega una tarjeta de video a la PC.
+	 * La validación de límites máximos se realiza al construir la PC.
 	 *
 	 * @param id Identificador de la tarjeta de video
 	 * @param descripcion Descripción de la tarjeta de video
@@ -222,8 +220,6 @@ public class PcBuilder {
 	 */
 	public PcBuilder agregarTarjetaVideo(String id, String descripcion, String marca, String modelo, BigDecimal costo,
 			BigDecimal precioBase, String memoria) {
-		if(this.tarjetas.size() == PcBuilder.MAX_TARJETAS) //
-			return this;
 		this.tarjetas.add(new TarjetaVideo(id, descripcion, marca, modelo, costo,
 				precioBase, memoria));
 		return this;
@@ -232,7 +228,12 @@ public class PcBuilder {
 	/**
 	 * Valida si la configuración actual de la PC es válida.
 	 * Verifica que se hayan definido ID, descripción, marca, modelo y
-	 * que se cumplan los mínimos de componentes.
+	 * que se cumplan los límites mínimos y máximos de componentes.
+	 *
+	 * Límites validados:
+	 * - Monitores: mínimo 1, máximo 2
+	 * - Tarjetas de video: mínimo 1, máximo 2
+	 * - Discos duros: mínimo 1, máximo 3
 	 *
 	 * @return true si la PC es válida, false en caso contrario
 	 */
@@ -250,6 +251,14 @@ public class PcBuilder {
 		if(this.monitores.size() < PcBuilder.MIN_MONITORES)
 			return false;
 		if(this.tarjetas.size() < PcBuilder.MIN_TARJETAS)
+			return false;
+
+		// Validaciones de límites máximos
+		if(this.discos.size() > PcBuilder.MAX_DISCOS)
+			return false;
+		if(this.monitores.size() > PcBuilder.MAX_MONITORES)
+			return false;
+		if(this.tarjetas.size() > PcBuilder.MAX_TARJETAS)
 			return false;
 		
 		return true;
@@ -296,9 +305,9 @@ public class PcBuilder {
 	 * @return La PC construida
 	 */
 	public Pc build() {
-		//if(this.pcEsValida() == false) {
-			//throw new RuntimeException("Estructura Pc Invalida [" + this.toString() + "]");
-		//}
+		if(this.pcEsValida() == false) {
+			throw new RuntimeException("Estructura Pc Invalida [" + this.toString() + "]");
+		}
 		Pc pc = new Pc(this);
 		return pc;
 	}

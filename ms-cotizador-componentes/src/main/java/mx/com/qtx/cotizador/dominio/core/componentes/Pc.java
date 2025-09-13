@@ -88,7 +88,6 @@ public class Pc extends Componente {
         		continue;
             total = total.add(c.getPrecioBase());
         }
-//      return total.multiply(BigDecimal.valueOf(1 - (DSCTO_PRECIO_AGREGADO / 100)));
         return total.multiply( new BigDecimal(1)
         			                   .subtract( new BigDecimal(DSCTO_PRECIO_AGREGADO)
         							          .divide(new BigDecimal(100)) )

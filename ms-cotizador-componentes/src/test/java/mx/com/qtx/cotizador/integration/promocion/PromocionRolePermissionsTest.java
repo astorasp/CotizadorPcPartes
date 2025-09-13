@@ -14,7 +14,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -44,8 +43,7 @@ public class PromocionRolePermissionsTest extends BaseIntegrationTest {
 
     @BeforeEach
     protected void setUp() {
-        RestAssured.port = port;
-        RestAssured.basePath = "";
+        super.setUp(); // Configurar basePath="/api/v1" y autenticación
     }
 
     @Test
@@ -248,6 +246,7 @@ public class PromocionRolePermissionsTest extends BaseIntegrationTest {
         PromocionCreateRequest request = buildTestPromocionRequest("No Auth Test");
 
         given()
+                .auth().none() // Explicitly disable authentication
                 .contentType(ContentType.JSON)
                 .body(request)
                 .when()
@@ -257,6 +256,7 @@ public class PromocionRolePermissionsTest extends BaseIntegrationTest {
 
         // Test sin autenticación - consultar promociones
         given()
+                .auth().none() // Explicitly disable authentication
                 .when()
                 .get("/promociones")
                 .then()
@@ -268,6 +268,7 @@ public class PromocionRolePermissionsTest extends BaseIntegrationTest {
         PromocionUpdateRequest updateRequest = buildTestPromocionUpdateRequest("No Auth Update");
 
         given()
+                .auth().none() // Explicitly disable authentication
                 .contentType(ContentType.JSON)
                 .body(updateRequest)
                 .when()
@@ -277,6 +278,7 @@ public class PromocionRolePermissionsTest extends BaseIntegrationTest {
 
         // Test sin autenticación - eliminar promoción
         given()
+                .auth().none() // Explicitly disable authentication
                 .when()
                 .delete("/promociones/" + testPromocionId)
                 .then()

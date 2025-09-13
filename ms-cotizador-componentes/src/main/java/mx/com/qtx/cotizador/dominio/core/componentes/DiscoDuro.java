@@ -23,11 +23,21 @@ public class DiscoDuro extends ComponenteSimple {
 	 * @param modelo Modelo específico del disco duro
 	 * @param costo Costo de adquisición del disco duro
 	 * @param precioBase Precio base de venta del disco duro
-	 * @param capacidadAlm Capacidad de almacenamiento del disco duro
+	 * @param capacidadAlm Capacidad de almacenamiento del disco duro (no debe ser nula ni vacía)
+	 * @throws IllegalArgumentException si capacidadAlm es nula o vacía
 	 */
 	protected DiscoDuro(String id, String descripcion, String marca, String modelo, BigDecimal costo,
 			BigDecimal precioBase, String capacidadAlm) {
 		super(id, descripcion, marca, modelo, costo, precioBase);
+
+		// Validaciones PRD específicas para DiscoDuro
+		if (capacidadAlm == null) {
+			throw new IllegalArgumentException("La capacidadAlm no puede ser nula");
+		}
+		if (capacidadAlm.trim().isEmpty()) {
+			throw new IllegalArgumentException("La capacidadAlm no puede estar vacía");
+		}
+
 		this.capacidadAlm = capacidadAlm;
 	}
 

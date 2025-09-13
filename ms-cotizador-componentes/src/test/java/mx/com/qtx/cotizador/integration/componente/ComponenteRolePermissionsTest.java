@@ -42,7 +42,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
         
         // Preparar datos de prueba
         componenteRequest = ComponenteCreateRequest.builder()
-            .id("TEST-PERM-001")
+            .id("TESTPERM01")  // Max 10 characters
             .tipoComponente("MONITOR")
             .descripcion("Monitor de prueba para permisos")
             .marca("TestBrand")
@@ -60,6 +60,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
     @DisplayName("Permisos 1: Usuario sin autenticación no puede acceder")
     void usuarioSinAutenticacionNoPuedeAcceder() {
         given()
+            .auth().none() // Explicitly disable authentication set by BaseIntegrationTest
             .contentType(ContentType.JSON)
         .when()
             .get(BASE_URL)
@@ -78,7 +79,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
             .get(BASE_URL)
         .then()
             .statusCode(200)
-            .body("successful", equalTo(true));
+            .body("codigo", equalTo("0"));
     }
 
     // ==========================================
@@ -97,7 +98,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
             .get(BASE_URL)
         .then()
             .statusCode(200)
-            .body("successful", equalTo(true));
+            .body("codigo", equalTo("0"));
     }
 
     @Test
@@ -111,9 +112,9 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
         .when()
             .post(BASE_URL)
         .then()
-            .statusCode(201)
-            .body("successful", equalTo(true))
-            .body("data.id", equalTo(componenteRequest.getId()));
+            .statusCode(200)  // API returns 200 for all successful operations
+            .body("codigo", equalTo("0"))
+            .body("datos.id", equalTo(componenteRequest.getId()));
     }
 
     @Test
@@ -121,10 +122,10 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
     void usuarioAutenticadoPuedeActualizarComponente() {
         // Primero crear el componente
         crearComponenteTest();
-        
+
         // Actualizar descripción
         componenteRequest.setDescripcion("Monitor actualizado");
-        
+
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
@@ -133,7 +134,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
             .put(BASE_URL + "/" + componenteRequest.getId())
         .then()
             .statusCode(200)
-            .body("successful", equalTo(true));
+            .body("codigo", equalTo("0"));
     }
 
     @Test
@@ -141,7 +142,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
     void usuarioAutenticadoPuedeEliminarComponente() {
         // Primero crear el componente
         crearComponenteTest();
-        
+
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
             .contentType(ContentType.JSON)
@@ -149,7 +150,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
             .delete(BASE_URL + "/" + componenteRequest.getId())
         .then()
             .statusCode(200)
-            .body("successful", equalTo(true));
+            .body("codigo", equalTo("0"));
     }
 
     // ==========================================
@@ -160,6 +161,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
     @DisplayName("Permisos 7: Usuario sin autenticación no puede crear")
     void usuarioSinAutenticacionNoPuedeCrear() {
         given()
+            .auth().none() // Explicitly disable authentication
             .contentType(ContentType.JSON)
             .body(componenteRequest)
         .when()
@@ -172,6 +174,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
     @DisplayName("Permisos 8: Usuario sin autenticación no puede actualizar")
     void usuarioSinAutenticacionNoPuedeActualizar() {
         given()
+            .auth().none() // Explicitly disable authentication
             .contentType(ContentType.JSON)
             .body(componenteRequest)
         .when()
@@ -184,6 +187,7 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
     @DisplayName("Permisos 9: Usuario sin autenticación no puede eliminar")
     void usuarioSinAutenticacionNoPuedeEliminar() {
         given()
+            .auth().none() // Explicitly disable authentication
             .contentType(ContentType.JSON)
         .when()
             .delete(BASE_URL + "/" + componenteRequest.getId())
@@ -209,8 +213,8 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
             .get(BASE_URL)
         .then()
             .statusCode(200)
-            .body("successful", equalTo(true));
-            
+            .body("codigo", equalTo("0"));
+
         // Verificar creación
         given()
             .auth().basic(USER_ADMIN, PASSWORD_ADMIN)
@@ -219,8 +223,8 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
         .when()
             .post(BASE_URL)
         .then()
-            .statusCode(201)
-            .body("successful", equalTo(true));
+            .statusCode(200)  // API returns 200 for all successful operations
+            .body("codigo", equalTo("0"));
     }
 
     // ==========================================
@@ -235,6 +239,6 @@ public class ComponenteRolePermissionsTest extends BaseIntegrationTest {
         .when()
             .post(BASE_URL)
         .then()
-            .statusCode(201);
+            .statusCode(200);  // API returns 200 for all successful operations
     }
 }

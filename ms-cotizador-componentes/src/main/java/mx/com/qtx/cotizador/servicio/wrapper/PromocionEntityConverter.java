@@ -19,7 +19,12 @@ public class PromocionEntityConverter {
      * al objeto de dominio correspondiente
      */
     public static Promocion convertToPromocion(mx.com.qtx.cotizador.entidad.Promocion entidad) {
-        if (entidad == null || entidad.getDetalles().isEmpty()) {
+        if (entidad == null) {
+            return null;
+        }
+
+        // If there are no details, the promotion is not valid - return null
+        if (entidad.getDetalles() == null || entidad.getDetalles().isEmpty()) {
             return null;
         }
 

@@ -189,7 +189,6 @@ class PromocionCombinadaTest {
         @DisplayName("Cantidad Uno: Validar aplicación mínima")
         void testCantidadUno() {
             // Arrange: Solo descuento plano debería aplicar
-            Promocion basePromo = new PromSinDescto();
             Promocion nxm = new PromNXM(3, 2);  // No aplica para cantidad 1
             Promocion combinada = new PromDsctoPlano(nxm, 20.0f);
 
@@ -256,7 +255,6 @@ class PromocionCombinadaTest {
             
             // Arrange - Orden B→A: Descuento Plano primero, luego NXM
             Promocion basePromo = new PromSinDescto();
-            Promocion planoPrimero = new PromDsctoPlano(basePromo, 20.0f);
             // Note: No se puede hacer NXM sobre PromDsctoPlano ya que NXM hereda de PromBase
 
             int cantidad = 8;

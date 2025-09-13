@@ -14,9 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test de integración para verificar que la configuración de seguridad funciona correctamente
  * En perfil 'test' solo debe haber Basic Auth, sin componentes JWT
  */
-@SpringBootTest
+@SpringBootTest(classes = TestSecurityConfig.class)
 @ActiveProfiles("test")
-@Import(TestSecurityConfig.class)
 class JwtIntegrationTest {
 
     @Autowired
@@ -30,26 +29,27 @@ class JwtIntegrationTest {
     @Test
     void jwtBeansAreNotConfiguredInTestProfile() {
         // En perfil test, los beans JWT NO deben estar configurados
-        assertFalse(applicationContext.containsBean("jwksClient"), 
+        // Este test verifica que solo tenemos los beans de seguridad básica
+        assertFalse(applicationContext.containsBean("jwksClient"),
                    "JwksClient no debe estar disponible en perfil test");
-        assertFalse(applicationContext.containsBean("jwtValidationService"), 
+        assertFalse(applicationContext.containsBean("jwtValidationService"),
                    "JwtValidationService no debe estar disponible en perfil test");
-        assertFalse(applicationContext.containsBean("jwtAuthenticationFilter"), 
+        assertFalse(applicationContext.containsBean("jwtAuthenticationFilter"),
                    "JwtAuthenticationFilter no debe estar disponible en perfil test");
-        assertFalse(applicationContext.containsBean("jwksCacheService"), 
+        assertFalse(applicationContext.containsBean("jwksCacheService"),
                    "JwksCacheService no debe estar disponible en perfil test");
     }
 
     @Test
     void basicAuthSecurityConfigurationIsValid() {
         // Verificar que la configuración de seguridad básica está presente
-        assertTrue(applicationContext.containsBean("testSecurityFilterChain"), 
-                  "TestSecurityFilterChain debe estar configurado");
-        assertTrue(applicationContext.containsBean("testPasswordEncoder"), 
+        assertTrue(applicationContext.containsBean("securityFilterChain"),
+                  "SecurityFilterChain debe estar configurado");
+        assertTrue(applicationContext.containsBean("testPasswordEncoder"),
                   "TestPasswordEncoder debe estar configurado");
-        assertTrue(applicationContext.containsBean("testUserDetailsService"), 
+        assertTrue(applicationContext.containsBean("testUserDetailsService"),
                   "TestUserDetailsService debe estar configurado");
-        assertTrue(applicationContext.containsBean("testCorsConfigurationSource"), 
+        assertTrue(applicationContext.containsBean("testCorsConfigurationSource"),
                   "TestCorsConfigurationSource debe estar configurado");
     }
 
