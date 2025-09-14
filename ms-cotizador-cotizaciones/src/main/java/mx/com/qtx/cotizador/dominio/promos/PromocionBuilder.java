@@ -5,158 +5,124 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Constructor fluido (Builder Pattern) para crear promociones complejas en el sistema CotizadorPcPartes.
- * <p>
- * Esta clase implementa el patrón Builder para facilitar la construcción de promociones
- * complejas de manera fluida y legible. Permite crear promociones que combinan
- * múltiples tipos de descuentos (N×M, descuentos planos, descuentos por cantidad)
- * en una única cadena de llamadas de método.
- * </p>
- *
- * <h3>Patrón Builder aplicado:</h3>
- * <ul>
- *   <li><strong>Constructores simples:</strong> Métodos que configuran aspectos individuales</li>
- *   <li><strong>Encadenamiento fluido:</strong> Cada método retorna this para permitir chaining</li>
- *   <li><strong>Construcción final:</strong> Método build() que crea el objeto final</li>
- *   <li><strong>Separación de construcción:</strong> Construcción compleja separada de representación</li>
- * </ul>
- *
- * <h3>Proceso de construcción:</h3>
- * <ol>
- *   <li><strong>Seleccionar promoción base:</strong> Elegir tipo fundamental (sin descuento, N×M)</li>
- *   <li><strong>Agregar decoradores:</strong> Aplicar descuentos adicionales en capas</li>
- *   <li><strong>Configurar parámetros:</strong> Establecer valores específicos para cada promoción</li>
- *   <li><strong>Construir objeto:</strong> Crear la instancia final de Promocion</li>
- * </ol>
- *
- * <h3>Ejemplos de uso:</h3>
- * <pre>{@code
- * // Ejemplo 1: 3x2 simple
- * Promocion promoSimple = Promocion.getBuilder()
- *     .conPromocionBaseNXM(3, 2)
- *     .build();
- *
- * // Ejemplo 2: 3x2 con 10% adicional
- * Promocion promoCompuesta = Promocion.getBuilder()
- *     .conPromocionBaseNXM(3, 2)
- *     .agregarDsctoPlano(10.0f)
- *     .build();
- *
- * // Ejemplo 3: Promoción compleja multi-nivel
- * Map<Integer, Double> descuentos = Map.of(5, 5.0, 10, 10.0, 20, 15.0);
- * Promocion promoCompleja = Promocion.getBuilder()
- *     .conPromocionBaseSinDscto()
- *     .agregarDsctoXcantidad(descuentos)
- *     .agregarDsctoPlano(5.0f)
- *     .build();
- * }</pre>
- *
- * <h3>Tipos de promociones base soportadas:</h3>
- * <ul>
- *   <li><strong>Sin descuento:</strong> Precio regular como base</li>
- *   <li><strong>N×M:</strong> Promoción "lleve N, pague M"</li>
- * </ul>
- *
- * <h3>Decoradores disponibles:</h3>
- * <ul>
- *   <li><strong>Descuento plano:</strong> Porcentaje fijo adicional</li>
- *   <li><strong>Descuento por cantidad:</strong> Escalas de descuento según cantidad</li>
- * </ul>
- *
- * <h3>Arquitectura interna:</h3>
- * <p>
- * El builder mantiene listas separadas para cada tipo de decorador:
- * </p>
- * <ul>
- *   <li>{@link #lstDsctosPlanos} - Lista de porcentajes de descuento plano</li>
- *   <li>{@link #lstMapsCantVsDscto} - Lista de mapas de descuento por cantidad</li>
- * </ul>
- *
- * <h3>Proceso de construcción final:</h3>
- * <p>
- * El método {@link #build()} delega la construcción final a
- * {@link Promocion#crearPromocion(PromocionBuilder)} que:
- * </p>
- * <ol>
- *   <li>Crea la promoción base según {@link #tipoPromocionBase}</li>
- *   <li>Aplica cada decorador en orden usando el patrón Decorator</li>
- *   <li>Retorna la promoción completamente configurada</li>
- * </ol>
- *
- * <h3>Beneficios del patrón Builder:</h3>
- * <ul>
- *   <li><strong>Legibilidad:</strong> Código expresivo y fácil de entender</li>
- *   <li><strong>Flexibilidad:</strong> Permite configuraciones complejas</li>
- *   <li><strong>Seguridad:</strong> Evita estados inválidos del objeto</li>
- *   <li><strong>Mantenibilidad:</strong> Fácil agregar nuevos tipos de promociones</li>
- *   <li><strong>Fluencia:</strong> Interfaz fluida que mejora la experiencia del desarrollador</li>
- * </ul>
+ * Constructor de promociones que implementa el patrón Builder.
+ * Permite construir promociones complejas de manera fluida, combinando
+ * promociones base con descuentos acumulables planos y por cantidad.
  *
  * @author hp835
  * @version 1.0
  * @created 24-mar.-2025 11:17:34 p. m.
- * @see mx.com.qtx.cotizador.dominio.promos.Promocion
- * @see mx.com.qtx.cotizador.dominio.promos.PromSinDescto
- * @see mx.com.qtx.cotizador.dominio.promos.PromNXM
- * @see mx.com.qtx.cotizador.dominio.promos.PromDsctoPlano
- * @see mx.com.qtx.cotizador.dominio.promos.PromDsctoXcantidad
  */
 public class PromocionBuilder {
 
+	/** Constante para promoción base sin descuento */
 	static final int PROM_BASE_SIN_DSCTO = 1;
+	/** Constante para promoción base N X M */
 	static final int PROM_BASE_NXM = 2;
+	/** Tipo de promoción base seleccionada */
 	private int tipoPromocionBase;
+	/** Parámetro N para promoción N X M */
 	private int n;
+	/** Parámetro M para promoción N X M */
 	private int m;
 	
+	/** Lista de descuentos planos porcentuales a acumular */
 	private List<Float> lstDsctosPlanos;
+	/** Lista de mapas de descuentos por cantidad a acumular */
 	private List<Map<Integer,Double>> lstMapsCantVsDscto;
 
+	/**
+	 * Constructor que inicializa las listas de descuentos.
+	 */
 	public PromocionBuilder(){
 		this.lstDsctosPlanos = new ArrayList<>();
 		this.lstMapsCantVsDscto = new ArrayList<>();
-	}	
-
+	}
+	
+	/**
+	 * Obtiene el tipo de promoción base.
+	 *
+	 * @return El tipo de promoción base
+	 */
 	int getTipoPromocionBase() {
 		return tipoPromocionBase;
 	}
 
+	/**
+	 * Obtiene el parámetro N para promoción N X M.
+	 *
+	 * @return El valor de N
+	 */
 	int getN() {
 		return n;
 	}
 
+	/**
+	 * Establece el parámetro N para promoción N X M.
+	 *
+	 * @param n El valor de N a establecer
+	 */
 	void setN(int n) {
 		this.n = n;
 	}
 
+	/**
+	 * Obtiene el parámetro M para promoción N X M.
+	 *
+	 * @return El valor de M
+	 */
 	int getM() {
 		return m;
 	}
 
+	/**
+	 * Establece el parámetro M para promoción N X M.
+	 *
+	 * @param m El valor de M a establecer
+	 */
 	void setM(int m) {
 		this.m = m;
 	}
 
+	/**
+	 * Obtiene la lista de descuentos planos.
+	 *
+	 * @return Lista de porcentajes de descuento plano
+	 */
 	List<Float> getLstDsctosPlanos() {
 		return lstDsctosPlanos;
 	}
 
 
+	/**
+	 * Obtiene la lista de mapas de descuentos por cantidad.
+	 *
+	 * @return Lista de mapas cantidad vs descuento
+	 */
 	List<Map<Integer, Double>> getLstMapsCantVsDscto() {
 		return lstMapsCantVsDscto;
 	}
 
+	/**
+	 * Configura la promoción base como sin descuento.
+	 *
+	 * @return Esta instancia del builder para encadenamiento
+	 */
 	public PromocionBuilder conPromocionBaseSinDscto(){
 		this.tipoPromocionBase = PROM_BASE_SIN_DSCTO;
 		return this;
 	}
 
 	/**
-	 * 
-	 * @param n
-	 * @param m
+	 * Configura la promoción base como N X M con los parámetros especificados.
+	 *
+	 * @param n Número de unidades que debe llevar el cliente
+	 * @param m Número de unidades que paga el cliente
+	 * @return Esta instancia del builder para encadenamiento
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public PromocionBuilder conPromocionBaseNXM(int n, int m){
+		ValidationUtils.validateNXMParameters(n, m);
 		this.tipoPromocionBase = PROM_BASE_NXM;
 		this.n = n;
 		this.m = m;
@@ -164,35 +130,52 @@ public class PromocionBuilder {
 	}
 
 	/**
-	 * 
-	 * @param procDscto
+	 * Agrega un descuento plano porcentual a la lista de acumulaciones.
+	 *
+	 * @param porcDscto Porcentaje de descuento a aplicar (ej: 7.5 para 7.5%)
+	 * @return Esta instancia del builder para encadenamiento
+	 * @throws IllegalArgumentException si el porcentaje es inválido
 	 */
 	public PromocionBuilder agregarDsctoPlano(float porcDscto){
+		ValidationUtils.validatePorcentajeDescuento(porcDscto, "porcDscto");
 		this.lstDsctosPlanos.add(porcDscto);
 		return this;
 
 	}
 
 	/**
-	 * 
-	 * @param mapCantVsDscto
+	 * Agrega un descuento por cantidad basado en el mapa proporcionado.
+	 *
+	 * @param mapCantVsDscto Mapa que asocia cantidades mínimas con porcentajes de descuento
+	 * @return Esta instancia del builder para encadenamiento
+	 * @throws IllegalArgumentException si el mapa es inválido
 	 */
 	public PromocionBuilder agregarDsctoXcantidad(Map<Integer,Double> mapCantVsDscto){
+		ValidationUtils.validateMapaDescuentosPorCantidad(mapCantVsDscto);
 		this.lstMapsCantVsDscto.add(mapCantVsDscto);
 		return this;
 
 	}
 
+	/**
+	 * Construye y devuelve la promoción con la configuración actual.
+	 *
+	 * @return La promoción construida
+	 */
 	public Promocion build() {
 		return Promocion.crearPromocion(this);
 	}
 
+	/**
+	 * Representación en cadena del estado actual del builder.
+	 *
+	 * @return Cadena con la información del builder
+	 */
 	@Override
 	public String toString() {
 		return "PromocionBuilder [tipoPromocionBase=" + tipoPromocionBase + ", n=" + n + ", m=" + m
 				+ ", lstDsctosPlanos=" + lstDsctosPlanos + ", lstMapsCantVsDscto=" + lstMapsCantVsDscto + "]";
 	}
-
 	
 	
 }
