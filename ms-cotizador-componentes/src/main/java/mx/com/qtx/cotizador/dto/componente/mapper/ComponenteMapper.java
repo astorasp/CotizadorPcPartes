@@ -3,6 +3,7 @@ package mx.com.qtx.cotizador.dto.componente.mapper;
 import mx.com.qtx.cotizador.dominio.core.componentes.Componente;
 import mx.com.qtx.cotizador.dominio.core.componentes.DiscoDuro;
 import mx.com.qtx.cotizador.dominio.core.componentes.TarjetaVideo;
+import mx.com.qtx.cotizador.dominio.core.componentes.Pc;
 import mx.com.qtx.cotizador.dto.componente.request.ComponenteCreateRequest;
 import mx.com.qtx.cotizador.dto.componente.request.ComponenteUpdateRequest;
 import mx.com.qtx.cotizador.dto.componente.response.ComponenteResponse;
@@ -138,6 +139,8 @@ public class ComponenteMapper {
         } else if (componente instanceof TarjetaVideo tarjeta) {
             builder.tipoComponente("TARJETA_VIDEO")
                    .memoria(tarjeta.getMemoria());
+        } else if (componente instanceof Pc) {
+            builder.tipoComponente("PC");
         } else {
             builder.tipoComponente("MONITOR");
         }
