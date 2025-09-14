@@ -1,5 +1,5 @@
 {
-  "name": "componentes-cotizaciones-sink",
+  "name": "componentes-cotizaciones-base-sink",
   "config": {
     "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
     "tasks.max": "1",
@@ -8,7 +8,7 @@
     "connection.password": "dbz_password",
     "hibernate.dialect": "org.hibernate.dialect.MySQLDialect",
     "hibernate.connection.driver_class": "com.mysql.cj.jdbc.Driver",
-    
+
     "hibernate.c3p0.min_size": "1",
     "hibernate.c3p0.max_size": "5",
     "hibernate.c3p0.timeout": "300",
@@ -18,13 +18,13 @@
     "hibernate.c3p0.testConnectionOnCheckout": "true",
     "hibernate.c3p0.acquireRetryAttempts": "3",
     "hibernate.c3p0.acquireRetryDelay": "1000",
-    
+
     "heartbeat.interval.ms": "30000",
     "batch.size": "100",
     "buffer.count.records": "500",
     "flush.timeout.ms": "60000",
-    
-    "topics.regex": "componentes\\.cotizador_componentes_db\\.(cocomponente|copromocion|codetalle_promocion|codetalle_prom_dscto_x_cant|copc_parte)",
+
+    "topics.regex": "componentes\\.cotizador_componentes_db\\.(cocomponente|copromocion)",
     "auto.create": "true",
     "auto.evolve": "true",
     "insert.mode": "upsert",
