@@ -24,9 +24,11 @@ public class PromNXM extends PromBase {
 	 *
 	 * @param n Número de unidades que debe llevar el cliente
 	 * @param m Número de unidades que paga el cliente por cada grupo de N
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public PromNXM(int n, int m) {
 		super(n + " X " + m, "Lleve " + n + ", pague " + m);
+		ValidationUtils.validateNXMParameters(n, m);
 		this.lleveN = n;
 		this.pagueM = m;
 	}
@@ -46,8 +48,10 @@ public class PromNXM extends PromBase {
 	 * Establece el número de unidades que debe llevar el cliente.
 	 *
 	 * @param lleveN Número de unidades para el grupo
+	 * @throws IllegalArgumentException si el valor es inválido
 	 */
 	public void setLleveN(int lleveN) {
+		ValidationUtils.validateNXMParameters(lleveN, this.pagueM);
 		this.lleveN = lleveN;
 	}
 
@@ -66,8 +70,10 @@ public class PromNXM extends PromBase {
 	 * Establece el número de unidades que paga el cliente por cada grupo.
 	 *
 	 * @param pagueM Número de unidades a pagar por grupo
+	 * @throws IllegalArgumentException si el valor es inválido
 	 */
 	public void setPagueM(int pagueM) {
+		ValidationUtils.validateNXMParameters(this.lleveN, pagueM);
 		this.pagueM = pagueM;
 	}
 
@@ -80,17 +86,20 @@ public class PromNXM extends PromBase {
 	 * @param nUnidades Cantidad total de unidades del componente
 	 * @param precioBase Precio base unitario del componente
 	 * @return Importe total calculado con la promoción aplicada
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public BigDecimal calcularImportePromocion(int nUnidades, BigDecimal precioBase){
-	    
+	    // Validar parámetros de entrada
+	    ValidationUtils.validateParametrosCalculoPromocion(nUnidades, precioBase);
+
 	    // Calcular grupos completos de N unidades y unidades restantes
 	    int gruposCompletos = nUnidades / this.lleveN;
 	    int unidadesRestantes = nUnidades % this.lleveN;
-	    
+
 	    // Calcular total: (M * grupos) + restantes
 	    BigDecimal total = precioBase
 	        .multiply(BigDecimal.valueOf(gruposCompletos * this.pagueM + unidadesRestantes));
-    
+
 	    return total;
 	}
 

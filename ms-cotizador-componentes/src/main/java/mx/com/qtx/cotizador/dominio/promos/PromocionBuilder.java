@@ -119,8 +119,10 @@ public class PromocionBuilder {
 	 * @param n Número de unidades que debe llevar el cliente
 	 * @param m Número de unidades que paga el cliente
 	 * @return Esta instancia del builder para encadenamiento
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public PromocionBuilder conPromocionBaseNXM(int n, int m){
+		ValidationUtils.validateNXMParameters(n, m);
 		this.tipoPromocionBase = PROM_BASE_NXM;
 		this.n = n;
 		this.m = m;
@@ -132,8 +134,10 @@ public class PromocionBuilder {
 	 *
 	 * @param porcDscto Porcentaje de descuento a aplicar (ej: 7.5 para 7.5%)
 	 * @return Esta instancia del builder para encadenamiento
+	 * @throws IllegalArgumentException si el porcentaje es inválido
 	 */
 	public PromocionBuilder agregarDsctoPlano(float porcDscto){
+		ValidationUtils.validatePorcentajeDescuento(porcDscto, "porcDscto");
 		this.lstDsctosPlanos.add(porcDscto);
 		return this;
 
@@ -144,8 +148,10 @@ public class PromocionBuilder {
 	 *
 	 * @param mapCantVsDscto Mapa que asocia cantidades mínimas con porcentajes de descuento
 	 * @return Esta instancia del builder para encadenamiento
+	 * @throws IllegalArgumentException si el mapa es inválido
 	 */
 	public PromocionBuilder agregarDsctoXcantidad(Map<Integer,Double> mapCantVsDscto){
+		ValidationUtils.validateMapaDescuentosPorCantidad(mapCantVsDscto);
 		this.lstMapsCantVsDscto.add(mapCantVsDscto);
 		return this;
 

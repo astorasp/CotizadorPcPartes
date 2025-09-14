@@ -21,9 +21,11 @@ public abstract class PromAcumulable extends Promocion {
 	 * @param descripcion Descripción detallada de la promoción
 	 * @param nombre Nombre identificativo de la promoción
 	 * @param promoBase Promoción base sobre la cual se aplicarán acumulaciones
+	 * @throws IllegalArgumentException si promoBase es null o otros parámetros son inválidos
 	 */
 	public PromAcumulable(String descripcion, String nombre, Promocion promoBase) {
 		super(descripcion, nombre);
+		ValidationUtils.validateNotNull(promoBase, "promoBase");
 		this.promoBase = promoBase;
 	}
 

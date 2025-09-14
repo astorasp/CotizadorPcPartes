@@ -23,9 +23,12 @@ public class PromDsctoXcantidad extends PromAcumulable {
 	 *
 	 * @param promoBase Promoción base sobre la cual aplicar los descuentos por cantidad
 	 * @param mapCantidadVsDscto Mapa que asocia cantidades mínimas con porcentajes de descuento
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public PromDsctoXcantidad(Promocion promoBase, Map<Integer, Double> mapCantidadVsDscto) {
 		super("Dscto con base en tabla de cantidades y descuentos" + mapCantidadVsDscto, "Dscto x cantidad", promoBase);
+		ValidationUtils.validateNotNull(promoBase, "promoBase");
+		ValidationUtils.validateMapaDescuentosPorCantidad(mapCantidadVsDscto);
 		this.mapCantidadVsDscto = mapCantidadVsDscto;
 	}
 
@@ -36,8 +39,10 @@ public class PromDsctoXcantidad extends PromAcumulable {
 	 * @param cant Cantidad de unidades del componente
 	 * @param precioBase Precio base unitario del componente
 	 * @return Importe total con el descuento por cantidad aplicado
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public BigDecimal calcularImportePromocion(int cant, BigDecimal precioBase){
+		ValidationUtils.validateParametrosCalculoPromocion(cant, precioBase);
 		
 		BigDecimal baseCalculo = this.promoBase.calcularImportePromocion(cant, precioBase);
 		

@@ -27,9 +27,12 @@ public abstract class Promocion implements IPromocion{
 	 *
 	 * @param descripcion Descripción detallada de la promoción
 	 * @param nombre Nombre identificativo de la promoción
+	 * @throws IllegalArgumentException si la descripción o nombre son inválidos
 	 */
 	public Promocion(String descripcion, String nombre) {
 		super();
+		ValidationUtils.validateNotNullOrEmpty(descripcion, "descripcion");
+		ValidationUtils.validateNotNullOrEmpty(nombre, "nombre");
 		this.descripcion = descripcion;
 		this.nombre = nombre;
 	}
@@ -47,8 +50,10 @@ public abstract class Promocion implements IPromocion{
 	 * Establece la descripción de la promoción.
 	 *
 	 * @param descripcion La descripción a establecer
+	 * @throws IllegalArgumentException si la descripción es inválida
 	 */
 	public void setDescripcion(String descripcion) {
+		ValidationUtils.validateNotNullOrEmpty(descripcion, "descripcion");
 		this.descripcion = descripcion;
 	}
 
@@ -65,8 +70,10 @@ public abstract class Promocion implements IPromocion{
 	 * Establece el nombre de la promoción.
 	 *
 	 * @param nombre El nombre a establecer
+	 * @throws IllegalArgumentException si el nombre es inválido
 	 */
 	public void setNombre(String nombre) {
+		ValidationUtils.validateNotNullOrEmpty(nombre, "nombre");
 		this.nombre = nombre;
 	}
 

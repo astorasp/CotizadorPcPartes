@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -533,30 +534,23 @@ class PromocionBuilderTest {
     }
 
     /**
-     * Verifica comportamiento con mapa de descuentos por cantidad vacío.
-     * 
-     * Given: PromocionBuilder con mapa de descuentos vacío
-     * When: Se construye la promoción
-     * Then: Funciona sin aplicar descuentos
+     * Verifica que mapa de descuentos por cantidad vacío lanza excepción de validación.
+     *
+     * Given: PromocionBuilder intentando agregar mapa de descuentos vacío
+     * When: Se intenta agregar el mapa vacío
+     * Then: Lanza IllegalArgumentException
      */
     @Test
-    @DisplayName("Mapa de descuentos vacío no debe aplicar descuentos")
-    void mapaDescuentosVacio_noDebeAplicarDescuentos() {
+    @DisplayName("Mapa de descuentos vacío debería lanzar excepción de validación")
+    void mapaDescuentosVacio_deberiaLanzarExcepcion() {
         // Given: Builder con mapa vacío
         Map<Integer, Double> mapaVacio = new HashMap<>();
-        builder.conPromocionBaseSinDscto()
-               .agregarDsctoXcantidad(mapaVacio);
-        
-        // When: Se construye y aplica
-        Promocion promocion = builder.build();
-        BigDecimal precio = new BigDecimal("120.00");
-        int cantidad = 10;
-        
-        // Then: Sin descuentos aplicados
-        BigDecimal esperado = precio.multiply(new BigDecimal(cantidad));
-        BigDecimal resultado = promocion.calcularImportePromocion(cantidad, precio);
-        
-        assertEquals(0, esperado.compareTo(resultado), "Mapa vacío no debe aplicar descuentos");
+
+        // When & Then: Intentar agregar mapa vacío debe fallar
+        assertThrows(IllegalArgumentException.class, () -> {
+            builder.conPromocionBaseSinDscto()
+                   .agregarDsctoXcantidad(mapaVacio);
+        });
     }
 
     // ==================== TESTS DE VALIDACIÓN Y GETTERS ====================

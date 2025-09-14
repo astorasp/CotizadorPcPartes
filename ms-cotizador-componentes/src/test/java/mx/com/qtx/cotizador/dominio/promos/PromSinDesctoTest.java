@@ -130,25 +130,23 @@ class PromSinDesctoTest {
         BigDecimal precioBase = null;
         
         // Act & Assert
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             promocion.calcularImportePromocion(cantidad, precioBase);
         });
     }
 
     @Test
-    @DisplayName("Debería manejar cantidad negativa (comportamiento actual)")
-    void calcular_cantidadNegativa_comportamientoActual() {
+    @DisplayName("Debería rechazar cantidad negativa con validaciones")
+    void calcular_cantidadNegativa_deberiaLanzarExcepcion() {
         // Arrange
         PromSinDescto promocion = new PromSinDescto();
         int cantidad = -5;
         BigDecimal precioBase = BigDecimal.valueOf(100.00);
-        
-        // Act
-        BigDecimal resultado = promocion.calcularImportePromocion(cantidad, precioBase);
-        
-        // Assert
-        // El comportamiento actual permite negativos - retorna valor negativo
-        assertThat(resultado).isEqualByComparingTo(BigDecimal.valueOf(-500.00));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            promocion.calcularImportePromocion(cantidad, precioBase);
+        });
     }
 
     // ==================== TESTS DE METADATOS ====================

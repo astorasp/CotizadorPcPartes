@@ -29,8 +29,10 @@ public class PromSinDescto extends PromBase {
 	 * @param cant Cantidad de unidades del componente
 	 * @param precioBase Precio base unitario del componente
 	 * @return Importe total calculado (cantidad * precio base)
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public BigDecimal calcularImportePromocion(int cant, BigDecimal precioBase){
+		ValidationUtils.validateParametrosCalculoPromocion(cant, precioBase);
 		return precioBase.multiply(new BigDecimal(cant));
 	}
 

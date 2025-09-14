@@ -3,21 +3,26 @@ package mx.com.qtx.cotizador.dominio.core.componentes;
 import java.math.BigDecimal;
 
 /**
- * Clase abstracta para componentes simples.
- * Extiende Componente para representar componentes individuales no compuestos.
+ * Clase abstracta base para componentes simples del sistema.
+ * Representa componentes de hardware individuales que no contienen subcomponentes,
+ * como monitores, discos duros, tarjetas de video, etc.
+ * Extiende la clase Componente y proporciona una base común para estos tipos de componentes.
+ *
+ * @author [Nombre del autor]
+ * @version 1.0
  */
 public abstract class ComponenteSimple extends Componente{
 
 	/**
-	 * Constructor para crear una instancia de ComponenteSimple.
-	 * Inicializa el componente simple con sus propiedades básicas.
-	 * 
-	 * @param id El identificador único asignado al componente para su identificación en el sistema
-	 * @param descripcion Una descripción detallada que explica las características y especificaciones del componente
-	 * @param marca El nombre de la marca fabricante del componente
-	 * @param modelo El modelo específico del componente proporcionado por el fabricante
-	 * @param costo El costo monetario de adquisición del componente expresado en BigDecimal para precisión
-	 * @param precioBase El precio base de venta del componente antes de aplicar promociones
+	 * Constructor que inicializa un componente simple con sus propiedades básicas.
+	 * Delega la inicialización al constructor de la clase padre Componente.
+	 *
+	 * @param id Identificador único del componente
+	 * @param descripcion Descripción detallada del componente
+	 * @param marca Marca del componente
+	 * @param modelo Modelo específico del componente
+	 * @param costo Costo de adquisición del componente
+	 * @param precioBase Precio base de venta del componente
 	 */
 	public ComponenteSimple(String id, String descripcion, String marca, String modelo, BigDecimal costo,
 			BigDecimal precioBase) {

@@ -22,9 +22,12 @@ public class PromDsctoPlano extends PromAcumulable {
 	 *
 	 * @param promoBase Promoción base sobre la cual aplicar el descuento adicional
 	 * @param porcDescto Porcentaje de descuento a aplicar (ej: 7.5 para 7.5%)
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public PromDsctoPlano(Promocion promoBase, float porcDescto) {
 		super(String.format("Descuento Plano del %4.2f %%",porcDescto), "Dscto Plano", promoBase);
+		ValidationUtils.validateNotNull(promoBase, "promoBase");
+		ValidationUtils.validatePorcentajeDescuento(porcDescto, "porcDescto");
 		this.porcDescto = porcDescto;
 	}
 
@@ -36,8 +39,11 @@ public class PromDsctoPlano extends PromAcumulable {
 	 * @param cant Cantidad de unidades del componente
 	 * @param precioBase Precio base unitario del componente
 	 * @return Importe total con el descuento plano aplicado
+	 * @throws IllegalArgumentException si los parámetros son inválidos
 	 */
 	public BigDecimal calcularImportePromocion(int cant, BigDecimal precioBase){
+		ValidationUtils.validateParametrosCalculoPromocion(cant, precioBase);
+
 		BigDecimal baseCalculo = this.promoBase.calcularImportePromocion(cant, precioBase);
 		BigDecimal porcDscto = new BigDecimal(porcDescto).divide(new BigDecimal(100));
 		BigDecimal importeDscto = baseCalculo.multiply(porcDscto);

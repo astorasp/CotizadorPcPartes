@@ -1,6 +1,7 @@
 package mx.com.qtx.cotizador.dominio.promos;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -219,19 +220,16 @@ class PromDsctoXcantidadTest {
     // ==================== EDGE CASES CRÍTICOS ====================
 
     @Test
-    @DisplayName("Map vacío debería devolver precio base sin descuento")
-    void map_vacio_deberia_devolver_precio_base() {
+    @DisplayName("Map vacío debería lanzar excepción de validación")
+    void map_vacio_deberia_lanzar_excepcion() {
         // Arrange
         PromSinDescto promoBase = new PromSinDescto();
         Map<Integer, Double> mapVacio = new HashMap<>();
-        PromDsctoXcantidad promocion = new PromDsctoXcantidad(promoBase, mapVacio);
-        
-        // Act
-        BigDecimal resultado = promocion.calcularImportePromocion(5, BigDecimal.valueOf(100.00));
-        
-        // Assert
-        // Sin escalas disponibles, devuelve precio base: 5 × $100 = $500
-        assertThat(resultado).isEqualByComparingTo(BigDecimal.valueOf(500.00));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> {
+            new PromDsctoXcantidad(promoBase, mapVacio);
+        });
     }
 
     @Test

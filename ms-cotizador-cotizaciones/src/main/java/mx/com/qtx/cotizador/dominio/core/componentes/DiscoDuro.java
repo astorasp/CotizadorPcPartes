@@ -3,35 +3,48 @@ package mx.com.qtx.cotizador.dominio.core.componentes;
 import java.math.BigDecimal;
 
 /**
- * Clase que representa un disco duro como componente de PC.
- * Extiende ComponenteSimple e incluye capacidad de almacenamiento.
+ * Representa un componente de tipo disco duro en el sistema de cotización.
+ * Extiende ComponenteSimple y añade la propiedad de capacidad de almacenamiento.
+ * Los discos duros son componentes de almacenamiento que pueden ser incluidos en configuraciones de PC.
+ *
+ * @author [Nombre del autor]
+ * @version 1.0
  */
 public class DiscoDuro extends ComponenteSimple {
 	private String capacidadAlm;
 
 	/**
-	 * Constructor protegido para crear una instancia de DiscoDuro.
-	 * Inicializa el disco duro con sus propiedades específicas, incluyendo la capacidad de almacenamiento.
-	 * 
-	 * @param id El identificador único asignado al disco duro para su identificación en el sistema
-	 * @param descripcion Una descripción detallada que explica las características y especificaciones del disco duro
-	 * @param marca El nombre de la marca fabricante del disco duro (ej: "Western Digital", "Seagate")
-	 * @param modelo El modelo específico del disco duro proporcionado por el fabricante
-	 * @param costo El costo monetario de adquisición del disco duro expresado en BigDecimal para precisión
-	 * @param precioBase El precio base de venta del disco duro antes de aplicar promociones
-	 * @param capacidadAlm La capacidad de almacenamiento del disco duro expresada como cadena (ej: "1TB", "500GB")
+	 * Constructor protegido para crear un disco duro con sus propiedades específicas.
+	 * Inicializa las propiedades heredadas y establece la capacidad de almacenamiento.
+	 *
+	 * @param id Identificador único del disco duro
+	 * @param descripcion Descripción detallada del disco duro
+	 * @param marca Marca del disco duro
+	 * @param modelo Modelo específico del disco duro
+	 * @param costo Costo de adquisición del disco duro
+	 * @param precioBase Precio base de venta del disco duro
+	 * @param capacidadAlm Capacidad de almacenamiento del disco duro (no debe ser nula ni vacía)
+	 * @throws IllegalArgumentException si capacidadAlm es nula o vacía
 	 */
 	protected DiscoDuro(String id, String descripcion, String marca, String modelo, BigDecimal costo,
 			BigDecimal precioBase, String capacidadAlm) {
 		super(id, descripcion, marca, modelo, costo, precioBase);
+
+		// Validaciones PRD específicas para DiscoDuro
+		if (capacidadAlm == null) {
+			throw new IllegalArgumentException("La capacidadAlm no puede ser nula");
+		}
+		if (capacidadAlm.trim().isEmpty()) {
+			throw new IllegalArgumentException("La capacidadAlm no puede estar vacía");
+		}
+
 		this.capacidadAlm = capacidadAlm;
 	}
 
 	/**
 	 * Obtiene la capacidad de almacenamiento del disco duro.
-	 * Este método devuelve la capacidad de almacenamiento tal como fue configurada durante la creación del objeto.
-	 * 
-	 * @return La capacidad de almacenamiento como una cadena de texto que representa el tamaño (ej: "1TB", "500GB")
+	 *
+	 * @return La capacidad de almacenamiento como cadena de texto
 	 */
 	public String getCapacidadAlm() {
 		return capacidadAlm;
@@ -39,18 +52,16 @@ public class DiscoDuro extends ComponenteSimple {
 
 	/**
 	 * Establece la capacidad de almacenamiento del disco duro.
-	 * Permite modificar la capacidad de almacenamiento después de la creación del objeto.
-	 * 
-	 * @param capacidadAlm La nueva capacidad de almacenamiento a asignar, expresada como cadena de texto
+	 *
+	 * @param capacidadAlm La capacidad de almacenamiento a establecer
 	 */
 	public void setCapacidadAlm(String capacidadAlm) {
 		this.capacidadAlm = capacidadAlm;
 	}
 
 	/**
-	 * Muestra las características específicas del disco duro en la consola.
-	 * Primero invoca el método de la clase padre para mostrar las características generales del componente,
-	 * y luego añade la información específica de la capacidad de almacenamiento del disco duro.
+	 * Muestra las características específicas del disco duro.
+	 * Incluye la información del componente padre y la capacidad de almacenamiento.
 	 */
 	@Override
 	public void mostrarCaracteristicas() {
@@ -60,10 +71,9 @@ public class DiscoDuro extends ComponenteSimple {
 	}
 
 	/**
-	 * Obtiene la categoría específica de este componente.
-	 * Devuelve "Disco Duro" para identificar que este componente es un dispositivo de almacenamiento.
-	 * 
-	 * @return La cadena "Disco Duro" que representa la categoría del componente
+	 * Obtiene la categoría de este componente.
+	 *
+	 * @return "Disco Duro" como categoría del componente
 	 */
 	@Override
 	public String getCategoria() {

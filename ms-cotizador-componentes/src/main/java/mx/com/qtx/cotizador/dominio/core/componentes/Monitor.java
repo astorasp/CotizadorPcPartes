@@ -11,11 +11,6 @@ import java.math.BigDecimal;
  * @version 1.0
  */
 public class Monitor extends ComponenteSimple {
-	
-//	private static Map<Integer, Double> mapDsctos = Map.of(0,  0.0,
-//														   3,  5.0,
-//														   6, 10.0,
-//														   9, 12.0);
 
 	/**
 	 * Constructor protegido para crear un monitor con sus propiedades básicas.
@@ -32,10 +27,6 @@ public class Monitor extends ComponenteSimple {
 			BigDecimal precioBase) {
 		super(id, descripcion, marca, modelo, costo, precioBase);
 	}
-	
-//	public BigDecimal cotizar(int cantidadI) {
-//		return PromocionUtil.calcularPrecioPromocionDsctoXcant(cantidadI, this.precioBase, mapDsctos);
-//	}
 
 	/**
 	 * Obtiene la categoría de este componente.
