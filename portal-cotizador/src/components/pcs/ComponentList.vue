@@ -62,6 +62,7 @@
             <label class="text-sm text-gray-700">Cant:</label>
             <div class="flex items-center border rounded-md">
               <button
+                type="button"
                 @click="decrementQuantity(index)"
                 :disabled="component.cantidad <= 1"
                 class="px-2 py-1 text-sm text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -77,6 +78,7 @@
                 class="w-12 px-2 py-1 text-sm text-center border-0 focus:ring-0"
               />
               <button
+                type="button"
                 @click="incrementQuantity(index)"
                 :disabled="component.cantidad >= 10"
                 class="px-2 py-1 text-sm text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -99,6 +101,7 @@
           <!-- Botón eliminar -->
           <div>
             <button
+              type="button"
               @click="removeComponent(index)"
               class="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
               title="Quitar componente"

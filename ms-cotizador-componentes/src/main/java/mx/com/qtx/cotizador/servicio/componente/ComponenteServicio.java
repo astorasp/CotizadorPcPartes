@@ -436,7 +436,27 @@ public class ComponenteServicio {
             }
             
             // Convertir DTO a objeto de dominio
-            Pc pc = PcMapper.toPc(request);
+            Pc pc;
+            try {
+                pc = PcMapper.toPc(request);
+            } catch (RuntimeException e) {
+                String mensaje = e.getMessage();
+                if (mensaje.contains("Estructura Pc Invalida")) {
+                    // Extraer información específica del error de validación
+                    String detalleError = "PC no cumple reglas de negocio: ";
+                    if (mensaje.contains("tarjetas(0)")) {
+                        detalleError += "requiere mínimo 1 tarjeta de video";
+                    } else if (mensaje.contains("monitores(0)")) {
+                        detalleError += "requiere mínimo 1 monitor";
+                    } else if (mensaje.contains("discos(0)")) {
+                        detalleError += "requiere mínimo 1 disco duro";
+                    } else {
+                        detalleError += "revisa que tenga 1-2 monitores, 1-2 tarjetas de video y 1-3 discos duros";
+                    }
+                    return new ApiResponse<>(Errores.REGLA_NEGOCIO_VIOLADA.getCodigo(), detalleError);
+                }
+                throw e; // Re-lanzar si no es error de validación de PC
+            }
             
             // Validar que tenga sub-componentes
             if (pc.getSubComponentes() == null || pc.getSubComponentes().isEmpty()) {
