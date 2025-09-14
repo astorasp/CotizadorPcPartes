@@ -38,6 +38,7 @@ public class Cotizacion {
 		this.num = nCotizaciones;
 		this.fecha = LocalDate.now();
 		this.total = new BigDecimal(0);
+		this.totalImpuestos = new BigDecimal(0);
 		this.detalles = new TreeMap<>();
 	}
 	

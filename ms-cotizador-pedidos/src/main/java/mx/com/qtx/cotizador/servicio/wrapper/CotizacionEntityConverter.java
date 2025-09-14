@@ -161,7 +161,20 @@ public class CotizacionEntityConverter {
         if (fecha != null) {
             cotizacionDominio.setFecha(fecha);
         }
-        
+
+        // Establecer num del folio si está disponible
+        if (cotizacionEntity.getFolio() != null) {
+            cotizacionDominio.setNum(cotizacionEntity.getFolio());
+        }
+
+        // Establecer totales de la entidad
+        if (cotizacionEntity.getTotal() != null) {
+            cotizacionDominio.setTotal(cotizacionEntity.getTotal());
+        }
+        if (cotizacionEntity.getImpuestos() != null) {
+            cotizacionDominio.setTotalImpuestos(cotizacionEntity.getImpuestos());
+        }
+
         // Convertir los detalles
         if (cotizacionEntity.getDetalles() != null && !cotizacionEntity.getDetalles().isEmpty()) {
             List<mx.com.qtx.cotizador.dominio.core.DetalleCotizacion> detallesDominio = 

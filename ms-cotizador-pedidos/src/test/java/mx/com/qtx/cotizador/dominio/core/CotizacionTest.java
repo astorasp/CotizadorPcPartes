@@ -74,7 +74,7 @@ class CotizacionTest {
             assertThat(nuevaCotizacion.getNum()).isPositive();
             assertThat(nuevaCotizacion.getFecha()).isEqualTo(LocalDate.now());
             assertThat(nuevaCotizacion.getTotal()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(nuevaCotizacion.getTotalImpuestos()).isNull();
+            assertThat(nuevaCotizacion.getTotalImpuestos()).isEqualByComparingTo(BigDecimal.ZERO);
             assertThat(nuevaCotizacion.getDetalles()).isEmpty();
         }
 

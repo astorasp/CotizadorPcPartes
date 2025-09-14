@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import mx.com.qtx.cotizador.dominio.core.Cotizacion;
 import mx.com.qtx.cotizador.entidad.Componente;
 import mx.com.qtx.cotizador.entidad.TipoComponente;
 import mx.com.qtx.cotizador.repositorio.ComponenteRepositorio;
@@ -171,9 +172,24 @@ class CotizacionEntityConverterTest {
         @Test
         @DisplayName("Debería convertir cotización dominio a entidad correctamente")
         void convertToEntity_deberiaConvertirCotizacionCorrectamente() {
-            // Skip this test due to domain design issue: totalImpuestos is not initialized
-            // and causes NullPointerException in subtraction calculation
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Skipped due to totalImpuestos null in domain object");
+            // Arrange
+            Cotizacion cotizacionDominio = new Cotizacion();
+            cotizacionDominio.setNum(FOLIO_COTIZACION);
+            cotizacionDominio.setFecha(LocalDate.of(2025, 4, 15));
+            cotizacionDominio.setTotal(TOTAL_COTIZACION);
+            cotizacionDominio.setTotalImpuestos(IMPUESTOS);
+
+            // Act
+            mx.com.qtx.cotizador.entidad.Cotizacion resultado =
+                CotizacionEntityConverter.convertToEntity(cotizacionDominio, componenteRepositorio);
+
+            // Assert
+            assertThat(resultado).isNotNull();
+            assertThat(resultado.getFolio()).isNull(); // Folio se genera en persistencia, no en conversión
+            assertThat(resultado.getFecha()).isEqualTo("2025-04-15");
+            assertThat(resultado.getTotal()).isEqualByComparingTo(TOTAL_COTIZACION);
+            assertThat(resultado.getImpuestos()).isEqualByComparingTo(IMPUESTOS);
+            assertThat(resultado.getSubtotal()).isEqualByComparingTo(SUBTOTAL);
         }
 
         @Test
@@ -190,15 +206,43 @@ class CotizacionEntityConverterTest {
         @Test
         @DisplayName("Debería manejar fecha null correctamente")
         void convertToEntity_deberiaManejarFechaNull() {
-            // Skip this test due to domain design issue: totalImpuestos is not initialized
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Skipped due to totalImpuestos null in domain object");
+            // Arrange
+            Cotizacion cotizacionDominio = new Cotizacion();
+            cotizacionDominio.setNum(FOLIO_COTIZACION);
+            cotizacionDominio.setFecha(null); // Fecha null
+            cotizacionDominio.setTotal(TOTAL_COTIZACION);
+            cotizacionDominio.setTotalImpuestos(IMPUESTOS);
+
+            // Act
+            mx.com.qtx.cotizador.entidad.Cotizacion resultado =
+                CotizacionEntityConverter.convertToEntity(cotizacionDominio, componenteRepositorio);
+
+            // Assert
+            assertThat(resultado).isNotNull();
+            assertThat(resultado.getFolio()).isNull(); // Folio se genera en persistencia
+            assertThat(resultado.getFecha()).isNull();
+            assertThat(resultado.getTotal()).isEqualByComparingTo(TOTAL_COTIZACION);
         }
 
         @Test
         @DisplayName("Debería calcular subtotal correctamente")
         void convertToEntity_deberiaCalcularSubtotalCorrectamente() {
-            // Skip this test due to domain design issue: totalImpuestos is not initialized
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Skipped due to totalImpuestos null in domain object");
+            // Arrange
+            Cotizacion cotizacionDominio = new Cotizacion();
+            cotizacionDominio.setNum(FOLIO_COTIZACION);
+            cotizacionDominio.setFecha(LocalDate.of(2025, 4, 15));
+            cotizacionDominio.setTotal(new BigDecimal("1160.00")); // Total
+            cotizacionDominio.setTotalImpuestos(new BigDecimal("160.00")); // Impuestos
+            // Subtotal esperado = Total - Impuestos = 1160 - 160 = 1000
+
+            // Act
+            mx.com.qtx.cotizador.entidad.Cotizacion resultado =
+                CotizacionEntityConverter.convertToEntity(cotizacionDominio, componenteRepositorio);
+
+            // Assert
+            assertThat(resultado.getSubtotal()).isEqualByComparingTo(new BigDecimal("1000.00"));
+            assertThat(resultado.getImpuestos()).isEqualByComparingTo(new BigDecimal("160.00"));
+            assertThat(resultado.getTotal()).isEqualByComparingTo(new BigDecimal("1160.00"));
         }
     }
 
@@ -293,8 +337,23 @@ class CotizacionEntityConverterTest {
         @Test
         @DisplayName("Debería crear nueva entidad sin detalles")
         void convertToNewEntity_deberiaCrearNuevaEntidadCorrectamente() {
-            // Skip this test due to domain design issue: totalImpuestos is not initialized
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Skipped due to totalImpuestos null in domain object");
+            // Arrange
+            Cotizacion cotizacionDominio = new Cotizacion();
+            cotizacionDominio.setNum(FOLIO_COTIZACION);
+            cotizacionDominio.setFecha(LocalDate.of(2025, 4, 15));
+            cotizacionDominio.setTotal(TOTAL_COTIZACION);
+            cotizacionDominio.setTotalImpuestos(IMPUESTOS);
+
+            // Act
+            mx.com.qtx.cotizador.entidad.Cotizacion resultado =
+                CotizacionEntityConverter.convertToNewEntity(cotizacionDominio);
+
+            // Assert
+            assertThat(resultado).isNotNull();
+            assertThat(resultado.getFolio()).isNull(); // Nueva entidad no tiene folio asignado
+            assertThat(resultado.getFecha()).isEqualTo("2025-04-15");
+            assertThat(resultado.getTotal()).isEqualByComparingTo(TOTAL_COTIZACION);
+            assertThat(resultado.getImpuestos()).isEqualByComparingTo(IMPUESTOS);
         }
 
         @Test
@@ -471,8 +530,20 @@ class CotizacionEntityConverterTest {
         @Test
         @DisplayName("Debería formatear fecha correctamente con patrón yyyy-MM-dd")
         void deberiaFormatearFechaCorrectamenteConPatron() {
-            // Skip this test due to domain design issue: totalImpuestos is not initialized
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Skipped due to totalImpuestos null in domain object");
+            // Arrange
+            Cotizacion cotizacionDominio = new Cotizacion();
+            cotizacionDominio.setNum(FOLIO_COTIZACION);
+            cotizacionDominio.setFecha(LocalDate.of(2025, 12, 25)); // Fecha específica
+            cotizacionDominio.setTotal(TOTAL_COTIZACION);
+            cotizacionDominio.setTotalImpuestos(IMPUESTOS);
+
+            // Act
+            mx.com.qtx.cotizador.entidad.Cotizacion resultado =
+                CotizacionEntityConverter.convertToEntity(cotizacionDominio, componenteRepositorio);
+
+            // Assert - Verificar formato yyyy-MM-dd
+            assertThat(resultado.getFecha()).isEqualTo("2025-12-25");
+            assertThat(resultado.getFecha()).matches("\\d{4}-\\d{2}-\\d{2}");
         }
 
         @Test
@@ -517,8 +588,22 @@ class CotizacionEntityConverterTest {
         @Test
         @DisplayName("Debería preservar fecha en conversión bidireccional")
         void deberiaPreservarFechaEnConversionBidireccional() {
-            // Skip this test due to domain design issue: totalImpuestos is not initialized
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Skipped due to totalImpuestos null in domain object");
+            // Arrange - Crear entidad cotización
+            mx.com.qtx.cotizador.entidad.Cotizacion entidadOriginal = new mx.com.qtx.cotizador.entidad.Cotizacion();
+            entidadOriginal.setFolio(FOLIO_COTIZACION);
+            entidadOriginal.setFecha("2025-06-15");
+            entidadOriginal.setSubtotal(SUBTOTAL);
+            entidadOriginal.setImpuestos(IMPUESTOS);
+            entidadOriginal.setTotal(TOTAL_COTIZACION);
+
+            // Act - Convertir a dominio
+            Cotizacion cotizacionResultado = CotizacionEntityConverter.convertToDomain(entidadOriginal);
+
+            // Assert - La fecha debe preservarse correctamente
+            assertThat(cotizacionResultado.getFecha()).isEqualTo(LocalDate.of(2025, 6, 15));
+            assertThat(cotizacionResultado.getNum()).isEqualTo(FOLIO_COTIZACION.longValue());
+            assertThat(cotizacionResultado.getTotal()).isEqualByComparingTo(TOTAL_COTIZACION);
+            assertThat(cotizacionResultado.getTotalImpuestos()).isEqualByComparingTo(IMPUESTOS);
         }
 
         @Test
@@ -557,8 +642,22 @@ class CotizacionEntityConverterTest {
         @Test
         @DisplayName("Debería ser consistente con múltiples conversiones")
         void deberiaSerConsistenteConMultiplesConversiones() {
-            // Skip this test due to domain design issue: totalImpuestos is not initialized
-            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Skipped due to totalImpuestos null in domain object");
+            // Arrange - Crear entidad cotización original
+            mx.com.qtx.cotizador.entidad.Cotizacion entidadOriginal = new mx.com.qtx.cotizador.entidad.Cotizacion();
+            entidadOriginal.setFolio(FOLIO_COTIZACION);
+            entidadOriginal.setFecha("2025-07-20");
+            entidadOriginal.setSubtotal(new BigDecimal("1680.00"));
+            entidadOriginal.setImpuestos(new BigDecimal("320.00"));
+            entidadOriginal.setTotal(new BigDecimal("2000.00"));
+
+            // Act - Convertir a dominio y validar que los cálculos son correctos
+            Cotizacion dominio = CotizacionEntityConverter.convertToDomain(entidadOriginal);
+
+            // Assert - Los datos deben ser consistentes
+            assertThat(dominio.getFecha()).isEqualTo(LocalDate.of(2025, 7, 20));
+            assertThat(dominio.getNum()).isEqualTo(FOLIO_COTIZACION.longValue());
+            assertThat(dominio.getTotal()).isEqualByComparingTo(new BigDecimal("2000.00"));
+            assertThat(dominio.getTotalImpuestos()).isEqualByComparingTo(new BigDecimal("320.00"));
         }
     }
 }
