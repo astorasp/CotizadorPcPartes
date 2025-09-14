@@ -198,6 +198,17 @@ public class AuthService {
                 throw new RuntimeException("Usuario no activo");
             }
             
+            // Validar si la sesión fue cerrada manualmente (sin renovación automática)
+            String currentSessionId = jwtService.extractSessionId(refreshToken);
+            if (currentSessionId != null && !sessionService.isSessionActive(currentSessionId)) {
+                // Si la sesión específica está inactiva, verificar si el usuario tiene otras sesiones activas
+                if (!sessionService.hasActiveSession(userId)) {
+                    logger.warn("Intento de renovación con sesión cerrada manualmente: {} para usuario: {}",
+                                currentSessionId, username);
+                    throw new RuntimeException("Sesión inactiva - no se puede renovar token");
+                }
+            }
+
             // Obtener roles actualizados
             List<String> roles = getRolesAsignados(userId);
             

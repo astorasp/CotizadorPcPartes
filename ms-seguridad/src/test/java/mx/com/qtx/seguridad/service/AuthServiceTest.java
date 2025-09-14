@@ -211,23 +211,24 @@ class AuthServiceTest {
         assertNotNull(refreshedResponse);
         assertNotNull(refreshedResponse.getAccessToken());
         
-        // El refresh token debe ser diferente (nuevo token con nuevo JTI)
-        assertNotNull(refreshedResponse.getRefreshToken());
-        assertNotEquals(refreshToken, refreshedResponse.getRefreshToken());
-        
+        // Las renovaciones NO devuelven refresh token (solo access token)
+        assertNull(refreshedResponse.getRefreshToken());
+
         assertEquals("Bearer", refreshedResponse.getTokenType());
         assertTrue(refreshedResponse.getExpiresIn() > 0);
-        
+
         // El nuevo access token debe ser diferente
         assertNotEquals(initialResponse.getAccessToken(), refreshedResponse.getAccessToken());
-        
-        // Validar que ambos tokens tienen la misma información de usuario pero diferentes JTIs
-        Claims initialClaims = jwtService.validateToken(initialResponse.getRefreshToken());
-        Claims refreshedClaims = jwtService.validateToken(refreshedResponse.getRefreshToken());
-        
-        assertEquals(initialClaims.getSubject(), refreshedClaims.getSubject());
-        assertEquals(initialClaims.get("user_id"), refreshedClaims.get("user_id"));
-        assertNotEquals(initialClaims.getId(), refreshedClaims.getId()); // JTI debe ser diferente
+
+        // Validar que el nuevo access token contiene la información correcta
+        Claims refreshedAccessClaims = jwtService.validateToken(refreshedResponse.getAccessToken());
+        Claims initialRefreshClaims = jwtService.validateToken(initialResponse.getRefreshToken());
+
+        assertEquals(refreshedAccessClaims.getSubject(), initialRefreshClaims.getSubject());
+        assertEquals(refreshedAccessClaims.get("user_id"), initialRefreshClaims.get("user_id"));
+
+        // JTI debe ser diferente entre el access token nuevo y el refresh token original
+        assertNotEquals(refreshedAccessClaims.getId(), initialRefreshClaims.getId());
     }
 
     @Test

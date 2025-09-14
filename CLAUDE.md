@@ -416,6 +416,7 @@ DELETE /proveedores/{id}  # Delete supplier
   ```bash
   docker-compose up -d --build [service-name]
   ```
+- **Environment Setup**: Always run `./init-env.sh` (Linux/macOS) or `./init-env.ps1` (Windows) before first deployment to create required `.env` files
 
 ## Development Workflow
 

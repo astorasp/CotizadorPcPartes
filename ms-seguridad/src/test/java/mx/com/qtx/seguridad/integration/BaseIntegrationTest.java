@@ -224,17 +224,34 @@ public abstract class BaseIntegrationTest {
 
     /**
      * Valida que una respuesta de token tenga la estructura correcta
+     * @param response la respuesta del token
+     * @param expectRefreshToken si debe esperar refresh token (true para login, false para renovación)
      */
-    protected void assertTokenResponse(Map<String, Object> response) {
+    protected void assertTokenResponse(Map<String, Object> response, boolean expectRefreshToken) {
         assert response != null;
         assert response.containsKey("accessToken");
-        assert response.containsKey("refreshToken");
         assert response.containsKey("tokenType");
         assert response.containsKey("expiresIn");
         assert "Bearer".equals(response.get("tokenType"));
         assert response.get("accessToken") != null;
-        assert response.get("refreshToken") != null;
+
+        if (expectRefreshToken) {
+            assert response.containsKey("refreshToken");
+            assert response.get("refreshToken") != null;
+        } else {
+            // Para renovaciones, refreshToken puede no estar presente o ser null
+            Object refreshToken = response.get("refreshToken");
+            assert refreshToken == null;
+        }
+
         assert ((Number) response.get("expiresIn")).longValue() > 0;
+    }
+
+    /**
+     * Valida respuesta de login (debe incluir refresh token)
+     */
+    protected void assertTokenResponse(Map<String, Object> response) {
+        assertTokenResponse(response, true);
     }
 
     /**
