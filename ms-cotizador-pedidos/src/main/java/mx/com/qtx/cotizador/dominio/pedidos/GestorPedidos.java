@@ -90,6 +90,8 @@ public class GestorPedidos {
                 precioUnitario, importeTotal);
             
         }
+        // Asignar el pedido creado como pedido actual
+        this.pedido = nuevoPedido;
         // Aquí iría la lógica para persistir el pedido, enviarlo, etc.
         System.out.println("GestorPedidos: Pedido generado exitosamente.");
         return nuevoPedido;
