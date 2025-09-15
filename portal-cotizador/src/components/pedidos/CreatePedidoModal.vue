@@ -93,10 +93,10 @@
                       </div>
                       <div class="text-right ml-2">
                         <div class="font-medium text-gray-800">
-                          {{ formatCurrency(detalle.precioUnitario * detalle.cantidad) }}
+                          {{ formatCurrency(detalle.importeTotal) }}
                         </div>
                         <div class="text-gray-500">
-                          {{ formatCurrency(detalle.precioUnitario) }} c/u
+                          {{ formatCurrency(detalle.precioBase) }} c/u
                         </div>
                       </div>
                     </div>
