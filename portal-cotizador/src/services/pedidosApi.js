@@ -1,4 +1,4 @@
-import apiClient from './apiClient'
+import pedidosApiClient from './pedidosApiClient'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
@@ -10,7 +10,7 @@ export const pedidosApi = {
    * Obtener todos los pedidos
    */
   async getAll() {
-    const response = await apiClient.get(API_ENDPOINTS.PEDIDOS.BASE)
+    const response = await pedidosApiClient.get(API_ENDPOINTS.PEDIDOS.BASE)
     return response.datos || []
   },
 
@@ -18,7 +18,7 @@ export const pedidosApi = {
    * Obtener pedido por número/ID
    */
   async getById(numPedido) {
-    const response = await apiClient.get(API_ENDPOINTS.PEDIDOS.BY_ID(numPedido))
+    const response = await pedidosApiClient.get(API_ENDPOINTS.PEDIDOS.BY_ID(numPedido))
     return response.datos
   },
 
@@ -26,7 +26,7 @@ export const pedidosApi = {
    * Generar nuevo pedido desde cotización
    */
   async generate(pedidoData) {
-    const response = await apiClient.post(API_ENDPOINTS.PEDIDOS.GENERATE, pedidoData)
+    const response = await pedidosApiClient.post(API_ENDPOINTS.PEDIDOS.GENERATE, pedidoData)
     return response
   },
 
@@ -34,7 +34,7 @@ export const pedidosApi = {
    * Buscar pedidos por fecha desde
    */
   async searchByDateFrom(fechaDesde) {
-    const response = await apiClient.get(API_ENDPOINTS.PEDIDOS.BY_DATE_FROM, {
+    const response = await pedidosApiClient.get(API_ENDPOINTS.PEDIDOS.BY_DATE_FROM, {
       params: { fechaDesde }
     })
     return response.datos || []

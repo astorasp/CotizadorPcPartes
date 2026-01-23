@@ -92,13 +92,12 @@ class SessionManagementIntegrationTest {
             "Initial session should be inactive after refresh");
         
         // Verificar que la nueva sesión está activa
-        assertTrue(sessionService.isSessionActive(newSessionId), 
+        assertTrue(sessionService.isSessionActive(newSessionId),
             "New session should be active after refresh");
-        
-        // Verificar que el refresh token también tiene la nueva sesión
-        String refreshTokenSessionId = jwtService.extractSessionId(refreshedTokens.getRefreshToken());
-        assertEquals(newSessionId, refreshTokenSessionId, 
-            "Both tokens should have the same session ID");
+
+        // Las renovaciones NO devuelven refresh token (solo access token)
+        assertNull(refreshedTokens.getRefreshToken(),
+            "Refresh operations should not return a refresh token");
     }
     
     @Test
@@ -143,11 +142,11 @@ class SessionManagementIntegrationTest {
         TokenResponse initialLogin = authService.authenticate(TEST_USER, TEST_PASSWORD, mockRequest);
         String session1 = jwtService.extractSessionId(initialLogin.getAccessToken());
         
-        // When - Múltiples renovaciones
+        // When - Múltiples renovaciones usando SIEMPRE el refresh token original
         TokenResponse refresh1 = authService.refreshToken(initialLogin.getRefreshToken());
         String session2 = jwtService.extractSessionId(refresh1.getAccessToken());
-        
-        TokenResponse refresh2 = authService.refreshToken(refresh1.getRefreshToken());
+
+        TokenResponse refresh2 = authService.refreshToken(initialLogin.getRefreshToken());
         String session3 = jwtService.extractSessionId(refresh2.getAccessToken());
         
         // Then - Verificar cadena de sesiones
@@ -161,7 +160,7 @@ class SessionManagementIntegrationTest {
         assertTrue(sessionService.isSessionActive(session3));
         
         // Verificar historial de sesiones
-        Integer userId = jwtService.extractUserId(refresh2.getAccessToken());
+        Integer userId = jwtService.extractUserId(initialLogin.getAccessToken());
         List<Acceso> sessionHistory = sessionService.getUserSessionHistory(userId);
         assertTrue(sessionHistory.size() >= 3, "Should have at least 3 sessions in history");
     }

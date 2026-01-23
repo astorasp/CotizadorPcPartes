@@ -1,7 +1,7 @@
 # 🖥️ Sistema Cotizador de PC Partes
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.0-brightgreen.svg)](https://vuejs.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.4.4-blue.svg)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://docs.docker.com/compose/)
@@ -135,14 +135,14 @@ La siguiente tabla resume las capacidades clave de cada rol dentro del sistema.
 
 ---
 
-### 🌐 **Acceso a los Servicios**
+### 🌐 **Acceso a los Servicios (Microservicios)**
 
-| Servicio | URL | Autenticación |
-|----------|-----|---------------|
-| **Portal Web** | http://localhost | Login con usuarios del sistema (JWT) |
-| **API REST** | http://localhost:8080 | JWT Token (Authorization: Bearer) |
-| **Swagger UI** | http://localhost:8080/swagger-ui.html | JWT Token (Authorization: Bearer) |
-| **Health Check** | http://localhost:8080/actuator/health | JWT Token (Authorization: Bearer) |
+| Servicio | URL Base (dev) | Swagger (dev) | Health (dev) |
+|----------|-----------------|---------------|--------------|
+| **Portal Web** | http://localhost | - | http://localhost/health |
+| **Componentes/PCs/Promociones** | http://localhost:8082/api/v1 | http://localhost:8082/api/v1/swagger-ui/index.html | http://localhost:8082/api/v1/actuator/health |
+| **Cotizaciones** | http://localhost:8083/api/v1 | http://localhost:8083/api/v1/swagger-ui/index.html | http://localhost:8083/api/v1/actuator/health |
+| **Pedidos/Proveedores** | http://localhost:8084/api/v1 | http://localhost:8084/api/v1/swagger-ui/index.html | http://localhost:8084/api/v1/actuator/health |
 
 ### 🔐 **Sistema de Autenticación**
 
@@ -187,15 +187,17 @@ La siguiente tabla resume las capacidades clave de cada rol dentro del sistema.
       └─────────────────────┘ └────────┘ └─────────────────┘
 ```
 
-### 🔄 **Flujo de Datos**
+### 🔄 **Flujo de Datos (Microservicios)**
 
 ```
-Portal Web (Vue.js 3) → Backend API (Spring Boot) → MySQL Database
-      ↓                        ↓                         ↓
-- Sistema de Loading    - Domain-Driven Design    - Connection Pooling
-- Composables Vue       - CRUD Operations         - Transacciones ACID
-- Pinia State Mgmt      - Business Logic          - Índices optimizados
-- TailwindCSS          - Security (Basic Auth)    - Esquema normalizado
+Portal Web (Vue.js 3)
+  → API Gateway (Nginx)
+    → ms-cotizador-componentes (8082)  ─┐
+    → ms-cotizador-cotizaciones (8083) ─┼→ MySQLs por microservicio
+    → ms-cotizador-pedidos (8084)      ─┘    (cotizador_componentes_db, cotizador_cotizaciones_db, cotizador_pedidos_db)
+
+CDC (Debezium + Kafka Connect)
+  Componentes/Cotizaciones/Pedidos MySQL → Kafka topics → Sinks cruzados
 ```
 
 ---
@@ -270,31 +272,79 @@ El sistema cuenta con un **sistema de loading centralizado** que proporciona:
 ## 📁 Estructura del Proyecto
 
 ```
-CotizadorPcPartes/
-├── 📁 Cotizador/                    # Backend Spring Boot
+CotizadorPcPartes/                   # Arquitectura de Microservicios
+├── 📁 ms-seguridad/                 # Microservicio de Autenticación (Puerto 8081)
+│   ├── 📁 src/main/java/mx/com/qtx/seguridad/
+│   │   ├── 📁 dominio/              # Domain Layer (Simple entities)
+│   │   │   ├── Usuario.java         # User Entity
+│   │   │   ├── Rol.java             # Role Entity
+│   │   │   └── Acceso.java          # Access Control
+│   │   ├── 📁 aplicacion/           # Application Layer
+│   │   │   ├── 📁 servicio/         # Auth Services
+│   │   │   └── 📁 dto/              # DTOs
+│   │   ├── 📁 infraestructura/      # Infrastructure Layer
+│   │   │   ├── 📁 repositorio/      # JPA Repositories
+│   │   │   ├── 📁 controlador/      # REST Controllers
+│   │   │   └── 📁 configuracion/    # JWT + Security Config
+│   │   └── 📁 seguridad/            # JWT/Session Management
+│   ├── 📁 scripts/                  # Database Scripts
+│   │   └── seguridad_ddl.sql        # Schema + Sample Users
+│   └── 📁 src/test/                 # Tests (Unit + Integration)
+│
+├── 📁 ms-cotizador-componentes/     # Microservicio de Componentes/PCs/Promociones (Puerto 8082)
 │   ├── 📁 src/main/java/mx/com/qtx/cotizador/
 │   │   ├── 📁 dominio/              # Domain Layer (DDD)
 │   │   │   ├── 📁 core/             # Core Business Logic
 │   │   │   │   ├── 📁 componentes/  # Component Domain
+│   │   │   │   │   ├── Componente.java      # Component Hierarchy
+│   │   │   │   │   ├── DiscoDuro.java       # Hard Drive
+│   │   │   │   │   ├── TarjetaVideo.java    # Graphics Card
+│   │   │   │   │   ├── Monitor.java         # Monitor
+│   │   │   │   │   ├── Pc.java              # PC Composite
+│   │   │   │   │   └── PcBuilder.java       # Builder Pattern
+│   │   │   │   └── 📁 promos/       # Promotion Domain
+│   │   │   │       ├── Promocion.java       # Promotion Base
+│   │   │   │       └── PromocionBuilder.js  # Stacking System
+│   │   │   ├── 📁 aplicacion/       # Application Layer
+│   │   │   ├── 📁 infraestructura/  # Infrastructure Layer
+│   │   │   └── 📁 excepcion/        # Exception Handling
+│   │   ├── 📁 sql/                  # Database Scripts
+│   │   │   ├── ddl.sql              # Componentes Schema
+│   │   │   └── dml.sql              # Sample Components
+│   │   └── 📁 src/test/             # Tests (Unit + Integration)
+│
+├── 📁 ms-cotizador-cotizaciones/    # Microservicio de Cotizaciones (Puerto 8083)
+│   ├── 📁 src/main/java/mx/com/qtx/cotizador/
+│   │   ├── 📁 dominio/              # Domain Layer (DDD)
+│   │   │   ├── 📁 core/             # Core Business Logic
 │   │   │   │   ├── Cotizacion.java  # Quotation Aggregate
 │   │   │   │   └── DetalleCotizacion.java
-│   │   │   ├── 📁 cotizadorA/       # Strategy Pattern
-│   │   │   ├── 📁 cotizadorB/       # Alternative Strategy
-│   │   │   ├── 📁 promos/           # Promotion Domain
-│   │   │   ├── 📁 pedidos/          # Order Domain
-│   │   │   └── 📁 impuestos/        # Tax Domain
-│   │   ├── 📁 aplicacion/           # Application Layer
-│   │   │   ├── 📁 servicio/         # Application Services
-│   │   │   └── 📁 dto/              # Data Transfer Objects
-│   │   ├── 📁 infraestructura/      # Infrastructure Layer
-│   │   │   ├── 📁 repositorio/      # Repository Implementations
-│   │   │   ├── 📁 controlador/      # REST Controllers
-│   │   │   └── 📁 configuracion/    # Spring Configuration
-│   │   └── 📁 excepcion/            # Exception Handling
-│   ├── 📁 sql/                      # Database Scripts
-│   │   ├── ddl.sql                  # Schema Definition
-│   │   └── dml.sql                  # Sample Data
-│   └── 📁 src/test/                 # Tests (Unit + Integration)
+│   │   │   ├── 📁 cotizadorA/       # Strategy Pattern A
+│   │   │   ├── 📁 cotizadorB/       # Strategy Pattern B
+│   │   │   └── 📁 impuestos/        # Tax Bridge Pattern
+│   │   │   ├── 📁 aplicacion/       # Application Layer
+│   │   │   ├── 📁 infraestructura/  # Infrastructure Layer
+│   │   │   └── 📁 excepcion/        # Exception Handling
+│   │   ├── 📁 sql/                  # Database Scripts
+│   │   │   ├── ddl.sql              # Cotizaciones Schema
+│   │   │   └── dml.sql              # Sample Quotations
+│   │   └── 📁 src/test/             # Tests (Unit + Integration)
+│
+├── 📁 ms-cotizador-pedidos/         # Microservicio de Pedidos/Proveedores (Puerto 8084)
+│   ├── 📁 src/main/java/mx/com/qtx/cotizador/
+│   │   ├── 📁 dominio/              # Domain Layer (DDD)
+│   │   │   ├── 📁 core/             # Core Business Logic
+│   │   │   │   ├── Pedido.java      # Order Aggregate
+│   │   │   │   └── Proveedor.java   # Supplier Entity
+│   │   │   ├── 📁 pedidos/          # Order Domain Services
+│   │   │   │   └── GestorPedidos.java
+│   │   │   ├── 📁 aplicacion/       # Application Layer
+│   │   │   ├── 📁 infraestructura/  # Infrastructure Layer
+│   │   │   └── 📁 excepcion/        # Exception Handling
+│   │   ├── 📁 sql/                  # Database Scripts
+│   │   │   ├── ddl.sql              # Pedidos Schema
+│   │   │   └── dml.sql              # Sample Orders/Suppliers
+│   │   └── 📁 src/test/             # Tests (Unit + Integration)
 │
 ├── 📁 portal-cotizador/             # Frontend Vue.js 3
 │   ├── index.html                   # Main Application
@@ -343,8 +393,25 @@ CotizadorPcPartes/
 │   ├── package.json                 # Dependencies
 │   └── tailwind.config.js           # TailwindCSS Config
 │
-├── docker-compose.yml               # Multi-container Setup
+├── 📁 kafka-config/                 # CDC (Change Data Capture) Configuration
+│   ├── setup-debezium-connectors.sh # Auto-setup CDC connectors
+│   ├── validate-cdc-setup.sh        # Validate CDC configuration
+│   ├── health-check.sh              # Monitor CDC health
+│   ├── monitor-cdc.sh               # CDC monitoring dashboard
+│   └── 📁 connectors/               # Debezium connector configs
+│       ├── componentes-source.json   # Components CDC source
+│       ├── cotizaciones-source.json  # Quotations CDC source
+│       └── pedidos-source.json       # Orders CDC source
+│
+├── 📁 gateway/                      # Nginx API Gateway
+│   ├── nginx.conf                   # Gateway configuration
+│   └── Dockerfile                   # Gateway container
+│
+├── docker-compose.yml               # Multi-container Setup (Microservices + Kafka + CDC)
 ├── docker-scripts.sh                # Docker Management Script
+├── init-env.sh                      # Environment setup (Linux/macOS)
+├── init-env.ps1                     # Environment setup (Windows)
+├── .env.example                     # Environment variables template
 ├── CLAUDE.md                        # AI Assistant Instructions
 └── README.md                        # This file
 ```
@@ -550,34 +617,108 @@ Antes de ejecutar el sistema, **debes inicializar** los archivos de configuraci�
 #### **Prerrequisitos**
 - Java 21+ (OpenJDK recomendado)
 - Maven 3.8+
-- MySQL 8.0+
+- MySQL 8.0+ (múltiples bases de datos)
 - Node.js 18+ (para desarrollo frontend)
 
-#### **Backend Setup**
+#### **Backend Setup (Microservicios)**
 
 ```bash
-cd Cotizador
-
-# 1. Configurar base de datos MySQL
+# 1. Configurar bases de datos MySQL (una por microservicio)
 mysql -u root -p
-CREATE DATABASE cotizador;
-CREATE USER 'cotizador_user'@'localhost' IDENTIFIED BY 'cotizador_pass';
-GRANT ALL PRIVILEGES ON cotizador.* TO 'cotizador_user'@'localhost';
 
-# 2. Ejecutar scripts de base de datos
-mysql -u cotizador_user -p cotizador < sql/ddl.sql
-mysql -u cotizador_user -p cotizador < sql/dml.sql
+# Base de datos para Seguridad
+CREATE DATABASE seguridad;
+CREATE USER 'seguridad_user'@'localhost' IDENTIFIED BY 'seguridad_pass';
+GRANT ALL PRIVILEGES ON seguridad.* TO 'seguridad_user'@'localhost';
 
-# 3. Configurar variables de entorno
+# Base de datos para Componentes
+CREATE DATABASE cotizador_componentes_db;
+CREATE USER 'componentes_user'@'localhost' IDENTIFIED BY 'componentes_pass';
+GRANT ALL PRIVILEGES ON cotizador_componentes_db.* TO 'componentes_user'@'localhost';
+
+# Base de datos para Cotizaciones
+CREATE DATABASE cotizador_cotizaciones_db;
+CREATE USER 'cotizaciones_user'@'localhost' IDENTIFIED BY 'cotizaciones_pass';
+GRANT ALL PRIVILEGES ON cotizador_cotizaciones_db.* TO 'cotizaciones_user'@'localhost';
+
+# Base de datos para Pedidos
+CREATE DATABASE cotizador_pedidos_db;
+CREATE USER 'pedidos_user'@'localhost' IDENTIFIED BY 'pedidos_pass';
+GRANT ALL PRIVILEGES ON cotizador_pedidos_db.* TO 'pedidos_user'@'localhost';
+
+FLUSH PRIVILEGES;
+
+# 2. Ejecutar scripts de base de datos por microservicio
+# (cada microservicio tiene sus propios scripts DDL/DML)
+mysql -u seguridad_user -p seguridad < ms-seguridad/scripts/seguridad_ddl.sql
+mysql -u componentes_user -p cotizador_componentes_db < ms-cotizador-componentes/sql/ddl.sql
+mysql -u componentes_user -p cotizador_componentes_db < ms-cotizador-componentes/sql/dml.sql
+mysql -u cotizaciones_user -p cotizador_cotizaciones_db < ms-cotizador-cotizaciones/sql/ddl.sql
+mysql -u cotizaciones_user -p cotizador_cotizaciones_db < ms-cotizador-cotizaciones/sql/dml.sql
+mysql -u pedidos_user -p cotizador_pedidos_db < ms-cotizador-pedidos/sql/ddl.sql
+mysql -u pedidos_user -p cotizador_pedidos_db < ms-cotizador-pedidos/sql/dml.sql
+
+# 3. Ejecutar cada microservicio (terminales separadas)
+
+# Terminal 1 - Microservicio de Seguridad (Puerto 8081)
+cd ms-seguridad
 export DB_HOST=localhost
-export DB_USERNAME=cotizador_user
-export DB_PASSWORD=cotizador_pass
-export SECURITY_USERNAME=admin
-export SECURITY_PASSWORD=admin123
-
-# 4. Compilar y ejecutar
-mvn clean install
+export MYSQL_SEGURIDAD_USER=seguridad_user
+export MYSQL_SEGURIDAD_PASSWORD=seguridad_pass
 mvn spring-boot:run
+
+# Terminal 2 - Microservicio de Componentes (Puerto 8082)
+cd ms-cotizador-componentes
+export DB_HOST=localhost
+export DB_USERNAME=componentes_user
+export DB_PASSWORD=componentes_pass
+export JWT_MS_SEGURIDAD_BASE_URL=http://localhost:8081
+mvn spring-boot:run
+
+# Terminal 3 - Microservicio de Cotizaciones (Puerto 8083)
+cd ms-cotizador-cotizaciones
+export DB_HOST=localhost
+export DB_USERNAME=cotizaciones_user
+export DB_PASSWORD=cotizaciones_pass
+export JWT_MS_SEGURIDAD_BASE_URL=http://localhost:8081
+mvn spring-boot:run
+
+# Terminal 4 - Microservicio de Pedidos (Puerto 8084)
+cd ms-cotizador-pedidos
+export DB_HOST=localhost
+export DB_USERNAME=pedidos_user
+export DB_PASSWORD=pedidos_pass
+export JWT_MS_SEGURIDAD_BASE_URL=http://localhost:8081
+mvn spring-boot:run
+```
+
+#### **🚀 Script de Desarrollo Automatizado**
+
+```bash
+# Crear script para levantar todos los microservicios
+# Guardar como: start-dev-services.sh
+
+#!/bin/bash
+echo "🚀 Starting all microservices for development..."
+
+# Array de microservicios y sus puertos
+declare -A services=(
+    ["ms-seguridad"]="8081"
+    ["ms-cotizador-componentes"]="8082"
+    ["ms-cotizador-cotizaciones"]="8083"
+    ["ms-cotizador-pedidos"]="8084"
+)
+
+for service in "${!services[@]}"; do
+    echo "Starting $service on port ${services[$service]}..."
+    cd $service
+    mvn spring-boot:run &
+    cd ..
+    sleep 10  # Wait for service to start
+done
+
+echo "✅ All microservices started!"
+echo "🌐 Portal will be available at: http://localhost"
 ```
 
 #### **Frontend Setup**
@@ -607,97 +748,162 @@ npm run build
 
 ## 🧪 Testing
 
-### 🔬 **Suite de Tests Completa**
+### 🔬 **Suite de Tests Completa (Microservicios)**
+
+#### **🧪 Testing por Microservicio**
 
 ```bash
-cd Cotizador
-
-# Ejecutar todos los tests
+# 1. Microservicio de Seguridad
+cd ms-seguridad
 mvn test
 
-# Ejecutar solo tests de integración
-mvn test -Dtest="*IntegrationTest"
+# 2. Microservicio de Componentes/PCs/Promociones
+cd ms-cotizador-componentes
+mvn test
 
-# Ejecutar tests con reporte de cobertura
-mvn test jacoco:report
+# 3. Microservicio de Cotizaciones
+cd ms-cotizador-cotizaciones
+mvn test
+
+# 4. Microservicio de Pedidos/Proveedores
+cd ms-cotizador-pedidos
+mvn test
+```
+
+#### **🚀 Ejecutar Todos los Tests (Script Automatizado)**
+
+```bash
+# Desde la raíz del proyecto - Ejecutar todos los microservicios
+for dir in ms-*; do
+  echo "🧪 Testing $dir..."
+  cd $dir && mvn test && cd ..
+done
+
+# Ejecutar solo tests de integración en todos los microservicios
+for dir in ms-*; do
+  echo "🔍 Integration Tests in $dir..."
+  cd $dir && mvn test -Dtest="*IntegrationTest" && cd ..
+done
+
+# Generar reportes de cobertura en todos los microservicios
+for dir in ms-*; do
+  echo "📊 Coverage Report for $dir..."
+  cd $dir && mvn test jacoco:report && cd ..
+done
 ```
 
 ### 🧪 **Tests de Integración con TestContainers**
 
+#### **ms-seguridad (Puerto 8081)**
+| Test Suite | Cobertura | Estado |
+|------------|-----------|--------|
+| `AuthIntegrationTest` | Autenticación JWT | ✅ |
+| `UserIntegrationTest` | Gestión de Usuarios | ✅ |
+| `RoleIntegrationTest` | Gestión de Roles | ✅ |
+| `SessionIntegrationTest` | Gestión de Sesiones | ✅ |
+
+#### **ms-cotizador-componentes (Puerto 8082)**
 | Test Suite | Cobertura | Estado |
 |------------|-----------|--------|
 | `ComponenteIntegrationTest` | CRUD Componentes | ✅ |
-| `ProveedorIntegrationTest` | CRUD Proveedores | ✅ |
-| `PromocionIntegrationTest` | CRUD Promociones | ✅ |
 | `PcIntegrationTest` | Armado de PCs | ✅ |
-| `CotizacionIntegrationTest` | Cotizaciones | ✅ |
+| `PromocionIntegrationTest` | CRUD Promociones | ✅ |
+
+#### **ms-cotizador-cotizaciones (Puerto 8083)**
+| Test Suite | Cobertura | Estado |
+|------------|-----------|--------|
+| `CotizacionIntegrationTest` | CRUD Cotizaciones | ✅ |
+| `DetalleCotizacionIntegrationTest` | Gestión de Detalles | ✅ |
+| `ImpuestoIntegrationTest` | Cálculo de Impuestos | ✅ |
+
+#### **ms-cotizador-pedidos (Puerto 8084)**
+| Test Suite | Cobertura | Estado |
+|------------|-----------|--------|
 | `PedidoIntegrationTest` | Gestión de Pedidos | ✅ |
+| `ProveedorIntegrationTest` | CRUD Proveedores | ✅ |
 
 ### 📊 **Arquitectura de Testing**
 
-- **Base Compartida**: `BaseIntegrationTest` con MySQL compartido
-- **Datos Consistentes**: Scripts DDL/DML precargados
-- **Autenticación**: Basic Auth automática (test/test123)
-- **Aislamiento**: Cada test es independiente
-- **Performance**: Contenedor MySQL reutilizado
+#### **Por Microservicio**
+- **Base Compartida**: `BaseIntegrationTest` en cada microservicio con MySQL dedicado
+- **Datos Consistentes**: Scripts DDL/DML específicos por dominio
+- **Autenticación**:
+  - **ms-seguridad**: JWT con credenciales de test
+  - **Otros microservicios**: Basic Auth (test/test123) o JWT desde ms-seguridad
+- **Aislamiento**: Tests independientes por microservicio
+- **Performance**: TestContainers MySQL reutilizado por microservicio
+
+#### **Bases de Datos de Test**
+| Microservicio | Base de Datos Test | Puerto |
+|---------------|-------------------|--------|
+| ms-seguridad | seguridad_test | TestContainer |
+| ms-cotizador-componentes | cotizador_componentes_test | TestContainer |
+| ms-cotizador-cotizaciones | cotizador_cotizaciones_test | TestContainer |
+| ms-cotizador-pedidos | cotizador_pedidos_test | TestContainer |
+
+#### **Orden de Ejecución Recomendado**
+1. **ms-seguridad** - Tests de autenticación base
+2. **ms-cotizador-componentes** - Tests de componentes y PCs
+3. **ms-cotizador-cotizaciones** - Tests que dependen de componentes
+4. **ms-cotizador-pedidos** - Tests que dependen de cotizaciones y proveedores
 
 ---
 
 ## 📚 API Documentation
 
-### 🔗 **Endpoints Principales**
+### 🔗 **Endpoints Principales (por microservicio)**
 
-#### **Componentes**
+#### **Componentes / PCs / Promociones** (ms-cotizador-componentes · 8082)
 ```http
-GET    /cotizador/v1/api/componentes         # Listar componentes
-POST   /cotizador/v1/api/componentes         # Crear componente
-GET    /cotizador/v1/api/componentes/{id}    # Obtener componente
-PUT    /cotizador/v1/api/componentes/{id}    # Actualizar componente
-DELETE /cotizador/v1/api/componentes/{id}    # Eliminar componente
+GET    /api/v1/componentes                   # Listar componentes
+POST   /api/v1/componentes                   # Crear componente
+GET    /api/v1/componentes/{id}              # Obtener componente
+PUT    /api/v1/componentes/{id}              # Actualizar componente
+DELETE /api/v1/componentes/{id}              # Eliminar componente
 ```
 
 #### **PCs**
 ```http
-GET    /cotizador/v1/api/pcs                 # Listar PCs
-POST   /cotizador/v1/api/pcs                 # Crear PC
-GET    /cotizador/v1/api/pcs/{id}            # Obtener PC
-PUT    /cotizador/v1/api/pcs/{id}            # Actualizar PC
-DELETE /cotizador/v1/api/pcs/{id}            # Eliminar PC
-POST   /cotizador/v1/api/pcs/{id}/componentes # Agregar componente a PC
+GET    /api/v1/pcs                            # Listar PCs
+POST   /api/v1/pcs                            # Crear PC
+GET    /api/v1/pcs/{id}                       # Obtener PC
+PUT    /api/v1/pcs/{id}                       # Actualizar PC
+DELETE /api/v1/pcs/{id}                       # Eliminar PC
+POST   /api/v1/pcs/{id}/componentes           # Agregar componente a PC
 ```
 
-#### **Cotizaciones**
+#### **Cotizaciones** (ms-cotizador-cotizaciones · 8083)
 ```http
-GET    /cotizador/v1/api/cotizaciones        # Listar cotizaciones
-POST   /cotizador/v1/api/cotizaciones        # Crear cotización
-GET    /cotizador/v1/api/cotizaciones/{id}   # Obtener cotización
-PUT    /cotizador/v1/api/cotizaciones/{id}   # Actualizar cotización
-DELETE /cotizador/v1/api/cotizaciones/{id}   # Eliminar cotización
+GET    /api/v1/cotizaciones                  # Listar cotizaciones
+POST   /api/v1/cotizaciones                  # Crear cotización
+GET    /api/v1/cotizaciones/{id}             # Obtener cotización
+PUT    /api/v1/cotizaciones/{id}             # Actualizar cotización
+DELETE /api/v1/cotizaciones/{id}             # Eliminar cotización
 ```
 
-#### **Pedidos**
+#### **Pedidos** (ms-cotizador-pedidos · 8084)
 ```http
-GET    /cotizador/v1/api/pedidos             # Listar pedidos
-POST   /cotizador/v1/api/pedidos/generar     # Generar pedido desde cotización
-GET    /cotizador/v1/api/pedidos/{id}        # Obtener pedido
+GET    /api/v1/pedidos                        # Listar pedidos
+POST   /api/v1/pedidos/generar                # Generar pedido desde cotización
+GET    /api/v1/pedidos/{id}                   # Obtener pedido
 ```
 
-#### **Proveedores**
+#### **Proveedores** (ms-cotizador-pedidos · 8084)
 ```http
-GET    /cotizador/v1/api/proveedores         # Listar proveedores
-POST   /cotizador/v1/api/proveedores         # Crear proveedor
-GET    /cotizador/v1/api/proveedores/{id}    # Obtener proveedor
-PUT    /cotizador/v1/api/proveedores/{id}    # Actualizar proveedor
-DELETE /cotizador/v1/api/proveedores/{id}    # Eliminar proveedor
+GET    /api/v1/proveedores                    # Listar proveedores
+POST   /api/v1/proveedores                    # Crear proveedor
+GET    /api/v1/proveedores/{id}               # Obtener proveedor
+PUT    /api/v1/proveedores/{id}               # Actualizar proveedor
+DELETE /api/v1/proveedores/{id}               # Eliminar proveedor
 ```
 
-#### **Promociones**
+#### **Promociones** (ms-cotizador-componentes · 8082)
 ```http
-GET    /cotizador/v1/api/promociones         # Listar promociones
-POST   /cotizador/v1/api/promociones         # Crear promoción
-GET    /cotizador/v1/api/promociones/{id}    # Obtener promoción
-PUT    /cotizador/v1/api/promociones/{id}    # Actualizar promoción
-DELETE /cotizador/v1/api/promociones/{id}    # Eliminar promoción
+GET    /api/v1/promociones                    # Listar promociones
+POST   /api/v1/promociones                    # Crear promoción
+GET    /api/v1/promociones/{id}               # Obtener promoción
+PUT    /api/v1/promociones/{id}               # Actualizar promoción
+DELETE /api/v1/promociones/{id}               # Eliminar promoción
 ```
 
 ### 📖 **Documentación Interactiva**
@@ -951,6 +1157,34 @@ docker-compose build --no-cache
 docker-compose down -v --remove-orphans
 ```
 
+### 🔄 CDC (Change Data Capture) con Kafka + Debezium
+
+El sistema incluye CDC para replicar tablas clave entre microservicios usando Kafka y Debezium.
+
+- Broker: Kafka 4 (KRaft)
+- Conectores: Kafka Connect (Debezium)
+- Configuración y scripts: `kafka-config/`
+- Topics de cambios (por defecto):
+  - `componentes.changes`, `promociones.changes`, `pcs.changes`, `cotizaciones.changes`, `pedidos.changes`
+
+Flujo general:
+```
+MySQL (componentes/cotizaciones/pedidos) → Debezium Source → Kafka Topics → Debezium Sink → MySQL destino
+```
+
+Operación:
+```bash
+# Validar setup CDC
+./kafka-config/validate-cdc-setup.sh
+
+# Crear/actualizar conectores (si es necesario)
+./kafka-config/setup-debezium-connectors.sh
+
+# Monitoreo
+./kafka-config/health-check.sh
+./kafka-config/monitor-cdc.sh
+```
+
 ### 🛠️ **Script de Gestión Avanzada**
 
 ```bash
@@ -1005,6 +1239,7 @@ docker-compose ps
 
 ### 🐳 **DevOps & Testing**
 - **Docker & Docker Compose** - Containerización
+- **Kafka 4 + Kafka Connect (Debezium)** - CDC entre microservicios
 - **TestContainers** - Tests de integración
 - **JUnit 5** - Framework de testing
 - **Mockito** - Mocking

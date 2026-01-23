@@ -4,12 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CotizadorPcPartes is a comprehensive enterprise-level microservices system for PC hardware component quotation, order management, and inventory control. The system implements Domain-Driven Design with Spring Boot 3.5.3, Java 21, MySQL 8.4.4, and JWT-based authentication across multiple services.
+CotizadorPcPartes is a comprehensive enterprise-level microservices system for PC hardware component quotation, order management, and inventory control. The system has been restructured from a monolithic architecture to a distributed microservices architecture with four specialized services, implementing real-time data replication via CDC (Change Data Capture) with Kafka + Debezium.
 
 ## Technology Stack
 
 - **Backend**: Spring Boot 3.5.3, Java 21, Spring Data JPA, Spring Security with JWT
 - **Database**: MySQL 8.4.4 with HikariCP connection pooling (separate DBs per service)
+- **Data Replication**: Kafka 4.0.0 + Debezium 3.0 CDC for real-time cross-microservice data sync
 - **Frontend**: Vue.js 3, Vite, TailwindCSS, Pinia stores
 - **Authentication**: JWT with RS256 signing, JWKS endpoints, session management
 - **Gateway**: Nginx API Gateway for service routing
@@ -21,24 +22,24 @@ CotizadorPcPartes is a comprehensive enterprise-level microservices system for P
 
 ### Development Commands
 ```bash
-# Build and run ms-cotizador locally
-cd ms-cotizador
-mvn spring-boot:run
-
-# Build and run ms-seguridad locally
-cd ms-seguridad
-mvn spring-boot:run
+# Build and run microservices locally (each in separate terminal)
+cd ms-seguridad && mvn spring-boot:run                    # Port 8081
+cd ms-cotizador-componentes && mvn spring-boot:run        # Port 8082
+cd ms-cotizador-cotizaciones && mvn spring-boot:run       # Port 8083
+cd ms-cotizador-pedidos && mvn spring-boot:run            # Port 8084
 
 # Build and run frontend locally
 cd portal-cotizador
 npm install
 npm run dev
 
-# Run all tests (specific microservice)
-cd ms-cotizador && mvn test
+# Run all tests (per microservice)
 cd ms-seguridad && mvn test
+cd ms-cotizador-componentes && mvn test
+cd ms-cotizador-cotizaciones && mvn test
+cd ms-cotizador-pedidos && mvn test
 
-# Run integration tests only (in specific order)
+# Run integration tests only (in specific order per service)
 mvn test -Dtest="*IntegrationTest"
 
 # Run with coverage report
@@ -82,11 +83,11 @@ docker-compose up -d --build
 
 ### Database Commands
 ```bash
-# Access MySQL Cotizador container
-docker exec -it cotizador-mysql mysql -u cotizador_user -p cotizador
-
-# Access MySQL Seguridad container  
-docker exec -it seguridad-mysql mysql -u seguridad_user -p seguridad
+# Access MySQL containers per microservice
+docker exec -it mysql-componentes mysql -u componentes_user -p cotizador_componentes_db
+docker exec -it mysql-cotizaciones mysql -u cotizaciones_user -p cotizador_cotizaciones_db
+docker exec -it mysql-pedidos mysql -u pedidos_user -p cotizador_pedidos_db
+docker exec -it mysql-seguridad mysql -u seguridad_user -p seguridad
 
 # Re-initialize databases (recreate containers)
 docker-compose down -v && docker-compose up -d
@@ -95,16 +96,49 @@ docker-compose down -v && docker-compose up -d
 ## Architecture
 
 ### Microservices Architecture
-The system implements a microservices architecture with the following services:
+The system implements a distributed microservices architecture with four specialized services:
 
-#### **ms-seguridad** (Security Microservice)
+#### **ms-seguridad** (Security Microservice) - Port 8081
 - **Purpose**: Centralized JWT authentication, RBAC authorization, session management
 - **Domain**: Simple entities (`Usuario`, `Rol`, `RolAsignado`, `Acceso`)
 - **Key Features**: JWT with RS256, JWKS endpoints, session tracking, rate limiting
+- **Database**: `seguridad` (MySQL)
 
-#### **ms-cotizador** (Quotation Microservice) - Domain-Driven Design
-- **Purpose**: Core business logic for PC quotation, order management, inventory
-- **Architecture**: Rich domain models with embedded business logic
+#### **ms-cotizador-componentes** (Components/PCs/Promotions Microservice) - Port 8082
+- **Purpose**: Hardware component management, PC assembly, promotions
+- **Domain**: Component hierarchy, PC building with Builder pattern, promotion stacking
+- **Key Features**: Component CRUD, PC assembly validation, promotion management
+- **Database**: `cotizador_componentes_db` (MySQL)
+
+#### **ms-cotizador-cotizaciones** (Quotations Microservice) - Port 8083
+- **Purpose**: Quotation management with Strategy pattern, tax calculations
+- **Domain**: Quotation aggregates with detailed line items, tax bridge pattern
+- **Key Features**: Multiple quotation algorithms, tax calculations, margin analysis
+- **Database**: `cotizador_cotizaciones_db` (MySQL)
+
+#### **ms-cotizador-pedidos** (Orders/Suppliers Microservice) - Port 8084
+- **Purpose**: Order management, supplier relationships, fulfillment tracking
+- **Domain**: Order lifecycle management, supplier catalogs, delivery coordination
+- **Key Features**: Order generation from quotations, supplier management, status tracking
+- **Database**: `cotizador_pedidos_db` (MySQL)
+
+### Data Replication Architecture
+The system implements real-time Change Data Capture (CDC) for cross-microservice data synchronization:
+
+#### **CDC Flow** (< 1 second latency)
+- **Components → Cotizaciones + Pedidos**: All component data (componentes, promociones, PC parts)
+- **Cotizaciones → Pedidos**: All quotation data (cocotizacion, codetalle_cotizacion)
+
+#### **Technology Stack**
+- **Kafka 4.0.0**: Message broker with KRaft mode (no Zookeeper)
+- **Debezium 3.0**: MySQL CDC connector with binlog streaming
+- **Custom Python Replicator**: Multi-table event processor with automatic reconnection
+- **MySQL Binlog**: Source of truth for all database changes
+
+#### **Automatic Setup**
+- **History Topics**: Pre-created on startup (dbhistory.componentes, dbhistory.cotizaciones, dbhistory.pedidos)
+- **CDC Connectors**: Automatically configured via init containers
+- **Recovery Mode**: Connectors use `snapshot.mode: "recovery"` for reliable operation
 
 ### Domain Layer Structure (ms-cotizador)
 The cotizador service follows Domain-Driven Design with rich domain models:
@@ -186,19 +220,22 @@ JWT_MS_SEGURIDAD_BASE_URL=http://ms-seguridad:8081
 ```
 
 ### Service URLs
-- **Frontend (Vue.js)**: http://localhost (via gateway)
-- **Gateway (Nginx)**: http://localhost (single entry point)
-- **Cotizador API**: http://localhost/cotizador/v1/api (via gateway)
-- **Seguridad API**: http://localhost/seguridad/v1/api (via gateway)
-- **Swagger UI**: http://localhost/swagger-ui.html (via gateway)
-- **Health Checks**: 
-  - Cotizador: http://localhost/actuator/health
-  - Seguridad: http://localhost/seguridad/actuator/health
-- **Internal Services** (Docker network only):
-  - ms-cotizador: http://backend:8080
+- **Frontend (Vue.js)**: http://localhost (via nginx gateway)
+- **Gateway (Nginx)**: http://localhost (single entry point for all services)
+- **Components/PCs/Promotions API**: http://localhost:8082/api/v1 (direct) or via gateway
+- **Quotations API**: http://localhost:8083/api/v1 (direct) or via gateway
+- **Orders/Suppliers API**: http://localhost:8084/api/v1 (direct) or via gateway
+- **Security API**: http://localhost:8081/api/v1 (direct) or via gateway
+- **Swagger UI**: 
+  - Components: http://localhost:8082/api/v1/swagger-ui/index.html
+  - Quotations: http://localhost:8083/api/v1/swagger-ui/index.html
+  - Orders: http://localhost:8084/api/v1/swagger-ui/index.html
+- **Health Checks**: Each service at `/actuator/health`
+- **Internal Services** (Docker network):
+  - ms-cotizador-componentes: http://ms-cotizador-componentes:8082
+  - ms-cotizador-cotizaciones: http://ms-cotizador-cotizaciones:8083
+  - ms-cotizador-pedidos: http://ms-cotizador-pedidos:8084
   - ms-seguridad: http://ms-seguridad:8081
-  - MySQL Cotizador: mysql:3306
-  - MySQL Seguridad: mysql-seguridad:3306
 
 ## Development Guidelines
 
@@ -315,35 +352,82 @@ The frontend implements a comprehensive permissions system in `portal-cotizador/
 
 ## Key API Endpoints
 
-### ms-seguridad APIs (`/seguridad/v1/api`)
+### ms-seguridad APIs (Port 8081 - `/api/v1`)
 ```http
 POST /auth/login           # User authentication
 POST /auth/refresh         # Token refresh
 POST /auth/logout          # Session termination
 GET  /auth/validate        # Token validation
-GET  /keys/jwks           # JWKS public keys
-GET  /session/{id}/info   # Session information
-POST /session/{id}/close  # Close specific session
+GET  /keys/jwks            # JWKS public keys
+GET  /session/{id}/info    # Session information
+POST /session/{id}/close   # Close specific session
 ```
 
-### ms-cotizador APIs (`/cotizador/v1/api`)
+### ms-cotizador-componentes APIs (Port 8082 - `/api/v1`)
 ```http
 # Components (requires JWT authentication)
 GET    /componentes       # List components
 POST   /componentes       # Create (ADMIN, GERENTE, INVENTARIO)
+PUT    /componentes/{id}  # Update component
 DELETE /componentes/{id}  # Delete (ADMIN only)
-
-# Quotations
-GET    /cotizaciones      # List quotations  
-POST   /cotizaciones      # Create (ADMIN, GERENTE, VENDEDOR)
 
 # PCs
 GET    /pcs               # List PCs
 POST   /pcs               # Create (ADMIN, GERENTE, INVENTARIO)
+PUT    /pcs/{id}          # Update PC
 DELETE /pcs/{id}          # Delete (ADMIN only)
+POST   /pcs/{id}/componentes  # Add component to PC
 
 # Promotions
 GET    /promociones       # List promotions
 POST   /promociones       # Create (ADMIN, GERENTE)
+PUT    /promociones/{id}  # Update promotion
 DELETE /promociones/{id}  # Delete (ADMIN only)
 ```
+
+### ms-cotizador-cotizaciones APIs (Port 8083 - `/api/v1`)
+```http
+# Quotations
+GET    /cotizaciones      # List quotations
+POST   /cotizaciones      # Create (ADMIN, GERENTE, VENDEDOR)
+GET    /cotizaciones/{id} # Get quotation details
+PUT    /cotizaciones/{id} # Update quotation
+DELETE /cotizaciones/{id} # Delete quotation
+```
+
+### ms-cotizador-pedidos APIs (Port 8084 - `/api/v1`)
+```http
+# Orders
+GET    /pedidos           # List orders
+POST   /pedidos/generar   # Generate order from quotation
+GET    /pedidos/{id}      # Get order details
+PUT    /pedidos/{id}      # Update order status
+
+# Suppliers
+GET    /proveedores       # List suppliers
+POST   /proveedores       # Create supplier
+GET    /proveedores/{id}  # Get supplier details
+PUT    /proveedores/{id}  # Update supplier
+DELETE /proveedores/{id}  # Delete supplier
+## Important Development Notes
+
+- **Controller Mappings**: Do not move controller mappings in microservice projects unless explicitly requested by the user
+- **Container Rebuilds**: When making changes to any microservice or portal, you must rebuild the image and redeploy the container using:
+  ```bash
+  docker-compose up -d --build [service-name]
+  ```
+- **Environment Setup**: Always run `./init-env.sh` (Linux/macOS) or `./init-env.ps1` (Windows) before first deployment to create required `.env` files
+
+## Development Workflow
+
+### Making Changes to Microservices
+1. Make code changes in the respective microservice
+2. Rebuild specific service: `docker-compose build ms-seguridad` (or other service)
+3. Redeploy: `docker-compose up -d --build ms-seguridad`
+4. Verify: Check health endpoint and logs
+
+### Making Changes to Frontend
+1. Make changes in `portal-cotizador/`
+2. Rebuild frontend: `docker-compose build portal-cotizador`  
+3. Redeploy: `docker-compose up -d --build portal-cotizador`
+4. Verify: Check application at http://localhost

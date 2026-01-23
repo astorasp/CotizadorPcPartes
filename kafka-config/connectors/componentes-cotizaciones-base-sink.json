@@ -1,0 +1,47 @@
+{
+  "name": "componentes-cotizaciones-base-sink",
+  "config": {
+    "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
+    "tasks.max": "1",
+    "connection.url": "jdbc:mysql://cotizaciones-mysql:3306/cotizador_cotizaciones_db?autoReconnect=true&failOverReadOnly=false&maxReconnects=10&initialTimeout=2&allowPublicKeyRetrieval=true&useSSL=false",
+    "connection.username": "debezium",
+    "connection.password": "dbz_password",
+    "hibernate.dialect": "org.hibernate.dialect.MySQLDialect",
+    "hibernate.connection.driver_class": "com.mysql.cj.jdbc.Driver",
+
+    "hibernate.c3p0.min_size": "1",
+    "hibernate.c3p0.max_size": "5",
+    "hibernate.c3p0.timeout": "300",
+    "hibernate.c3p0.max_statements": "50",
+    "hibernate.c3p0.idle_test_period": "150",
+    "hibernate.c3p0.preferredTestQuery": "SELECT 1",
+    "hibernate.c3p0.testConnectionOnCheckout": "true",
+    "hibernate.c3p0.acquireRetryAttempts": "3",
+    "hibernate.c3p0.acquireRetryDelay": "1000",
+
+    "heartbeat.interval.ms": "30000",
+    "batch.size": "100",
+    "buffer.count.records": "500",
+    "flush.timeout.ms": "60000",
+
+    "topics.regex": "componentes\\.cotizador_componentes_db\\.(cocomponente|copromocion)",
+    "auto.create": "true",
+    "auto.evolve": "true",
+    "insert.mode": "upsert",
+    "delete.enabled": "true",
+    "primary.key.mode": "record_key",
+    "table.name.format": "${topic}",
+    "transforms": "unwrap,extractTopic",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "false",
+    "transforms.unwrap.delete.handling.mode": "drop",
+    "transforms.extractTopic.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.extractTopic.regex": "componentes\\.cotizador_componentes_db\\.(.*)",
+    "transforms.extractTopic.replacement": "$1",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "true",
+    "value.converter.schemas.enable": "true",
+    "consumer.auto.offset.reset": "latest"
+  }
+}

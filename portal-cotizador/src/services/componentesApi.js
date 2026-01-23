@@ -1,15 +1,25 @@
-import apiClient from './apiClient'
+import componentesApiClient from './componentesApiClient'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
- * API service para componentes (migración exacta de PortalApi.componentes)
+ * API service para componentes usando el microservicio específico de componentes
+ * Migrado para usar ms-cotizador-componentes via gateway
  */
 export const componentesApi = {
   /**
    * Obtener todos los componentes
    */
   async getAll() {
-    const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.BASE)
+    const response = await componentesApiClient.get(API_ENDPOINTS.COMPONENTES.BASE)
+    return response.datos || []
+  },
+
+  /**
+   * Obtener todos los componentes incluyendo PCs (sin filtros)
+   * Útil para cotizaciones donde se necesita mostrar todos los items disponibles
+   */
+  async getAllWithPcs() {
+    const response = await componentesApiClient.get(API_ENDPOINTS.COMPONENTES.CON_PCS)
     return response.datos || []
   },
 
@@ -17,7 +27,7 @@ export const componentesApi = {
    * Obtener componente por ID
    */
   async getById(id) {
-    const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.BY_ID(id))
+    const response = await componentesApiClient.get(API_ENDPOINTS.COMPONENTES.BY_ID(id))
     return response.datos
   },
 
@@ -25,7 +35,7 @@ export const componentesApi = {
    * Crear nuevo componente
    */
   async create(componenteData) {
-    const response = await apiClient.post(API_ENDPOINTS.COMPONENTES.BASE, componenteData)
+    const response = await componentesApiClient.post(API_ENDPOINTS.COMPONENTES.BASE, componenteData)
     return response
   },
 
@@ -33,7 +43,7 @@ export const componentesApi = {
    * Actualizar componente existente
    */
   async update(id, componenteData) {
-    const response = await apiClient.put(API_ENDPOINTS.COMPONENTES.BY_ID(id), componenteData)
+    const response = await componentesApiClient.put(API_ENDPOINTS.COMPONENTES.BY_ID(id), componenteData)
     return response
   },
 
@@ -41,7 +51,7 @@ export const componentesApi = {
    * Eliminar componente
    */
   async delete(id) {
-    const response = await apiClient.delete(API_ENDPOINTS.COMPONENTES.BY_ID(id))
+    const response = await componentesApiClient.delete(API_ENDPOINTS.COMPONENTES.BY_ID(id))
     return response
   },
 
@@ -49,7 +59,7 @@ export const componentesApi = {
    * Obtener componentes por tipo
    */
   async getByType(tipo) {
-    const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.BY_TYPE(tipo))
+    const response = await componentesApiClient.get(API_ENDPOINTS.COMPONENTES.BY_TYPE(tipo))
     return response.datos || []
   },
 
@@ -58,7 +68,7 @@ export const componentesApi = {
    */
   async exists(id) {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.COMPONENTES.EXISTS(id))
+      const response = await componentesApiClient.get(API_ENDPOINTS.COMPONENTES.EXISTS(id))
       return response.datos || false
     } catch (error) {
       // Si da 404, significa que no existe

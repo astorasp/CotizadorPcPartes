@@ -60,13 +60,9 @@ export const useComponentesStore = defineStore('componentes', () => {
     modelo: '',
     costo: 0,
     precioBase: 0,
-    // Campos específicos por tipo
-    tamano: 0,
-    resolucion: '',
-    capacidad: 0,
-    tipoConexion: '',
-    memoriaGpu: 0,
-    tipoMemoria: ''
+    // Campos específicos por tipo según API real
+    capacidadAlm: '',  // Para DISCO_DURO
+    memoria: ''        // Para TARJETA_VIDEO
   })
   
   // Componente actual para detalles
@@ -494,12 +490,9 @@ export const useComponentesStore = defineStore('componentes', () => {
       modelo: '',
       costo: 0,
       precioBase: 0,
-      tamano: 0,
-      resolucion: '',
-      capacidad: 0,
-      tipoConexion: '',
-      memoriaGpu: 0,
-      tipoMemoria: ''
+      // Campos específicos por tipo según API real
+      capacidadAlm: '',  // Para DISCO_DURO
+      memoria: ''        // Para TARJETA_VIDEO
     }
   }
 
@@ -515,12 +508,9 @@ export const useComponentesStore = defineStore('componentes', () => {
       modelo: componente.modelo || '',
       costo: componente.costo || 0,
       precioBase: componente.precioBase || 0,
-      tamano: componente.tamano || 0,
-      resolucion: componente.resolucion || '',
-      capacidad: componente.capacidad || 0,
-      tipoConexion: componente.tipoConexion || '',
-      memoriaGpu: componente.memoriaGpu || 0,
-      tipoMemoria: componente.tipoMemoria || ''
+      // Campos específicos por tipo según API real
+      capacidadAlm: componente.capacidadAlm || '',  // Para DISCO_DURO
+      memoria: componente.memoria || ''             // Para TARJETA_VIDEO
     }
   }
 

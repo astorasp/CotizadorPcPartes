@@ -73,6 +73,59 @@
                     <div class="font-medium">{{ selectedCotizacion.detalles?.length || 0 }}</div>
                   </div>
                 </div>
+
+                <!-- Detalle de componentes -->
+                <div v-if="cotizacionDetails" class="mt-3 border-t border-blue-200 pt-3">
+                  <h5 class="font-medium text-blue-900 mb-2 text-sm">Detalle de Componentes</h5>
+                  <div class="space-y-2 max-h-32 overflow-y-auto">
+                    <div
+                      v-for="detalle in cotizacionDetails.detalles"
+                      :key="detalle.idComponente"
+                      class="flex justify-between items-center text-xs bg-white px-2 py-1 rounded border border-blue-100"
+                    >
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-gray-800 truncate">
+                          {{ detalle.nombreComponente || detalle.descripcion || `Componente ${detalle.idComponente}` }}
+                        </div>
+                        <div class="text-gray-500">
+                          Cantidad: {{ detalle.cantidad }}
+                        </div>
+                      </div>
+                      <div class="text-right ml-2">
+                        <div class="font-medium text-gray-800">
+                          {{ formatCurrency(detalle.importeTotal) }}
+                        </div>
+                        <div class="text-gray-500">
+                          {{ formatCurrency(detalle.precioBase) }} c/u
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Resumen de totales -->
+                  <div class="mt-2 pt-2 border-t border-blue-200 space-y-1 text-xs">
+                    <div class="flex justify-between">
+                      <span class="text-blue-700">Subtotal:</span>
+                      <span class="font-medium">{{ formatCurrency(cotizacionDetails.subtotal) }}</span>
+                    </div>
+                    <div v-if="cotizacionDetails.totalImpuestos > 0" class="flex justify-between">
+                      <span class="text-blue-700">Impuestos:</span>
+                      <span class="font-medium">{{ formatCurrency(cotizacionDetails.totalImpuestos) }}</span>
+                    </div>
+                    <div class="flex justify-between font-bold border-t border-blue-300 pt-1">
+                      <span class="text-blue-800">Total:</span>
+                      <span class="text-blue-800">{{ formatCurrency(cotizacionDetails.total) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Loading state para detalles -->
+                <div v-else-if="loadingCotizacionDetails" class="mt-3 border-t border-blue-200 pt-3">
+                  <div class="flex items-center text-sm text-blue-600">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Cargando detalles...
+                  </div>
+                </div>
               </div>
 
               <!-- Selección de proveedor -->
@@ -231,7 +284,9 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
 import { XMarkIcon, DocumentTextIcon } from '@heroicons/vue/24/outline'
+import { cotizacionesApi } from '@/services/cotizacionesApi'
 
 // Props
 const props = defineProps({
@@ -275,12 +330,16 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits([
-  'close', 
-  'submit', 
-  'cotizacion-change', 
-  'proveedor-change', 
+  'close',
+  'submit',
+  'cotizacion-change',
+  'proveedor-change',
   'nivel-surtido-change'
 ])
+
+// Reactive state for cotization details
+const cotizacionDetails = ref(null)
+const loadingCotizacionDetails = ref(false)
 
 // Methods
 const handleSubmit = () => {
@@ -304,6 +363,34 @@ const handleProveedorChange = (event) => {
 const handleNivelSurtidoChange = (event) => {
   emit('nivel-surtido-change', event.target.value)
 }
+
+// Fetch detailed cotization data
+const fetchCotizacionDetails = async (cotizacionId) => {
+  if (!cotizacionId) {
+    cotizacionDetails.value = null
+    return
+  }
+
+  loadingCotizacionDetails.value = true
+  try {
+    const details = await cotizacionesApi.getStats(cotizacionId)
+    cotizacionDetails.value = details
+  } catch (error) {
+    console.error('Error fetching cotization details:', error)
+    cotizacionDetails.value = null
+  } finally {
+    loadingCotizacionDetails.value = false
+  }
+}
+
+// Watch for changes in selectedCotizacion to automatically fetch details
+watch(() => props.selectedCotizacion, (newCotizacion) => {
+  if (newCotizacion?.folio) {
+    fetchCotizacionDetails(newCotizacion.folio)
+  } else {
+    cotizacionDetails.value = null
+  }
+}, { immediate: true })
 
 // Formateo (simple para el modal)
 const formatDate = (dateString) => {

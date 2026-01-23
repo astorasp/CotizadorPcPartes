@@ -234,6 +234,6 @@ build/
 out/ 
 
 # planning files 
-prd.md
-plan.md
-tasks.md
+#prd.md
+#plan.md
+#tasks.md

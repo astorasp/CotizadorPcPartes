@@ -1,4 +1,4 @@
-import apiClient from './apiClient'
+import promocionesApiClient from './promocionesApiClient'
 import { API_ENDPOINTS } from '@/utils/constants'
 
 /**
@@ -10,7 +10,7 @@ export const promocionesApi = {
    * Obtener todas las promociones
    */
   async getAll() {
-    const response = await apiClient.get(API_ENDPOINTS.PROMOCIONES.BASE)
+    const response = await promocionesApiClient.get(API_ENDPOINTS.PROMOCIONES.BASE)
     return response.datos || []
   },
 
@@ -18,7 +18,7 @@ export const promocionesApi = {
    * Obtener promoción por ID
    */
   async getById(id) {
-    const response = await apiClient.get(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
+    const response = await promocionesApiClient.get(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
     return response.datos
   },
 
@@ -26,7 +26,7 @@ export const promocionesApi = {
    * Crear nueva promoción
    */
   async create(promocionData) {
-    const response = await apiClient.post(API_ENDPOINTS.PROMOCIONES.BASE, promocionData)
+    const response = await promocionesApiClient.post(API_ENDPOINTS.PROMOCIONES.BASE, promocionData)
     return response
   },
 
@@ -34,7 +34,7 @@ export const promocionesApi = {
    * Actualizar promoción existente
    */
   async update(id, promocionData) {
-    const response = await apiClient.put(API_ENDPOINTS.PROMOCIONES.BY_ID(id), promocionData)
+    const response = await promocionesApiClient.put(API_ENDPOINTS.PROMOCIONES.BY_ID(id), promocionData)
     return response
   },
 
@@ -42,7 +42,7 @@ export const promocionesApi = {
    * Eliminar promoción
    */
   async delete(id) {
-    const response = await apiClient.delete(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
+    const response = await promocionesApiClient.delete(API_ENDPOINTS.PROMOCIONES.BY_ID(id))
     return response
   },
 
@@ -139,42 +139,79 @@ export const promocionesApi = {
   },
 
   /**
-   * Crear detalle de promoción según el tipo
+   * Crear detalles de promoción según el tipo (arquitectura base + acumulable)
    */
-  createDetalleForType(tipoData) {
-    const detalle = {
-      nombre: `Detalle ${tipoData.tipo}`,
-      esBase: true
-    }
+  createDetallesForType(tipoData) {
+    const detalles = []
 
     switch(tipoData.tipo) {
+      case 'SIN_DESCUENTO':
+        // No crear detalles - promoción sin descuento se guarda solo en tabla principal
+        break
+        
       case 'DESCUENTO_PLANO':
-        detalle.tipoAcumulable = 'DESCUENTO_PLANO'
-        detalle.porcentajeDescuentoPlano = parseFloat(tipoData.montoDescuento) || 0
-        break
       case 'DESCUENTO_PORCENTUAL':
-        detalle.tipoAcumulable = 'DESCUENTO_PLANO'
-        detalle.porcentajeDescuentoPlano = parseFloat(tipoData.porcentajeDescuento) || 0
+        // Crear detalle base obligatorio
+        detalles.push({
+          nombre: 'Base Sin Descuento',
+          esBase: true,
+          tipoBase: 'SIN_DESCUENTO'
+        })
+        
+        // Crear detalle acumulable con el descuento
+        detalles.push({
+          nombre: `Descuento Plano ${tipoData.porcentajeDescuento}%`,
+          esBase: false,
+          tipoAcumulable: 'DESCUENTO_PLANO',
+          porcentajeDescuentoPlano: parseFloat(tipoData.porcentajeDescuento) || 0
+        })
         break
+        
       case 'POR_CANTIDAD':
-        detalle.tipoBase = 'DESCUENTO_ESCALONADO'
-        detalle.escalasDescuento = [{
-          cantidad: parseInt(tipoData.cantidadMinima) || 1,
-          descuento: parseFloat(tipoData.porcentajeDescuento) || 0
-        }]
+        // Crear detalle base obligatorio
+        detalles.push({
+          nombre: 'Base Sin Descuento',
+          esBase: true,
+          tipoBase: 'SIN_DESCUENTO'
+        })
+        
+        // Crear detalle acumulable por cantidad con múltiples escalas
+        const escalasDescuento = this.buildEscalasDescuento(tipoData)
+        const nombreDetalle = escalasDescuento.length === 1 
+          ? `Descuento por Cantidad (${escalasDescuento[0].cantidadMinima}+ unidades)`
+          : `Descuento por Cantidad (${escalasDescuento.length} escalas)`
+        
+        detalles.push({
+          nombre: nombreDetalle,
+          esBase: false,
+          tipoAcumulable: 'DESCUENTO_POR_CANTIDAD',
+          escalasDescuento: escalasDescuento
+        })
         break
+        
       case 'NXM':
-        detalle.tipoBase = 'NXM'
-        detalle.parametrosNxM = {
-          llevent: parseInt(tipoData.nCompras) || 1,
-          paguen: parseInt(tipoData.mPago) || 1
-        }
+        // Solo crear detalle base para NXM
+        detalles.push({
+          nombre: `Promoción ${tipoData.nCompras}x${tipoData.mPago}`,
+          esBase: true,
+          tipoBase: 'NXM',
+          parametrosNxM: {
+            llevent: parseInt(tipoData.nCompras) || 1,
+            paguen: parseInt(tipoData.mPago) || 1
+          }
+        })
         break
+        
       default:
-        detalle.tipoBase = 'SIN_DESCUENTO'
+        // Promoción sin descuento
+        detalles.push({
+          nombre: 'Base Sin Descuento',
+          esBase: true,
+          tipoBase: 'SIN_DESCUENTO'
+        })
     }
 
-    return detalle
+    return detalles
   },
 
   /**
@@ -189,11 +226,11 @@ export const promocionesApi = {
       detalles: []
     }
 
-    // Crear detalle base según el tipo
+    // Crear detalles según el tipo (puede generar múltiples detalles)
     if (formData.tipo) {
-      const detalleBase = this.createDetalleForType(formData)
-      if (detalleBase) {
-        payload.detalles.push(detalleBase)
+      const detalles = this.createDetallesForType(formData)
+      if (detalles && detalles.length > 0) {
+        payload.detalles.push(...detalles)
       }
     }
 
@@ -306,7 +343,8 @@ export const promocionesApi = {
       'DESCUENTO_PORCENTUAL': 'Descuento Porcentual',
       'POR_CANTIDAD': 'Por Cantidad',
       'NXM': 'N x M',
-      'DESCUENTO_ESCALONADO': 'Descuento Escalonado'
+      'DESCUENTO_ESCALONADO': 'Descuento Escalonado',
+      'SIN_DESCUENTO': 'Sin Descuento'
     }
     return tipos[tipo] || tipo
   },
@@ -316,8 +354,8 @@ export const promocionesApi = {
    */
   getTiposPromocion() {
     return [
-      { value: 'DESCUENTO_PLANO', label: 'Descuento Plano', description: 'Descuento fijo en dinero' },
-      { value: 'DESCUENTO_PORCENTUAL', label: 'Descuento Porcentual', description: 'Descuento por porcentaje' },
+      { value: 'SIN_DESCUENTO', label: 'Sin Descuento', description: 'Promoción regular sin descuentos' },
+      { value: 'DESCUENTO_PLANO', label: 'Descuento Plano', description: 'Descuento porcentual aplicado al total' },
       { value: 'POR_CANTIDAD', label: 'Por Cantidad', description: 'Descuento por cantidad mínima' },
       { value: 'NXM', label: 'N x M', description: 'Lleva N unidades, paga M' }
     ]
@@ -389,17 +427,55 @@ export const promocionesApi = {
         <div><strong>Tipo:</strong> ${this.getTipoDisplayName(formData.tipo)}</div>
     `
 
-    // Agregar detalles específicos del tipo
+    // Generar detalles para preview
+    if (formData.tipo) {
+      const detalles = this.createDetallesForType(formData)
+      if (detalles && detalles.length > 0) {
+        content += `<div><strong>Detalles:</strong></div>`
+        detalles.forEach((detalle, index) => {
+          content += `<div class="ml-4 text-sm">`
+          content += `<strong>${index + 1}.</strong> ${detalle.nombre}`
+          if (detalle.esBase) {
+            content += ` <span class="text-blue-600">(Base)</span>`
+          } else {
+            content += ` <span class="text-green-600">(Acumulable)</span>`
+          }
+          content += `</div>`
+        })
+      }
+    }
+
+    // Agregar detalles específicos del tipo (información adicional)
     switch(formData.tipo) {
-      case 'DESCUENTO_PLANO':
-        content += `<div><strong>Monto Descuento:</strong> $${parseFloat(formData.montoDescuento || 0).toFixed(2)}</div>`
+      case 'SIN_DESCUENTO':
+        content += `<div><strong>Tipo:</strong> Promoción regular sin descuentos</div>`
         break
+      case 'DESCUENTO_PLANO':
       case 'DESCUENTO_PORCENTUAL':
         content += `<div><strong>Porcentaje:</strong> ${formData.porcentajeDescuento}%</div>`
         break
       case 'POR_CANTIDAD':
-        content += `<div><strong>Cantidad Mínima:</strong> ${formData.cantidadMinima}</div>`
-        content += `<div><strong>Descuento:</strong> ${formData.porcentajeDescuento}%</div>`
+        // Mostrar escalas múltiples si existen
+        if (formData.escalas && Array.isArray(formData.escalas) && formData.escalas.length > 0) {
+          content += `<div><strong>Escalas de Descuento:</strong></div>`
+          content += `<div class="ml-4 space-y-1">`
+          formData.escalas
+            .sort((a, b) => a.cantidadMinima - b.cantidadMinima)
+            .forEach((escala, index) => {
+              const rango = escala.cantidadMaxima && escala.cantidadMaxima < 999999 
+                ? `${escala.cantidadMinima}-${escala.cantidadMaxima}`
+                : `${escala.cantidadMinima}+`
+              content += `<div class="text-sm bg-blue-50 p-2 rounded">
+                <strong>Escala ${index + 1}:</strong> ${rango} unidades → ${escala.porcentaje}% descuento
+              </div>`
+            })
+          content += `</div>`
+        }
+        // Fallback para formato legacy
+        else if (formData.cantidadMinima && formData.porcentajeDescuento) {
+          content += `<div><strong>Cantidad Mínima:</strong> ${formData.cantidadMinima}</div>`
+          content += `<div><strong>Descuento:</strong> ${formData.porcentajeDescuento}%</div>`
+        }
         break
       case 'NXM':
         const descuentoCalculado = formData.nCompras && formData.mPago 
@@ -415,15 +491,103 @@ export const promocionesApi = {
   },
 
   /**
+   * Construir escalas de descuento para promociones POR_CANTIDAD
+   */
+  buildEscalasDescuento(tipoData) {
+    // Si se proporcionan escalas múltiples (nuevo formato)
+    if (tipoData.escalas && Array.isArray(tipoData.escalas) && tipoData.escalas.length > 0) {
+      return tipoData.escalas
+        .filter(escala => escala.cantidadMinima && escala.porcentaje)
+        .map(escala => ({
+          cantidadMinima: parseInt(escala.cantidadMinima),
+          cantidadMaxima: escala.cantidadMaxima ? parseInt(escala.cantidadMaxima) : 999999,
+          descuento: parseFloat(escala.porcentaje)
+        }))
+        .sort((a, b) => a.cantidadMinima - b.cantidadMinima)
+    }
+    
+    // Fallback: formato legacy (una sola escala)
+    if (tipoData.cantidadMinima && tipoData.porcentajeDescuento) {
+      return [{
+        cantidadMinima: parseInt(tipoData.cantidadMinima) || 1,
+        cantidadMaxima: 999999,
+        descuento: parseFloat(tipoData.porcentajeDescuento) || 0
+      }]
+    }
+    
+    // Fallback: escalas por defecto si no se proporciona información
+    return [{
+      cantidadMinima: 1,
+      cantidadMaxima: 999999,
+      descuento: 5.0
+    }]
+  },
+
+  /**
+   * Validar escalas de descuento múltiples
+   */
+  validateEscalasDescuento(escalas) {
+    const errors = []
+    
+    if (!escalas || !Array.isArray(escalas) || escalas.length === 0) {
+      return { isValid: false, errors: ['Se requiere al menos una escala de descuento'] }
+    }
+    
+    // Validar cada escala individualmente
+    escalas.forEach((escala, index) => {
+      if (!escala.cantidadMinima || escala.cantidadMinima < 1) {
+        errors.push(`Escala ${index + 1}: La cantidad mínima debe ser mayor a 0`)
+      }
+      
+      if (escala.cantidadMaxima && escala.cantidadMaxima < escala.cantidadMinima) {
+        errors.push(`Escala ${index + 1}: La cantidad máxima debe ser mayor a la mínima`)
+      }
+      
+      if (!escala.porcentaje || escala.porcentaje <= 0 || escala.porcentaje > 100) {
+        errors.push(`Escala ${index + 1}: El porcentaje debe estar entre 0.01 y 100`)
+      }
+    })
+    
+    // Validar que no hay solapamientos entre escalas
+    const sorted = [...escalas].sort((a, b) => a.cantidadMinima - b.cantidadMinima)
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const current = sorted[i]
+      const next = sorted[i + 1]
+      
+      const currentMax = current.cantidadMaxima || 999999
+      if (next.cantidadMinima <= currentMax) {
+        errors.push(`Las escalas con rangos ${current.cantidadMinima}-${currentMax} y ${next.cantidadMinima}-${next.cantidadMaxima || '∞'} se solapan`)
+      }
+    }
+    
+    // Validar que los porcentajes son progresivos (opcional, pero recomendado)
+    const porcentajes = sorted.map(e => e.porcentaje)
+    for (let i = 0; i < porcentajes.length - 1; i++) {
+      if (porcentajes[i] >= porcentajes[i + 1]) {
+        errors.push('Se recomienda que los porcentajes de descuento sean progresivos (mayor cantidad = mayor descuento)')
+        break
+      }
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors: errors
+    }
+  },
+
+  /**
    * Validar configuración específica por tipo
    */
   validateTipoConfig(tipoData) {
     const errors = []
     
     switch(tipoData.tipo) {
+      case 'SIN_DESCUENTO':
+        // No hay validaciones específicas para promociones sin descuento
+        break
       case 'DESCUENTO_PLANO':
-        if (!tipoData.montoDescuento || tipoData.montoDescuento <= 0) {
-          errors.push('El monto de descuento debe ser mayor a 0')
+        if (!tipoData.porcentajeDescuento || tipoData.porcentajeDescuento <= 0 || tipoData.porcentajeDescuento > 100) {
+          errors.push('El porcentaje debe estar entre 0.01 y 100')
         }
         break
       case 'DESCUENTO_PORCENTUAL':
@@ -432,11 +596,25 @@ export const promocionesApi = {
         }
         break
       case 'POR_CANTIDAD':
-        if (!tipoData.cantidadMinima || tipoData.cantidadMinima <= 0) {
-          errors.push('La cantidad mínima debe ser mayor a 0')
+        // Validación para escalas múltiples (nuevo formato)
+        if (tipoData.escalas && Array.isArray(tipoData.escalas) && tipoData.escalas.length > 0) {
+          const escalasValidation = this.validateEscalasDescuento(tipoData.escalas)
+          if (!escalasValidation.isValid) {
+            errors.push(...escalasValidation.errors)
+          }
         }
-        if (!tipoData.porcentajeDescuento || tipoData.porcentajeDescuento <= 0 || tipoData.porcentajeDescuento > 100) {
-          errors.push('El porcentaje debe estar entre 1 y 100')
+        // Validación legacy (formato anterior - cantidadMinima + porcentajeDescuento)
+        else if (tipoData.cantidadMinima || tipoData.porcentajeDescuento) {
+          if (!tipoData.cantidadMinima || tipoData.cantidadMinima <= 0) {
+            errors.push('La cantidad mínima debe ser mayor a 0')
+          }
+          if (!tipoData.porcentajeDescuento || tipoData.porcentajeDescuento <= 0 || tipoData.porcentajeDescuento > 100) {
+            errors.push('El porcentaje debe estar entre 1 y 100')
+          }
+        }
+        // Si no hay ninguna configuración válida
+        else {
+          errors.push('Se requiere configurar escalas de descuento o una cantidad mínima con porcentaje')
         }
         break
       case 'NXM':

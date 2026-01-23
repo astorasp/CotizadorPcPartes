@@ -115,7 +115,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
 
   // Computed para cotizaciones disponibles para selección
   const availableCotizaciones = computed(() => {
-    return cotizaciones.value.map(cotizacion => ({
+    return (cotizaciones.value || []).map(cotizacion => ({
       ...cotizacion,
       displayText: `COT-${cotizacion.folio} - ${pedidosApi.formatDate(cotizacion.fecha)} - ${pedidosApi.formatCurrency(cotizacion.total)}`
     }))
@@ -123,7 +123,7 @@ export const usePedidosStore = defineStore('pedidos', () => {
 
   // Computed para proveedores disponibles para selección
   const availableProveedores = computed(() => {
-    return proveedores.value.map(proveedor => ({
+    return (proveedores.value || []).map(proveedor => ({
       ...proveedor,
       displayText: `${proveedor.cve} - ${proveedor.nombre}`
     }))

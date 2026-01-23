@@ -4,7 +4,13 @@
 
 // Configuración de la API
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/cotizador/v1/api',
+  // URLs base por microservicio via gateway
+  COMPONENTES_BASE_URL: import.meta.env.VITE_COMPONENTES_API_BASE_URL || '/api',
+  COTIZACIONES_BASE_URL: import.meta.env.VITE_COTIZACIONES_API_BASE_URL || '/api',
+  PEDIDOS_BASE_URL: import.meta.env.VITE_PEDIDOS_API_BASE_URL || '/api',
+  SEGURIDAD_BASE_URL: import.meta.env.VITE_SEGURIDAD_API_BASE_URL || '/api/seguridad',
+  // URL legacy para compatibilidad (deprecada)
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api/cotizador',
   TIMEOUT: 30000, // 30 segundos
   HEADERS: {
     'Content-Type': 'application/json',
@@ -16,48 +22,49 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   // Componentes
   COMPONENTES: {
-    BASE: '/componentes',
-    BY_ID: (id) => `/componentes/${id}`,
-    BY_TYPE: (tipo) => `/componentes/tipo/${tipo}`,
-    EXISTS: (id) => `/componentes/${id}/existe`
+    BASE: '',
+    BY_ID: (id) => `/${id}`,
+    BY_TYPE: (tipo) => `/tipo/${tipo}`,
+    EXISTS: (id) => `/${id}/existe`,
+    CON_PCS: '/con-pcs'
   },
   
   // PCs
   PCS: {
-    BASE: '/pcs',
-    BY_ID: (id) => `/pcs/${id}`,
-    COMPONENTS: (pcId) => `/pcs/${pcId}/componentes`,
-    ADD_COMPONENT: (pcId) => `/pcs/${pcId}/componentes`,
-    REMOVE_COMPONENT: (pcId, componenteId) => `/pcs/${pcId}/componentes/${componenteId}`
+    BASE: '',
+    BY_ID: (id) => `/${id}`,
+    COMPONENTS: (pcId) => `/${pcId}/componentes`,
+    ADD_COMPONENT: (pcId) => `/${pcId}/componentes`,
+    REMOVE_COMPONENT: (pcId, componenteId) => `/${pcId}/componentes/${componenteId}`
   },
   
   // Cotizaciones
   COTIZACIONES: {
-    BASE: '/cotizaciones',
-    BY_ID: (id) => `/cotizaciones/${id}`,
-    BY_DATE: '/cotizaciones/buscar/fecha'
+    BASE: '',
+    BY_ID: (id) => `/${id}`,
+    BY_DATE: '/buscar/fecha'
   },
   
   // Proveedores
   PROVEEDORES: {
-    BASE: '/proveedores',
-    BY_CVE: (cve) => `/proveedores/${cve}`,
-    BY_NAME: '/proveedores/buscar/nombre',
-    BY_RAZON: '/proveedores/buscar/razon-social'
+    BASE: '',
+    BY_CVE: (cve) => `/${cve}`,
+    BY_NAME: '/buscar/nombre',
+    BY_RAZON: '/buscar/razon-social'
   },
   
   // Pedidos
   PEDIDOS: {
-    BASE: '/pedidos',
-    BY_ID: (id) => `/pedidos/${id}`,
-    GENERATE: '/pedidos/generar',
-    BY_DATE_FROM: '/pedidos/buscar/fecha'
+    BASE: '',
+    BY_ID: (id) => `/${id}`,
+    GENERATE: '/generar',
+    BY_DATE_FROM: '/buscar/fecha'
   },
   
   // Promociones
   PROMOCIONES: {
-    BASE: '/promociones',
-    BY_ID: (id) => `/promociones/${id}`
+    BASE: '',
+    BY_ID: (id) => `/${id}`
   }
 }
 

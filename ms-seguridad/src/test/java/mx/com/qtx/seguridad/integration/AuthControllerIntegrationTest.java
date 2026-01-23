@@ -138,12 +138,12 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        
+
         Map<String, Object> responseBody = response.getBody();
-        assertTokenResponse(responseBody);
-        
+        assertTokenResponse(responseBody, false); // Renovaciones NO devuelven refresh token
+
         assertNotNull(responseBody.get("accessToken"));
-        assertNotNull(responseBody.get("refreshToken"));
+        assertNull(responseBody.get("refreshToken")); // Renovaciones devuelven refreshToken = null
     }
 
     @Test

@@ -9,7 +9,7 @@
 
 - **📖 [README Principal](../README.md)** - Documentación completa del sistema
 - **🚀 [Portal Web](../portal-cotizador/README.md)** - Frontend Vue.js 3
-- **🖥️ [Backend API](../ms-cotizador/README.md)** - Microservicio Spring Boot
+- **🖥️ [Backend API](../ms-cotizador-componentes/README.md)** - Microservicio Spring Boot
 - **🔒 [Seguridad](../ms-seguridad/)** - Microservicio de autenticación
 - **📚 [Documentación](../documentacion/)** - Diagramas y arquitectura
 
@@ -29,7 +29,9 @@ Internet
 Nginx Gateway (cotizador-gateway)
     ↓
 ├── Frontend (Vue.js) ← Proxy interno
-├── /api/cotizador/* → Backend (ms-cotizador:8080) ← Red privada
+├── /api/componentes/* → Componentes (ms-cotizador-componentes:8082) ← Red privada
+├── /api/cotizaciones/* → Cotizaciones (ms-cotizador-cotizaciones:8083) ← Red privada
+├── /api/pedidos/* → Pedidos (ms-cotizador-pedidos:8084) ← Red privada
 └── /api/seguridad/* → Seguridad (ms-seguridad:8081) ← Red privada
     ↓
 Bases de Datos (MySQL) ← Red privada
@@ -95,12 +97,12 @@ docker-compose -f docker-compose.gateway.yml ps
 
 ### APIs (Proxy automático)
 - `POST /api/seguridad/auth/login` → Login JWT
-- `GET /api/cotizador/componentes` → CRUD componentes
-- `GET /api/cotizador/cotizaciones` → CRUD cotizaciones
-- `GET /api/cotizador/pcs` → CRUD PCs y armado
-- `GET /api/cotizador/proveedores` → CRUD proveedores
-- `GET /api/cotizador/pedidos` → CRUD pedidos
-- `GET /api/cotizador/promociones` → CRUD promociones
+- `GET /api/componentes` → CRUD componentes
+- `GET /api/pcs` → CRUD PCs y armado
+- `GET /api/promociones` → CRUD promociones
+- `GET /api/cotizaciones` → CRUD cotizaciones
+- `GET /api/proveedores` → CRUD proveedores
+- `GET /api/pedidos` → CRUD pedidos
 - *Todas las rutas de los microservicios están disponibles*
 
 ### Monitoreo

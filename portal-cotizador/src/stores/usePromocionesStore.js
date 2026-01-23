@@ -59,11 +59,12 @@ export const usePromocionesStore = defineStore('promociones', () => {
     vigenciaHasta: '',
     tipo: '',
     // Configuraciones específicas por tipo
-    montoDescuento: 0,
     porcentajeDescuento: 0,
     cantidadMinima: 0,
     nCompras: 0,
-    mPago: 0
+    mPago: 0,
+    // Nuevos campos para escalas múltiples
+    escalas: [] // Array de { cantidadMinima, cantidadMaxima, porcentaje }
   })
 
   // Estado del preview
@@ -494,11 +495,11 @@ export const usePromocionesStore = defineStore('promociones', () => {
       vigenciaDesde: defaultDates.vigenciaDesde,
       vigenciaHasta: defaultDates.vigenciaHasta,
       tipo: '',
-      montoDescuento: 0,
       porcentajeDescuento: 0,
       cantidadMinima: 0,
       nCompras: 0,
-      mPago: 0
+      mPago: 0,
+      escalas: []
     }
   }
 
@@ -512,11 +513,11 @@ export const usePromocionesStore = defineStore('promociones', () => {
       vigenciaDesde: '',
       vigenciaHasta: '',
       tipo: '',
-      montoDescuento: 0,
       porcentajeDescuento: 0,
       cantidadMinima: 0,
       nCompras: 0,
-      mPago: 0
+      mPago: 0,
+      escalas: []
     }
     
     currentPromocion.value = null
@@ -532,23 +533,100 @@ export const usePromocionesStore = defineStore('promociones', () => {
     formData.value.vigenciaDesde = promocion.vigenciaDesde || ''
     formData.value.vigenciaHasta = promocion.vigenciaHasta || ''
     
-    // Determinar tipo principal y configuraciones
-    if (promocion.detalles && promocion.detalles.length > 0) {
-      const detalleBase = promocion.detalles.find(d => d.esBase) || promocion.detalles[0]
+    // Resetear valores de configuración
+    formData.value.tipo = ''
+    formData.value.porcentajeDescuento = 0
+    formData.value.cantidadMinima = 0
+    formData.value.nCompras = 0
+    formData.value.mPago = 0
+    formData.value.escalas = []
+    
+    // Determinar tipo basándose en la estructura de detalles
+    if (!promocion.detalles || promocion.detalles.length === 0) {
+      // Promoción sin detalles = SIN_DESCUENTO
+      formData.value.tipo = 'SIN_DESCUENTO'
       
-      if (detalleBase.tipoBase === 'NXM') {
-        formData.value.tipo = 'NXM'
-        formData.value.nCompras = detalleBase.llevent || 0
-        formData.value.mPago = detalleBase.paguen || 0
-      } else if (detalleBase.tipoAcumulable === 'DESCUENTO_PLANO') {
-        if (detalleBase.porcentajeDescuentoPlano < 1) {
+    } else if (promocion.detalles && promocion.detalles.length > 0) {
+      const detalleBase = promocion.detalles.find(d => d.esBase)
+      const detalleAcumulable = promocion.detalles.find(d => !d.esBase)
+      
+      if (DEBUG_CONFIG.ENABLED) {
+        console.log('[PromocionesStore] Analizando detalles para edición:', {
+          detalleBase,
+          detalleAcumulable,
+          totalDetalles: promocion.detalles.length
+        })
+      }
+      
+      // Analizar estructura existente (compatible con datos actuales)
+      if (detalleBase) {
+        // Caso 1: NXM - detectar por valores llevent/paguen
+        if (detalleBase.llevent > 1 && detalleBase.paguen > 0 && detalleBase.llevent > detalleBase.paguen) {
+          formData.value.tipo = 'NXM'
+          formData.value.nCompras = detalleBase.llevent || 0
+          formData.value.mPago = detalleBase.paguen || 0
+          
+        // Caso 2: Descuento Plano - detectar por porcentajeDescuentoPlano > 0
+        } else if (detalleBase.porcentajeDescuentoPlano > 0 && 
+                   detalleBase.llevent === 1 && detalleBase.paguen === 1) {
           formData.value.tipo = 'DESCUENTO_PLANO'
-          formData.value.montoDescuento = detalleBase.porcentajeDescuentoPlano
+          formData.value.porcentajeDescuento = detalleBase.porcentajeDescuentoPlano || 0
+          
+        // Caso 3: Promoción básica/regular sin descuento
+        } else if (detalleBase.llevent === 1 && detalleBase.paguen === 1 && 
+                   (detalleBase.porcentajeDescuentoPlano === 0 || !detalleBase.porcentajeDescuentoPlano)) {
+          // Promoción regular sin descuento
+          formData.value.tipo = 'SIN_DESCUENTO'
+          
         } else {
-          formData.value.tipo = 'DESCUENTO_PORCENTUAL'
-          formData.value.porcentajeDescuento = detalleBase.porcentajeDescuentoPlano
+          // Estructura nueva (futuras promociones)
+          if (detalleBase.tipoBase === 'NXM') {
+            formData.value.tipo = 'NXM'
+            formData.value.nCompras = detalleBase.llevent || 0
+            formData.value.mPago = detalleBase.paguen || 0
+            
+          } else if (detalleBase.tipoBase === 'SIN_DESCUENTO' && 
+                     detalleAcumulable && detalleAcumulable.tipoAcumulable === 'DESCUENTO_PLANO') {
+            formData.value.tipo = 'DESCUENTO_PLANO'
+            formData.value.porcentajeDescuento = detalleAcumulable.porcentajeDescuentoPlano || 0
+            
+          } else if (detalleBase.tipoBase === 'SIN_DESCUENTO' && 
+                     detalleAcumulable && detalleAcumulable.tipoAcumulable === 'DESCUENTO_POR_CANTIDAD') {
+            formData.value.tipo = 'POR_CANTIDAD'
+            
+            if (detalleAcumulable.escalasDescuento && detalleAcumulable.escalasDescuento.length > 0) {
+              // Mapear todas las escalas del backend al formato del frontend
+              formData.value.escalas = detalleAcumulable.escalasDescuento.map(escala => ({
+                cantidadMinima: escala.cantidadMinima || 0,
+                cantidadMaxima: escala.cantidadMaxima || null,
+                porcentaje: escala.descuento || escala.porcentajeDescuento || 0
+              }))
+              
+              // Mantener compatibilidad con campos individuales (para componentes que aún los usen)
+              const primeraEscala = detalleAcumulable.escalasDescuento[0]
+              formData.value.cantidadMinima = primeraEscala.cantidadMinima || 0
+              formData.value.porcentajeDescuento = primeraEscala.descuento || primeraEscala.porcentajeDescuento || 0
+            }
+          } else if (detalleBase.tipoBase === 'SIN_DESCUENTO' && !detalleAcumulable) {
+            // CASO AGREGADO: Promoción con detalleBase SIN_DESCUENTO sin detalles acumulables
+            formData.value.tipo = 'SIN_DESCUENTO'
+            
+          } else {
+            // Caso no reconocido - log para debugging
+            console.warn('[PromocionesStore] Estructura de detalles no reconocida:', promocion.detalles)
+          }
         }
       }
+    }
+
+    if (DEBUG_CONFIG.ENABLED) {
+      console.log('[PromocionesStore] Formulario poblado para edición:', {
+        tipo: formData.value.tipo,
+        porcentajeDescuento: formData.value.porcentajeDescuento,
+        nCompras: formData.value.nCompras,
+        mPago: formData.value.mPago,
+        cantidadMinima: formData.value.cantidadMinima
+      })
     }
 
     updatePreview()
@@ -561,11 +639,11 @@ export const usePromocionesStore = defineStore('promociones', () => {
     formData.value.tipo = tipo
     
     // Resetear valores específicos del tipo anterior
-    formData.value.montoDescuento = 0
     formData.value.porcentajeDescuento = 0
     formData.value.cantidadMinima = 0
     formData.value.nCompras = 0
     formData.value.mPago = 0
+    formData.value.escalas = []
     
     updatePreview()
   }

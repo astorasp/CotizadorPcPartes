@@ -54,8 +54,8 @@
                     :disabled="modalLoading"
                   >
                     <option value="">Seleccionar tipo...</option>
-                    <option value="COTIZADOR_A">Cotizador A</option>
-                    <option value="COTIZADOR_B">Cotizador B</option>
+                    <option value="A">Cotizador A</option>
+                    <option value="B">Cotizador B</option>
                   </select>
                 </div>
                 
@@ -69,59 +69,30 @@
                   />
                 </div>
               </div>
+              
+              <div class="mt-6">
+                <label class="form-label">Observaciones</label>
+                <textarea
+                  v-model="formData.observaciones"
+                  class="form-field"
+                  rows="3"
+                  placeholder="Ingrese observaciones adicionales para la cotización..."
+                  :disabled="modalLoading"
+                />
+              </div>
             </div>
 
             <!-- Sección de Componentes -->
             <div class="bg-white p-6 rounded-lg shadow-sm">
               <h4 class="text-md font-medium text-gray-900 mb-4">Agregar Componentes</h4>
               
-              <!-- Formulario para agregar componente -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="md:col-span-2">
-                  <label class="form-label">Componente</label>
-                  <select 
-                    v-model="componentSelectValue" 
-                    class="form-field"
-                    :disabled="modalLoading"
-                  >
-                    <option value="">Seleccionar componente...</option>
-                    <option 
-                      v-for="component in availableComponentsForSelect" 
-                      :key="component.id" 
-                      :value="component.id"
-                    >
-                      {{ component.id }} - {{ component.descripcion }} ({{ getTypeLabel(component.tipoComponente) }}) - {{ formatCurrency(component.precioBase) }}
-                    </option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label class="form-label">Cantidad</label>
-                  <input
-                    type="number"
-                    v-model.number="componentQuantity"
-                    min="1"
-                    max="10"
-                    class="form-field"
-                    :disabled="modalLoading"
-                  />
-                </div>
-              </div>
-              
+              <!-- Selector avanzado de componentes -->
               <div class="mb-6">
-                <button 
-                  type="button"
-                  @click="handleAddComponent"
-                  :disabled="!componentSelectValue || modalLoading"
-                  class="btn-secondary btn-md"
-                  :class="{ 'opacity-50 cursor-not-allowed': !componentSelectValue || modalLoading }"
-                >
-                  <svg v-if="modalLoading" class="animate-spin -ml-1 mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {{ modalLoading ? 'Agregando...' : 'Agregar Componente' }}
-                </button>
+                <ComponentSelectorCotizaciones
+                  :available-components="availableComponentsForSelect"
+                  :loading="modalLoading"
+                  @add-component="handleAddComponentFromSelector"
+                />
               </div>
 
               <!-- Lista de componentes agregados -->
@@ -331,6 +302,7 @@ import { storeToRefs } from 'pinia'
 import { useCotizacionesStore } from '@/stores/useCotizacionesStore'
 import { useUtils } from '@/composables/useUtils'
 import { COMPONENT_TYPE_LABELS } from '@/utils/constants'
+import ComponentSelectorCotizaciones from './ComponentSelectorCotizaciones.vue'
 
 // Composables y stores
 const cotizacionesStore = useCotizacionesStore()
@@ -357,6 +329,10 @@ const getTypeLabel = (tipo) => {
 
 const handleAddComponent = async () => {
   await cotizacionesStore.addComponentToCotizacion(componentSelectValue.value, componentQuantity.value)
+}
+
+const handleAddComponentFromSelector = async ({ component, quantity }) => {
+  await cotizacionesStore.addComponentToCotizacion(component.id, quantity)
 }
 
 const handleRemoveComponent = async (index) => {
